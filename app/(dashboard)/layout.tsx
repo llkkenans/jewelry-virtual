@@ -26,10 +26,10 @@ export default function DashboardLayout({
   useEffect(() => {
     async function loadUser() {
       const {
-        data: { user },
-      } = await supabase.auth.getUser()
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (!user) {
+      if (!session?.user) {
         router.push("/login")
         return
       }
@@ -37,7 +37,7 @@ export default function DashboardLayout({
       const { data } = await supabase
         .from("profiles")
         .select("credits")
-        .eq("id", user.id)
+        .eq("id", session.user.id)
         .single()
 
       setCredits(data?.credits ?? 0)
