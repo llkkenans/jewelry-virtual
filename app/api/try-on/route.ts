@@ -81,7 +81,6 @@ export async function POST(req: NextRequest) {
         image_url: imageUrl,
         mask_url: maskBase64,   // data:image/png;base64,... kabul eder
         prompt,
-        num_inference_steps: 28,
         guidance_scale: 3.5,
         num_images: 1,
         output_format: 'jpeg',
