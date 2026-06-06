@@ -55,7 +55,7 @@ export default function LoginPage() {
         <div className="relative z-10 space-y-6">
           <blockquote className="space-y-4">
             <p className="text-white/90 text-2xl font-light leading-relaxed tracking-tight">
-              "Takı fotoğraflarınızı saniyeler içinde gerçekçi model fotoğraflarına dönüştürün."
+              &quot;Takı fotoğraflarınızı saniyeler içinde gerçekçi model fotoğraflarına dönüştürün.&quot;
             </p>
             <footer className="space-y-1">
               <p className="text-white/60 text-sm">Pahalı stüdyo çekimi gerekmez.</p>
