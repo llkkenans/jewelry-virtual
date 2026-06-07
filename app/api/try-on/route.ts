@@ -3,14 +3,15 @@ import { fal } from '@/lib/fal'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 const CONCEPT_PROMPTS: Record<string, string> = {
-  ecommerce:  'elegant hand wearing the ring, clean white studio background, professional product photography, soft shadows',
-  studio:     'hand wearing the ring, professional studio lighting, bokeh background, high-end jewelry photography',
-  engagement: 'romantic close-up of hand wearing the ring, soft natural light, engagement photography style',
-  lifestyle:  'hand wearing the ring resting near a coffee cup, cozy cafe lifestyle photography, warm tones',
+  ecommerce:  'A beautiful woman\'s hand wearing this exact ring/jewelry, white studio background, professional product photography, soft shadows, high quality',
+  studio:     'A beautiful woman wearing this exact jewelry piece, professional studio lighting, bokeh background, high-end jewelry photography',
+  engagement: 'Close-up of a beautiful woman wearing this exact ring, romantic soft natural light, elegant engagement photography',
+  lifestyle:  'A stylish woman wearing this exact jewelry, cozy cafe setting, lifestyle photography, warm tones',
 }
 
-type FalFillResult = {
-  images: Array<{ url: string; width: number; height: number; content_type: string }>
+type FalResult = {
+  image?: { url: string }
+  images?: Array<{ url: string; width: number; height: number; content_type: string }>
 }
 
 export async function POST(req: NextRequest) {
@@ -80,30 +81,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 5. fal.ai Flux Pro Fill — base64 prefix'ini temizle, fal.storage'a yükle
+  // 5. fal.ai Flux Pro image-to-image — base64 prefix'ini temizle, fal.storage'a yükle
   const cleanImage = imageBase64.replace(/^data:image\/[a-z+]+;base64,/, '')
-  const cleanMask  = maskBase64.replace(/^data:image\/[a-z+]+;base64,/, '')
 
-  console.log('fal params:', { image_url: imageBase64?.substring(0, 50), prompt, mask_url: maskBase64?.substring(0, 50) })
+  console.log('fal params:', { image_url: imageBase64?.substring(0, 50), prompt })
 
   try {
     const imageFile = await fetch(`data:image/jpeg;base64,${cleanImage}`).then(r => r.blob())
-    const maskFile  = await fetch(`data:image/png;base64,${cleanMask}`).then(r => r.blob())
-
     const uploadedImage = await fal.storage.upload(imageFile)
-    const uploadedMask  = await fal.storage.upload(maskFile)
 
-    const result = await fal.subscribe('fal-ai/flux-pro/v1/fill', {
+    const result = await fal.subscribe('fal-ai/flux-pro/v1', {
       input: {
         image_url: uploadedImage,
         prompt,
-        mask_url: uploadedMask,
       },
     })
 
-    // 6. Sonuç URL'ini güncelle
-    console.log('fal output URL:', result.data?.images?.[0]?.url)
-    const outputUrl = (result.data as FalFillResult).images[0].url
+    // 6. Sonuç URL'ini güncelle — modele göre response formatı değişiyor
+    const data = result.data as FalResult
+    const outputUrl = data?.image?.url ?? data?.images?.[0]?.url
+    console.log('fal output URL:', outputUrl)
+
+    if (!outputUrl) {
+      throw new Error('fal.ai response içinde URL bulunamadı')
+    }
 
     await supabaseAdmin
       .from('generations')
