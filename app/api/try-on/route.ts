@@ -3,10 +3,10 @@ import { startGeneration, pollGeneration } from '@/lib/leonardo'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 const CONCEPT_PROMPTS: Record<string, string> = {
-  ecommerce:  "Elegant woman's hand wearing a luxurious gold ring, high-end jewelry store photography, soft white studio lighting, shallow depth of field, professional product photography, 8k quality",
-  studio:     'Beautiful woman wearing a stunning necklace, luxury jewelry photography, dramatic studio lighting, bokeh background, professional fashion photography, ultra realistic',
-  engagement: "Close-up of elegant woman's hand with engagement ring, romantic soft lighting, luxury jewelry photography, shallow depth of field, ultra detailed",
-  lifestyle:  'Stylish woman wearing elegant earrings, upscale cafe setting, natural light, luxury lifestyle photography, professional editorial photography',
+  ecommerce:  "Professional jewelry product photo, beautiful elegant woman's hand with manicured nails wearing this ring, white background, soft studio lighting, high-end jewelry photography, ultra realistic, 8k",
+  studio:     "Luxury jewelry advertisement, beautiful woman wearing this necklace around her neck, professional studio lighting, dark bokeh background, high fashion editorial, ultra realistic",
+  engagement: "Close up romantic photo, beautiful woman's hand with this engagement ring, soft natural light, shallow depth of field, luxury jewelry photography, ultra realistic",
+  lifestyle:  "Beautiful stylish woman wearing these earrings, upscale cafe background, natural golden hour light, luxury lifestyle photography, fashion editorial, ultra realistic",
 }
 
 export async function POST(req: NextRequest) {

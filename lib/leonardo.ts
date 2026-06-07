@@ -59,7 +59,7 @@ export async function startGeneration(prompt: string, imageBase64?: string): Pro
   if (imageBase64) {
     const initImageId = await uploadInitImage(imageBase64)
     body.init_image_id = initImageId
-    body.init_strength = 0.35
+    body.init_strength = 0.05
     console.log('Leonardo image-to-image modu, init_image_id:', initImageId)
   }
 
