@@ -9,8 +9,8 @@ import { Separator } from "@/components/ui/separator"
 import { LogOut, Images, Upload } from "lucide-react"
 
 const navItems = [
-  { href: "/dashboard/upload", label: "Üret", icon: Upload },
-  { href: "/dashboard/gallery", label: "Galeri", icon: Images },
+  { href: "/upload", label: "Üret", icon: Upload },
+  { href: "/gallery", label: "Galeri", icon: Images },
 ]
 
 export default function DashboardLayout({
@@ -59,7 +59,7 @@ export default function DashboardLayout({
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
           {/* Logo */}
-          <Link href="/dashboard/upload" className="flex items-center gap-2.5 shrink-0">
+          <Link href="/upload" className="flex items-center gap-2.5 shrink-0">
             <div className="w-6 h-6 rotate-45 border-2 border-[#111827] flex items-center justify-center">
               <div className="w-1.5 h-1.5 bg-[#111827] rotate-45" />
             </div>

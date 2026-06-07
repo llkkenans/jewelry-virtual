@@ -29,7 +29,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/dashboard/upload")
+    router.push("/upload")
   }
 
   return (
