@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { startGeneration, pollGeneration } from '@/lib/leonardo'
+import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 const CONCEPT_PROMPTS: Record<string, string> = {
-  ecommerce:  "Professional jewelry product photo, beautiful elegant woman's hand with manicured nails wearing this ring, white background, soft studio lighting, high-end jewelry photography, ultra realistic, 8k",
-  studio:     "Luxury jewelry advertisement, beautiful woman wearing this necklace around her neck, professional studio lighting, dark bokeh background, high fashion editorial, ultra realistic",
-  engagement: "Close up romantic photo, beautiful woman's hand with this engagement ring, soft natural light, shallow depth of field, luxury jewelry photography, ultra realistic",
-  lifestyle:  "Beautiful stylish woman wearing these earrings, upscale cafe background, natural golden hour light, luxury lifestyle photography, fashion editorial, ultra realistic",
+  ecommerce:  "Elegant woman's hand with manicured nails wearing the ring, white studio background, soft lighting",
+  studio:     'Beautiful woman wearing the necklace, luxury studio photography, dramatic lighting, dark background',
+  engagement: "Close-up of woman's hand wearing the ring, romantic soft light, shallow depth of field",
+  lifestyle:  'Stylish woman wearing the earrings, upscale cafe, warm natural light',
+}
+
+type BriaResult = {
+  images: Array<{ url: string }>
 }
 
 export async function POST(req: NextRequest) {
@@ -26,8 +30,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const prompt = CONCEPT_PROMPTS[concept]
-  if (!prompt) {
+  const sceneDescription = CONCEPT_PROMPTS[concept]
+  if (!sceneDescription) {
     return NextResponse.json(
       { error: `Geçersiz konsept. Geçerli değerler: ${Object.keys(CONCEPT_PROMPTS).join(', ')}` },
       { status: 400 }
@@ -72,14 +76,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 5. Leonardo.ai ile görsel üret
+  // 5. Bria Product Shot ile görsel üret
   try {
-    console.log('Leonardo generation başlatılıyor:', { concept, prompt: prompt.substring(0, 60) })
-    const leonardoId = await startGeneration(prompt, imageBase64)
-    console.log('Leonardo generationId:', leonardoId)
+    // imageBase64 → Blob → fal.storage URL
+    const imageBuffer = Buffer.from(imageBase64, 'base64')
+    const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
+    const uploadedImageUrl = await fal.storage.upload(imageBlob)
+    console.log('fal storage URL:', uploadedImageUrl)
 
-    const outputUrl = await pollGeneration(leonardoId)
-    console.log('Leonardo output URL:', outputUrl)
+    const result = await fal.subscribe('fal-ai/bria/product-shot', {
+      input: {
+        image_url: uploadedImageUrl,
+        scene_description: sceneDescription,
+      },
+    })
+
+    const outputUrl = (result.data as BriaResult).images[0].url
+    console.log('Bria output URL:', outputUrl)
 
     // 6. Sonuç URL'ini güncelle
     await supabaseAdmin
@@ -90,13 +103,13 @@ export async function POST(req: NextRequest) {
     // 7. outputUrl dön
     return NextResponse.json({ outputUrl, generationId: generation.id })
   } catch (error) {
-    console.error('Leonardo error:', JSON.stringify(error, null, 2))
+    console.error('Bria error:', JSON.stringify(error, null, 2))
 
     await supabaseAdmin
       .from('generations')
       .update({ status: 'failed' })
       .eq('id', generation.id)
 
-    return NextResponse.json({ error: 'Leonardo.ai işlemi başarısız' }, { status: 502 })
+    return NextResponse.json({ error: 'Bria Product Shot işlemi başarısız' }, { status: 502 })
   }
 }
