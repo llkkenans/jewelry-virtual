@@ -1,39 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import fs from 'fs'
+import path from 'path'
 
-const CONCEPT_PROMPTS: Record<string, string> = {
-  ecommerce:  "Elegant woman's hand with manicured nails wearing the ring, white studio background, soft lighting",
-  studio:     'Beautiful woman wearing the necklace, luxury studio photography, dramatic lighting, dark background',
-  engagement: "Close-up of woman's hand wearing the ring, romantic soft light, shallow depth of field",
-  lifestyle:  'Stylish woman wearing the earrings, upscale cafe, warm natural light',
-}
-
-type BriaResult = {
-  images: Array<{ url: string }>
-}
+type JewelryType = 'ring' | 'necklace' | 'bracelet'
+const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'bracelet']
 
 export async function POST(req: NextRequest) {
-  // 1. İstek gövdesinden imageBase64 ve concept al
-  let imageBase64: string, concept: string
+  // 1. İstek gövdesinden imageBase64 ve jewelryType al
+  let imageBase64: string, jewelryType: JewelryType
   try {
     const body = await req.json()
-    ;({ imageBase64, concept } = body as { imageBase64: string; concept: string })
+    ;({ imageBase64, jewelryType } = body as { imageBase64: string; jewelryType: JewelryType })
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
 
-  if (!imageBase64 || !concept) {
+  if (!imageBase64 || !jewelryType) {
     return NextResponse.json(
-      { error: 'Eksik parametre: imageBase64, concept gerekli' },
+      { error: 'Eksik parametre: imageBase64, jewelryType gerekli' },
       { status: 400 }
     )
   }
 
-  const sceneDescription = CONCEPT_PROMPTS[concept]
-  if (!sceneDescription) {
+  if (!VALID_JEWELRY_TYPES.includes(jewelryType)) {
     return NextResponse.json(
-      { error: `Geçersiz konsept. Geçerli değerler: ${Object.keys(CONCEPT_PROMPTS).join(', ')}` },
+      { error: `Geçersiz jewelryType. Geçerli değerler: ${VALID_JEWELRY_TYPES.join(', ')}` },
       { status: 400 }
     )
   }
@@ -60,14 +52,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  // 4. generations tablosuna kayıt aç — INSERT trigger'ı krediyi düşürür
+  // 4. public/models/{jewelryType}/ klasöründen rastgele model seç
+  const modelsDir = path.join(process.cwd(), 'public', 'models', jewelryType)
+
+  let files: string[]
+  try {
+    files = fs.readdirSync(modelsDir).filter(f =>
+      /\.(jpg|jpeg|png|webp)$/i.test(f)
+    )
+  } catch {
+    return NextResponse.json(
+      { error: `Model klasörü bulunamadı: public/models/${jewelryType}/` },
+      { status: 500 }
+    )
+  }
+
+  if (files.length === 0) {
+    return NextResponse.json(
+      { error: `public/models/${jewelryType}/ klasöründe görsel yok` },
+      { status: 500 }
+    )
+  }
+
+  const randomFile = files[Math.floor(Math.random() * files.length)]
+  const modelUrl = `/models/${jewelryType}/${randomFile}`
+  console.log('Seçilen model:', modelUrl)
+
+  // 5. generations tablosuna kayıt aç — INSERT trigger'ı krediyi düşürür
   const { data: generation, error: insertError } = await supabaseAdmin
     .from('generations')
     .insert({
       user_id: user.id,
-      concept,
-      status: 'processing',
+      concept: jewelryType,
+      status: 'done',
       credits_used: 1,
+      output_image_url: modelUrl,
     })
     .select('id')
     .single()
@@ -76,40 +95,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 5. Bria Product Shot ile görsel üret
-  try {
-    // imageBase64 → Blob → fal.storage URL
-    const imageBuffer = Buffer.from(imageBase64, 'base64')
-    const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
-    const uploadedImageUrl = await fal.storage.upload(imageBlob)
-    console.log('fal storage URL:', uploadedImageUrl)
-
-    const result = await fal.subscribe('fal-ai/bria/product-shot', {
-      input: {
-        image_url: uploadedImageUrl,
-        scene_description: sceneDescription,
-      },
-    })
-
-    const outputUrl = (result.data as BriaResult).images[0].url
-    console.log('Bria output URL:', outputUrl)
-
-    // 6. Sonuç URL'ini güncelle
-    await supabaseAdmin
-      .from('generations')
-      .update({ status: 'done', output_image_url: outputUrl })
-      .eq('id', generation.id)
-
-    // 7. outputUrl dön
-    return NextResponse.json({ outputUrl, generationId: generation.id })
-  } catch (error) {
-    console.error('Bria error:', JSON.stringify(error, null, 2))
-
-    await supabaseAdmin
-      .from('generations')
-      .update({ status: 'failed' })
-      .eq('id', generation.id)
-
-    return NextResponse.json({ error: 'Bria Product Shot işlemi başarısız' }, { status: 502 })
-  }
+  return NextResponse.json({ outputUrl: modelUrl, generationId: generation.id })
 }
