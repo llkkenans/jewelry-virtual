@@ -15,11 +15,16 @@ type FalFillResult = {
 
 export async function POST(req: NextRequest) {
   // 1. İstek gövdesinden imageBase64 ve concept al
-  const body = await req.json()
-  const { imageBase64, maskBase64, concept } = body as {
-    imageBase64: string
-    maskBase64: string
-    concept: string
+  let imageBase64: string, maskBase64: string, concept: string
+  try {
+    const body = await req.json()
+    ;({ imageBase64, maskBase64, concept } = body as {
+      imageBase64: string
+      maskBase64: string
+      concept: string
+    })
+  } catch {
+    return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
 
   if (!imageBase64 || !maskBase64 || !concept) {
@@ -75,13 +80,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 5. fal.ai Flux Pro Fill — görseli base64 olarak direkt gönder
+  // 5. fal.ai Flux Pro Fill — base64 prefix'ini temizle, sonra gönder
+  const cleanImage = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
+  const cleanMask  = maskBase64.replace(/^data:image\/[a-z]+;base64,/, '')
+
   try {
     const result = await fal.subscribe('fal-ai/flux-pro/v1/fill', {
       input: {
-        image_url: imageBase64,
+        image_url: cleanImage,
         prompt,
-        mask_url: maskBase64,
+        mask_url: cleanMask,
       },
     })
 
