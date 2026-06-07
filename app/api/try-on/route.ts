@@ -116,7 +116,8 @@ export async function POST(req: NextRequest) {
     const imageBuffer = Buffer.from(imageBase64, 'base64')
     const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
     const uploadedImageUrl = await fal.storage.upload(imageBlob)
-    console.log('fal storage URL:', uploadedImageUrl)
+    console.log('Model URL:', modelImageUrl)
+    console.log('Takı URL:', uploadedImageUrl)
 
     const result = await fal.subscribe('fal-ai/nano-banana-pro/edit', {
       input: {
