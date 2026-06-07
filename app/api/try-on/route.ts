@@ -1,36 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fal } from '@/lib/fal'
+import { startGeneration, pollGeneration } from '@/lib/leonardo'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 const CONCEPT_PROMPTS: Record<string, string> = {
-  ecommerce:  "a woman's hand elegantly wearing this jewelry piece, white studio background, professional product photography",
-  studio:     'a woman wearing this jewelry, professional studio lighting, high-end fashion photography, bokeh background',
-  engagement: "close-up of a woman's hand wearing this ring, romantic soft light, engagement photography",
-  lifestyle:  'a stylish woman wearing this jewelry, cozy cafe, warm lifestyle photography',
-}
-
-type FalResult = {
-  image?: { url: string }
-  images?: Array<{ url: string; width: number; height: number; content_type: string }>
+  ecommerce:  "Elegant woman's hand wearing a luxurious gold ring, high-end jewelry store photography, soft white studio lighting, shallow depth of field, professional product photography, 8k quality",
+  studio:     'Beautiful woman wearing a stunning necklace, luxury jewelry photography, dramatic studio lighting, bokeh background, professional fashion photography, ultra realistic',
+  engagement: "Close-up of elegant woman's hand with engagement ring, romantic soft lighting, luxury jewelry photography, shallow depth of field, ultra detailed",
+  lifestyle:  'Stylish woman wearing elegant earrings, upscale cafe setting, natural light, luxury lifestyle photography, professional editorial photography',
 }
 
 export async function POST(req: NextRequest) {
   // 1. İstek gövdesinden imageBase64 ve concept al
-  let imageBase64: string, maskBase64: string, concept: string
+  let imageBase64: string, concept: string
   try {
     const body = await req.json()
-    ;({ imageBase64, maskBase64, concept } = body as {
-      imageBase64: string
-      maskBase64: string
-      concept: string
-    })
+    ;({ imageBase64, concept } = body as { imageBase64: string; concept: string })
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
 
-  if (!imageBase64 || !maskBase64 || !concept) {
+  if (!imageBase64 || !concept) {
     return NextResponse.json(
-      { error: 'Eksik parametre: imageBase64, maskBase64, concept gerekli' },
+      { error: 'Eksik parametre: imageBase64, concept gerekli' },
       { status: 400 }
     )
   }
@@ -81,36 +72,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 5. fal.ai Flux Pro Fill — base64 prefix'ini temizle, fal.storage'a yükle
-  const cleanImage = imageBase64.replace(/^data:image\/[a-z+]+;base64,/, '')
-  const cleanMask  = maskBase64.replace(/^data:image\/[a-z+]+;base64,/, '')
-
-  console.log('fal params:', { image_url: imageBase64?.substring(0, 50), prompt, mask_url: maskBase64?.substring(0, 50) })
-
+  // 5. Leonardo.ai ile görsel üret
   try {
-    const imageFile = await fetch(`data:image/jpeg;base64,${cleanImage}`).then(r => r.blob())
-    const maskFile  = await fetch(`data:image/png;base64,${cleanMask}`).then(r => r.blob())
+    console.log('Leonardo generation başlatılıyor:', { concept, prompt: prompt.substring(0, 60) })
+    const leonardoId = await startGeneration(prompt)
+    console.log('Leonardo generationId:', leonardoId)
 
-    const uploadedImage = await fal.storage.upload(imageFile)
-    const uploadedMask  = await fal.storage.upload(maskFile)
+    const outputUrl = await pollGeneration(leonardoId)
+    console.log('Leonardo output URL:', outputUrl)
 
-    const result = await fal.subscribe('fal-ai/flux-pro/v1/fill', {
-      input: {
-        image_url: uploadedImage,
-        prompt,
-        mask_url: uploadedMask,
-      },
-    })
-
-    // 6. Sonuç URL'ini güncelle — modele göre response formatı değişiyor
-    const data = result.data as FalResult
-    const outputUrl = data?.image?.url ?? data?.images?.[0]?.url
-    console.log('fal output URL:', outputUrl)
-
-    if (!outputUrl) {
-      throw new Error('fal.ai response içinde URL bulunamadı')
-    }
-
+    // 6. Sonuç URL'ini güncelle
     await supabaseAdmin
       .from('generations')
       .update({ status: 'done', output_image_url: outputUrl })
@@ -119,14 +90,13 @@ export async function POST(req: NextRequest) {
     // 7. outputUrl dön
     return NextResponse.json({ outputUrl, generationId: generation.id })
   } catch (error) {
-    console.error('fal.ai error:', JSON.stringify(error, null, 2))
+    console.error('Leonardo error:', JSON.stringify(error, null, 2))
 
-    // Üretim başarısız — kaydı 'failed' yap (kredi iadesi yok)
     await supabaseAdmin
       .from('generations')
       .update({ status: 'failed' })
       .eq('id', generation.id)
 
-    return NextResponse.json({ error: 'fal.ai işlemi başarısız' }, { status: 502 })
+    return NextResponse.json({ error: 'Leonardo.ai işlemi başarısız' }, { status: 502 })
   }
 }

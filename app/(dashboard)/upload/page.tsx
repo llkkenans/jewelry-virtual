@@ -119,31 +119,7 @@ export default function UploadPage() {
         reader.readAsDataURL(file)
       })
 
-      // 2. Maskeleme — arka planı tespit et
-      let maskBase64: string
-      try {
-        const maskRes = await fetch("/api/mask", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ imageBase64 }),
-        })
-        if (!maskRes.ok) {
-          const err = await maskRes.json().catch(() => ({}))
-          throw new Error(err?.error ?? "Maskeleme başarısız oldu.")
-        }
-        const maskData = await maskRes.json()
-        maskBase64 = maskData.maskBase64
-      } catch (err: unknown) {
-        throw new Error(
-          "Maskeleme adımı başarısız: " +
-            (err instanceof Error ? err.message : "Bilinmeyen hata.")
-        )
-      }
-
-      // 3. Görsel üretimi — fal.ai
+      // 2. Görsel üretimi — Leonardo.ai
       try {
         const tryOnRes = await fetch("/api/try-on", {
           method: "POST",
@@ -151,7 +127,7 @@ export default function UploadPage() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify({ imageBase64, maskBase64, concept }),
+          body: JSON.stringify({ imageBase64, concept }),
         })
         if (!tryOnRes.ok) {
           const err = await tryOnRes.json().catch(() => ({}))
