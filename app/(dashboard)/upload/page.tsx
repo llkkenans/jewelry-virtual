@@ -93,6 +93,25 @@ export default function UploadPage() {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  function resizeAndConvertToBase64(f: File): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new window.Image()
+      const url = URL.createObjectURL(f)
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        const MAX = 512
+        let w = img.width, h = img.height
+        if (w > h && w > MAX) { h = (h * MAX) / w; w = MAX }
+        else if (h > MAX) { w = (w * MAX) / h; h = MAX }
+        canvas.width = w; canvas.height = h
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h)
+        URL.revokeObjectURL(url)
+        resolve(canvas.toDataURL("image/jpeg", 0.7))
+      }
+      img.src = url
+    })
+  }
+
   async function handleGenerate() {
     if (!file || !concept) return
     setGenerating(true)
@@ -107,17 +126,9 @@ export default function UploadPage() {
         return
       }
 
-      // 1. Dosyayı base64'e çevir
-      const imageBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => {
-          const result = reader.result as string
-          // "data:image/png;base64,XXX" → sadece base64 kısmı
-          resolve(result.split(",")[1])
-        }
-        reader.onerror = () => reject(new Error("Dosya okunamadı."))
-        reader.readAsDataURL(file)
-      })
+      // 1. Görseli sıkıştır (max 512x512, jpeg 0.7) ve base64'e çevir
+      const dataUrl = await resizeAndConvertToBase64(file)
+      const imageBase64 = dataUrl.split(",")[1]
 
       // 2. Görsel üretimi — Leonardo.ai
       try {
