@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     })
 
     // 6. Sonuç URL'ini güncelle
+    console.log('fal output URL:', result.data?.images?.[0]?.url)
     const outputUrl = (result.data as FalFillResult).images[0].url
 
     await supabaseAdmin
