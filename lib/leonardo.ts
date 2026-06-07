@@ -1,5 +1,6 @@
 const LEONARDO_API_URL = 'https://cloud.leonardo.ai/api/rest/v1'
 const LEONARDO_API_KEY = process.env.LEONARDO_API_KEY!
+console.log('API KEY:', process.env.LEONARDO_API_KEY?.substring(0, 8))
 
 const GENERATION_PARAMS = {
   num_images: 1,
@@ -19,8 +20,9 @@ export async function startGeneration(prompt: string): Promise<string> {
   })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(`Leonardo başlatma hatası: ${JSON.stringify(err)}`)
+    const errText = await res.text()
+    console.error('Leonardo API response:', res.status, errText)
+    throw new Error(`Leonardo başlatma hatası: ${res.status} ${errText}`)
   }
 
   const data = await res.json()
