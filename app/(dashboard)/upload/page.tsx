@@ -343,12 +343,12 @@ export default function UploadPage() {
           ) : result ? (
             /* Sonuç görseli */
             <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-4">
-              <div className="relative aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
-                <Image
+              <div className="rounded-lg overflow-hidden bg-[#F9FAFB]">
+                <img
                   src={result}
                   alt="Üretilen görsel"
-                  fill
-                  className="object-contain"
+                  crossOrigin="anonymous"
+                  className="w-full h-auto object-contain"
                 />
               </div>
               <a
