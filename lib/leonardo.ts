@@ -9,14 +9,67 @@ const GENERATION_PARAMS = {
   presetStyle: 'CINEMATIC',
 }
 
-export async function startGeneration(prompt: string): Promise<string> {
+// Görseli Leonardo init-image endpoint'ine yükler, image ID döner
+async function uploadInitImage(imageBase64: string): Promise<string> {
+  // 1. Presigned S3 URL al
+  const initRes = await fetch(`${LEONARDO_API_URL}/init-image`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LEONARDO_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ extension: 'jpg' }),
+  })
+
+  if (!initRes.ok) {
+    const errText = await initRes.text()
+    throw new Error(`Init image başlatma hatası: ${initRes.status} ${errText}`)
+  }
+
+  const initData = await initRes.json()
+  const { id, url, fields } = initData.uploadInitImage as {
+    id: string
+    url: string
+    fields: string
+  }
+
+  console.log('Leonardo init image id:', id)
+
+  // 2. S3'e multipart upload — fields önce, file en son
+  const parsedFields = typeof fields === 'string' ? JSON.parse(fields) : fields
+  const formData = new FormData()
+  for (const [key, value] of Object.entries(parsedFields as Record<string, string>)) {
+    formData.append(key, value)
+  }
+  const imageBuffer = Buffer.from(imageBase64, 'base64')
+  formData.append('file', new Blob([imageBuffer], { type: 'image/jpeg' }))
+
+  const s3Res = await fetch(url, { method: 'POST', body: formData })
+  if (!s3Res.ok) {
+    const errText = await s3Res.text()
+    throw new Error(`S3 upload hatası: ${s3Res.status} ${errText}`)
+  }
+
+  return id
+}
+
+export async function startGeneration(prompt: string, imageBase64?: string): Promise<string> {
+  const body: Record<string, unknown> = { ...GENERATION_PARAMS, prompt }
+
+  if (imageBase64) {
+    const initImageId = await uploadInitImage(imageBase64)
+    body.init_image_id = initImageId
+    body.init_strength = 0.35
+    console.log('Leonardo image-to-image modu, init_image_id:', initImageId)
+  }
+
   const res = await fetch(`${LEONARDO_API_URL}/generations`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${LEONARDO_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ ...GENERATION_PARAMS, prompt }),
+    body: JSON.stringify(body),
   })
 
   if (!res.ok) {

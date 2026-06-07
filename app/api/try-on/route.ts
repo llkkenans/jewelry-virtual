@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
   // 5. Leonardo.ai ile görsel üret
   try {
     console.log('Leonardo generation başlatılıyor:', { concept, prompt: prompt.substring(0, 60) })
-    const leonardoId = await startGeneration(prompt)
+    const leonardoId = await startGeneration(prompt, imageBase64)
     console.log('Leonardo generationId:', leonardoId)
 
     const outputUrl = await pollGeneration(leonardoId)
