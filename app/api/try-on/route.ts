@@ -3,10 +3,10 @@ import { fal } from '@/lib/fal'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 const CONCEPT_PROMPTS: Record<string, string> = {
-  ecommerce:  'A beautiful woman\'s hand wearing this exact ring/jewelry, white studio background, professional product photography, soft shadows, high quality',
-  studio:     'A beautiful woman wearing this exact jewelry piece, professional studio lighting, bokeh background, high-end jewelry photography',
-  engagement: 'Close-up of a beautiful woman wearing this exact ring, romantic soft natural light, elegant engagement photography',
-  lifestyle:  'A stylish woman wearing this exact jewelry, cozy cafe setting, lifestyle photography, warm tones',
+  ecommerce:  "a woman's hand elegantly wearing this jewelry piece, white studio background, professional product photography",
+  studio:     'a woman wearing this jewelry, professional studio lighting, high-end fashion photography, bokeh background',
+  engagement: "close-up of a woman's hand wearing this ring, romantic soft light, engagement photography",
+  lifestyle:  'a stylish woman wearing this jewelry, cozy cafe, warm lifestyle photography',
 }
 
 type FalResult = {
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const imageFile = await fetch(`data:image/jpeg;base64,${cleanImage}`).then(r => r.blob())
     const uploadedImage = await fal.storage.upload(imageFile)
 
-    const result = await fal.subscribe('fal-ai/flux-pro/v1', {
+    const result = await fal.subscribe('fal-ai/flux-pro/v1/fill', {
       input: {
         image_url: uploadedImage,
         prompt,
