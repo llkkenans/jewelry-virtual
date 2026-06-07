@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import fs from 'fs'
-import path from 'path'
 
 type JewelryType = 'ring' | 'necklace' | 'bracelet'
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'bracelet']
@@ -63,32 +61,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  // 4. public/models/{jewelryType}/ klasöründen rastgele model seç
-  const modelsDir = path.join(process.cwd(), 'public', 'models', jewelryType)
-
-  let files: string[]
-  try {
-    files = fs.readdirSync(modelsDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
-  } catch {
-    return NextResponse.json(
-      { error: `Model klasörü bulunamadı: public/models/${jewelryType}/` },
-      { status: 500 }
-    )
-  }
-
-  if (files.length === 0) {
-    return NextResponse.json(
-      { error: `public/models/${jewelryType}/ klasöründe görsel yok` },
-      { status: 500 }
-    )
-  }
-
-  const randomFile = files[Math.floor(Math.random() * files.length)]
-  const modelUrl = `/models/${jewelryType}/${randomFile}`
-  const modelImageUrl = `https://jewelry-virtual.vercel.app${modelUrl}`
-  console.log('Seçilen model:', modelImageUrl)
-
-  // 5. generations tablosuna kayıt aç — INSERT trigger'ı krediyi düşürür
+  // 4. generations tablosuna kayıt aç — INSERT trigger'ı krediyi düşürür
   const { data: generation, error: insertError } = await supabaseAdmin
     .from('generations')
     .insert({
@@ -104,9 +77,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 6. Nano Banana ile gerçek entegrasyon
+  // 5. Nano Banana ile görsel üret
   try {
-    // Kullanıcının takı görselini fal.storage'a yükle
+    // imageBase64 → fal.storage URL
     const imageBuffer = Buffer.from(imageBase64, 'base64')
     const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
     const uploadedImageUrl = await fal.storage.upload(imageBlob)
@@ -114,8 +87,7 @@ export async function POST(req: NextRequest) {
 
     const result = await fal.subscribe('fal-ai/nano-banana-pro/edit', {
       input: {
-        image_url: modelImageUrl,
-        image_urls: [uploadedImageUrl],
+        image_url: uploadedImageUrl,
         prompt: JEWELRY_PROMPTS[jewelryType],
         image_size: { width: 1024, height: 1024 },
       },
@@ -124,7 +96,7 @@ export async function POST(req: NextRequest) {
     const outputUrl = (result.data as NanoBananaResult).images[0].url
     console.log('Nano Banana output URL:', outputUrl)
 
-    // 7. Sonuç URL'ini güncelle
+    // 6. Sonuç URL'ini güncelle
     await supabaseAdmin
       .from('generations')
       .update({ status: 'done', output_image_url: outputUrl })
