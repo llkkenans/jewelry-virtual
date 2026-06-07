@@ -38,21 +38,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  // İstek gövdesinden görsel URL'ini al
+  // İstek gövdesinden base64 görsel al
   const body = await req.json()
-  const { imageUrl } = body as { imageUrl: string }
+  const { imageBase64 } = body as { imageBase64: string }
 
-  if (!imageUrl) {
-    return NextResponse.json({ error: 'imageUrl gerekli' }, { status: 400 })
+  if (!imageBase64) {
+    return NextResponse.json({ error: 'imageBase64 gerekli' }, { status: 400 })
   }
 
-  // Görseli indir
-  const imageResponse = await fetch(imageUrl)
-  if (!imageResponse.ok) {
-    return NextResponse.json({ error: 'Görsel indirilemedi' }, { status: 422 })
-  }
-
-  const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
+  // data:image/...;base64, prefix'ini temizle ve buffer'a çevir
+  const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
+  const imageBuffer = Buffer.from(base64Data, 'base64')
 
   // Görseli RGBA ham piksellere çevir
   const { data: pixels, info } = await sharp(imageBuffer)

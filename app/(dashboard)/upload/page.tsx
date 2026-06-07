@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import { supabase } from "@/lib/supabase/client"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -98,6 +99,14 @@ export default function UploadPage() {
     setError("")
 
     try {
+      // 0. Supabase session token al
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+
       // 1. Dosyayı base64'e çevir
       const imageBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
@@ -115,7 +124,10 @@ export default function UploadPage() {
       try {
         const maskRes = await fetch("/api/mask", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           body: JSON.stringify({ imageBase64 }),
         })
         if (!maskRes.ok) {
@@ -135,7 +147,10 @@ export default function UploadPage() {
       try {
         const tryOnRes = await fetch("/api/try-on", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           body: JSON.stringify({ imageBase64, maskBase64, concept }),
         })
         if (!tryOnRes.ok) {
