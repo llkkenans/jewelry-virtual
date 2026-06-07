@@ -10,44 +10,22 @@ import {
   Sparkles,
   Download,
   X,
-  ShoppingBag,
-  Aperture,
-  Heart,
-  Coffee,
+  Gem,
+  Link2,
+  Watch,
 } from "lucide-react"
 
-type Concept = "ecommerce" | "studio" | "engagement" | "lifestyle"
+type JewelryType = "ring" | "necklace" | "bracelet"
 
-const CONCEPTS: {
-  id: Concept
+const JEWELRY_TYPES: {
+  id: JewelryType
   label: string
   desc: string
   icon: React.ElementType
 }[] = [
-  {
-    id: "ecommerce",
-    label: "E-Ticaret",
-    desc: "Beyaz stüdyo zemin",
-    icon: ShoppingBag,
-  },
-  {
-    id: "studio",
-    label: "Stüdyo",
-    desc: "Profesyonel aydınlatma",
-    icon: Aperture,
-  },
-  {
-    id: "engagement",
-    label: "Nişan",
-    desc: "Romantik yakın çekim",
-    icon: Heart,
-  },
-  {
-    id: "lifestyle",
-    label: "Yaşam Tarzı",
-    desc: "Doğal ortam",
-    icon: Coffee,
-  },
+  { id: "ring",      label: "Yüzük",    desc: "Parmakta deneme",  icon: Gem   },
+  { id: "necklace",  label: "Kolye",    desc: "Boyunda deneme",   icon: Link2 },
+  { id: "bracelet",  label: "Bileklik", desc: "Bilekte deneme",   icon: Watch },
 ]
 
 export default function UploadPage() {
@@ -55,7 +33,7 @@ export default function UploadPage() {
   const [dragging, setDragging] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [concept, setConcept] = useState<Concept | null>(null)
+  const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState("")
@@ -113,7 +91,7 @@ export default function UploadPage() {
   }
 
   async function handleGenerate() {
-    if (!file || !concept) return
+    if (!file || !jewelryType) return
     setGenerating(true)
     setError("")
 
@@ -138,7 +116,7 @@ export default function UploadPage() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify({ imageBase64, concept }),
+          body: JSON.stringify({ imageBase64, jewelryType }),
         })
         if (!tryOnRes.ok) {
           const err = await tryOnRes.json().catch(() => ({}))
@@ -159,7 +137,7 @@ export default function UploadPage() {
     }
   }
 
-  const canGenerate = !!file && !!concept && !generating
+  const canGenerate = !!file && !!jewelryType && !generating
 
   return (
     <div className="space-y-6">
@@ -169,7 +147,7 @@ export default function UploadPage() {
           Takı Fotoğrafı Yükle
         </h1>
         <p className="text-sm text-[#6B7280] mt-1">
-          Takı görselinizi yükleyin, konsept seçin ve modelde gösterin.
+          Takı görselinizi yükleyin, takı türünü seçin ve modelde gösterin.
         </p>
       </div>
 
@@ -235,48 +213,40 @@ export default function UploadPage() {
             )}
           </div>
 
-          {/* Konsept seçici */}
+          {/* Takı türü seçici */}
           <div>
             <p className="text-sm font-medium text-[#111827] mb-2">
-              2. Konsept seçin
+              2. Takı türü seçin
             </p>
-            <div className="grid grid-cols-2 gap-2.5">
-              {CONCEPTS.map(({ id, label, desc, icon: Icon }) => {
-                const selected = concept === id
+            <div className="grid grid-cols-3 gap-2.5">
+              {JEWELRY_TYPES.map(({ id, label, desc, icon: Icon }) => {
+                const selected = jewelryType === id
                 return (
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setConcept(id)}
-                    className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    onClick={() => setJewelryType(id)}
+                    className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
                       selected
-                        ? "border-[#111827] bg-[#111827] text-white"
-                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF] text-[#111827]"
+                        ? "border-[#111827] bg-[#111827]"
+                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                         selected ? "bg-white/20" : "bg-[#F9FAFB]"
                       }`}
                     >
                       <Icon
-                        size={15}
+                        size={16}
                         className={selected ? "text-white" : "text-[#6B7280]"}
                       />
                     </div>
                     <div>
-                      <p
-                        className={`text-sm font-medium leading-tight ${
-                          selected ? "text-white" : "text-[#111827]"
-                        }`}
-                      >
+                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>
                         {label}
                       </p>
-                      <p
-                        className={`text-xs mt-0.5 ${
-                          selected ? "text-white/70" : "text-[#6B7280]"
-                        }`}
-                      >
+                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>
                         {desc}
                       </p>
                     </div>
@@ -358,7 +328,7 @@ export default function UploadPage() {
                   Sonuç burada görünecek
                 </p>
                 <p className="text-xs text-[#9CA3AF] mt-1">
-                  Görsel yükleyin ve konsept seçin
+                  Görsel yükleyin ve takı türü seçin
                 </p>
               </div>
             </div>
