@@ -98,22 +98,58 @@ export default function UploadPage() {
     setError("")
 
     try {
-      const formData = new FormData()
-      formData.append("image", file)
-      formData.append("concept", concept)
-
-      const res = await fetch("/api/try-on", {
-        method: "POST",
-        body: formData,
+      // 1. Dosyayı base64'e çevir
+      const imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const result = reader.result as string
+          // "data:image/png;base64,XXX" → sadece base64 kısmı
+          resolve(result.split(",")[1])
+        }
+        reader.onerror = () => reject(new Error("Dosya okunamadı."))
+        reader.readAsDataURL(file)
       })
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error ?? "Üretim başarısız oldu.")
+      // 2. Maskeleme — arka planı tespit et
+      let maskBase64: string
+      try {
+        const maskRes = await fetch("/api/mask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64 }),
+        })
+        if (!maskRes.ok) {
+          const err = await maskRes.json().catch(() => ({}))
+          throw new Error(err?.error ?? "Maskeleme başarısız oldu.")
+        }
+        const maskData = await maskRes.json()
+        maskBase64 = maskData.maskBase64
+      } catch (err: unknown) {
+        throw new Error(
+          "Maskeleme adımı başarısız: " +
+            (err instanceof Error ? err.message : "Bilinmeyen hata.")
+        )
       }
 
-      const data = await res.json()
-      setResult(data.outputUrl)
+      // 3. Görsel üretimi — fal.ai
+      try {
+        const tryOnRes = await fetch("/api/try-on", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64, maskBase64, concept }),
+        })
+        if (!tryOnRes.ok) {
+          const err = await tryOnRes.json().catch(() => ({}))
+          throw new Error(err?.error ?? "Görsel üretimi başarısız oldu.")
+        }
+        const tryOnData = await tryOnRes.json()
+        setResult(tryOnData.outputUrl)
+      } catch (err: unknown) {
+        throw new Error(
+          "Üretim adımı başarısız: " +
+            (err instanceof Error ? err.message : "Bilinmeyen hata.")
+        )
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
     } finally {
