@@ -13,10 +13,20 @@ const FOLDER_MAP: Record<JewelryType, string> = {
   earring:  'kupe',
 }
 
-const JEWELRY_PROMPTS: Record<JewelryType, string> = {
-  ring:     "Place this exact ring naturally on the woman's ring finger. Match the lighting, preserve all ring details exactly, realistic skin texture.",
-  necklace: "Place this exact necklace naturally around the woman's neck and collarbone. Match the lighting, preserve all necklace details exactly.",
-  earring:  "Transform this earring photo into a luxury jewelry product photo. Show the earring being worn on an elegant woman's ear exactly like the reference photo style. Keep the earring design exactly the same.",
+const skinTones = ['fair skin', 'olive skin', 'dark skin', 'light brown skin']
+const backgrounds = ['white studio', 'soft beige', 'dark luxury', 'marble texture', 'outdoor soft light']
+const angles = ['front view', 'side angle', 'close-up detail', '45 degree angle']
+
+function buildPrompts(): Record<JewelryType, string> {
+  const randomSkin = skinTones[Math.floor(Math.random() * skinTones.length)]
+  const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)]
+  const randomAngle = angles[Math.floor(Math.random() * angles.length)]
+
+  return {
+    ring:     `Elegant woman's hand with ${randomSkin} and manicured nails wearing this exact ring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
+    necklace: `Beautiful woman with ${randomSkin} wearing this exact necklace around her neck, ${randomBg} background, ${randomAngle}, luxury fashion photography, ultra realistic`,
+    earring:  `Elegant woman with ${randomSkin} wearing this exact earring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
+  }
 }
 
 type NanoBananaResult = {
@@ -123,7 +133,7 @@ export async function POST(req: NextRequest) {
       input: {
         image_url: modelImageUrl,
         image_urls: [uploadedImageUrl],
-        prompt: JEWELRY_PROMPTS[jewelryType],
+        prompt: buildPrompts()[jewelryType],
         image_size: { width: 1024, height: 1024 },
       },
     })
