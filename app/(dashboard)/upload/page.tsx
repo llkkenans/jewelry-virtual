@@ -12,10 +12,9 @@ import {
   X,
   Gem,
   Link2,
-  Watch,
 } from "lucide-react"
 
-type JewelryType = "ring" | "necklace" | "bracelet"
+type JewelryType = "ring" | "necklace" | "earring"
 
 const JEWELRY_TYPES: {
   id: JewelryType
@@ -23,9 +22,9 @@ const JEWELRY_TYPES: {
   desc: string
   icon: React.ElementType
 }[] = [
-  { id: "ring",      label: "Yüzük",    desc: "Parmakta deneme",  icon: Gem   },
-  { id: "necklace",  label: "Kolye",    desc: "Boyunda deneme",   icon: Link2 },
-  { id: "bracelet",  label: "Bileklik", desc: "Bilekte deneme",   icon: Watch },
+  { id: "ring",     label: "Yüzük",  desc: "Parmakta deneme", icon: Gem      },
+  { id: "necklace", label: "Kolye",  desc: "Boyunda deneme",  icon: Link2    },
+  { id: "earring",  label: "Küpe",   desc: "Kulakta deneme",  icon: Sparkles },
 ]
 
 export default function UploadPage() {
