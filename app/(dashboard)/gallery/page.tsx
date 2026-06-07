@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -102,13 +101,12 @@ export default function GalleryPage() {
                 key={item.id}
                 className="rounded-xl border border-[#E5E7EB] bg-white p-3 space-y-3 hover:shadow-sm transition-shadow"
               >
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
-                  <Image
+                <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
+                  <img
                     src={item.output_image_url}
                     alt={type?.label ?? item.jewelry_type}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    crossOrigin="anonymous"
+                    className="w-full h-full object-cover"
                   />
                 </div>
 
