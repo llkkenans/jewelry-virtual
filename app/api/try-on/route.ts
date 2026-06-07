@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
   const cleanImage = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
   const cleanMask  = maskBase64.replace(/^data:image\/[a-z]+;base64,/, '')
 
+  console.log('fal params:', { image_url: imageBase64?.substring(0, 50), prompt, mask_url: maskBase64?.substring(0, 50) })
+
   try {
     const result = await fal.subscribe('fal-ai/flux-pro/v1/fill', {
       input: {
@@ -103,7 +105,9 @@ export async function POST(req: NextRequest) {
 
     // 7. outputUrl dön
     return NextResponse.json({ outputUrl, generationId: generation.id })
-  } catch {
+  } catch (error) {
+    console.error('fal.ai error:', JSON.stringify(error, null, 2))
+
     // Üretim başarısız — kaydı 'failed' yap (kredi iadesi yok)
     await supabaseAdmin
       .from('generations')
