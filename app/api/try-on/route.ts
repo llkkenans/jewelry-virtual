@@ -4,19 +4,19 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import fs from 'fs'
 import path from 'path'
 
-type JewelryType = 'ring' | 'necklace' | 'bracelet'
-const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'bracelet']
+type JewelryType = 'ring' | 'necklace' | 'earring'
+const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring']
 
 const FOLDER_MAP: Record<JewelryType, string> = {
   ring:     'ring',
   necklace: 'necklace',
-  bracelet: 'kupe',
+  earring:  'kupe',
 }
 
 const JEWELRY_PROMPTS: Record<JewelryType, string> = {
   ring:     "Place this exact ring naturally on the woman's ring finger. Match the lighting, preserve all ring details exactly, realistic skin texture.",
   necklace: "Place this exact necklace naturally around the woman's neck and collarbone. Match the lighting, preserve all necklace details exactly.",
-  bracelet: "Place this exact bracelet naturally on the woman's wrist. Match the lighting, preserve all bracelet details exactly.",
+  earring:  "Transform this earring photo into a luxury jewelry product photo. Show the earring being worn on an elegant woman's ear exactly like the reference photo style. Keep the earring design exactly the same.",
 }
 
 type NanoBananaResult = {
