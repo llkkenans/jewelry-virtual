@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     .from('generations')
     .insert({
       user_id: user.id,
-      concept: jewelryType,
+      jewelry_type: jewelryType,
       status: 'processing',
       credits_used: 1,
     })
