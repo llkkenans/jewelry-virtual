@@ -80,18 +80,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim kaydı oluşturulamadı' }, { status: 500 })
   }
 
-  // 5. fal.ai Flux Pro Fill — base64 prefix'ini temizle, sonra gönder
-  const cleanImage = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
-  const cleanMask  = maskBase64.replace(/^data:image\/[a-z]+;base64,/, '')
+  // 5. fal.ai Flux Pro Fill — base64 prefix'ini temizle, fal.storage'a yükle
+  const cleanImage = imageBase64.replace(/^data:image\/[a-z+]+;base64,/, '')
+  const cleanMask  = maskBase64.replace(/^data:image\/[a-z+]+;base64,/, '')
 
   console.log('fal params:', { image_url: imageBase64?.substring(0, 50), prompt, mask_url: maskBase64?.substring(0, 50) })
 
   try {
+    const imageFile = await fetch(`data:image/jpeg;base64,${cleanImage}`).then(r => r.blob())
+    const maskFile  = await fetch(`data:image/png;base64,${cleanMask}`).then(r => r.blob())
+
+    const uploadedImage = await fal.storage.upload(imageFile)
+    const uploadedMask  = await fal.storage.upload(maskFile)
+
     const result = await fal.subscribe('fal-ai/flux-pro/v1/fill', {
       input: {
-        image_url: cleanImage,
+        image_url: uploadedImage,
         prompt,
-        mask_url: cleanMask,
+        mask_url: uploadedMask,
       },
     })
 
