@@ -2,12 +2,10 @@ const LEONARDO_API_URL = 'https://cloud.leonardo.ai/api/rest/v1'
 const LEONARDO_API_KEY = process.env.LEONARDO_API_KEY!
 
 const GENERATION_PARAMS = {
-  modelId: 'aa77f04e-3eec-4034-9c07-d0f619684628',
+  modelId: 'b24e16ff-06e3-43eb-8d33-4416c2d75876',
   num_images: 1,
   width: 1024,
   height: 1024,
-  photoReal: true,
-  photoRealVersion: 'v2',
   presetStyle: 'CINEMATIC',
 }
 
