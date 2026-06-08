@@ -27,15 +27,18 @@ const JEWELRY_TYPES: {
   { id: "earring",  label: "Küpe",   desc: "Kulakta deneme",  icon: Sparkles },
 ]
 
+const QUANTITIES = [1, 2, 3, 4]
+
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
+  const [dragging, setDragging]       = useState(false)
+  const [file, setFile]               = useState<File | null>(null)
+  const [preview, setPreview]         = useState<string | null>(null)
   const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
-  const [generating, setGenerating] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
-  const [error, setError] = useState("")
+  const [quantity, setQuantity]       = useState<number>(1)
+  const [generating, setGenerating]   = useState(false)
+  const [results, setResults]         = useState<string[]>([])
+  const [error, setError]             = useState("")
 
   function handleFile(f: File) {
     if (!f.type.startsWith("image/")) {
@@ -44,7 +47,7 @@ export default function UploadPage() {
     }
     setFile(f)
     setPreview(URL.createObjectURL(f))
-    setResult(null)
+    setResults([])
     setError("")
   }
 
@@ -55,17 +58,13 @@ export default function UploadPage() {
     if (f) handleFile(f)
   }, [])
 
-  const onDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragging(true)
-  }, [])
-
+  const onDragOver  = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true) }, [])
   const onDragLeave = useCallback(() => setDragging(false), [])
 
   function clearFile() {
     setFile(null)
     setPreview(null)
-    setResult(null)
+    setResults([])
     setError("")
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
@@ -79,7 +78,7 @@ export default function UploadPage() {
         const MAX = 512
         let w = img.width, h = img.height
         if (w > h && w > MAX) { h = (h * MAX) / w; w = MAX }
-        else if (h > MAX) { w = (w * MAX) / h; h = MAX }
+        else if (h > MAX)     { w = (w * MAX) / h; h = MAX }
         canvas.width = w; canvas.height = h
         canvas.getContext("2d")!.drawImage(img, 0, 0, w, h)
         URL.revokeObjectURL(url)
@@ -95,7 +94,6 @@ export default function UploadPage() {
     setError("")
 
     try {
-      // 0. Supabase session token al
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
       if (!token) {
@@ -103,32 +101,33 @@ export default function UploadPage() {
         return
       }
 
-      // 1. Görseli sıkıştır (max 512x512, jpeg 0.7) ve base64'e çevir
-      const dataUrl = await resizeAndConvertToBase64(file)
+      const dataUrl     = await resizeAndConvertToBase64(file)
       const imageBase64 = dataUrl.split(",")[1]
 
-      // 2. Görsel üretimi — Leonardo.ai
-      try {
-        const tryOnRes = await fetch("/api/try-on", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify({ imageBase64, jewelryType }),
-        })
-        if (!tryOnRes.ok) {
-          const err = await tryOnRes.json().catch(() => ({}))
-          throw new Error(err?.error ?? "Görsel üretimi başarısız oldu.")
-        }
-        const tryOnData = await tryOnRes.json()
-        setResult(tryOnData.outputUrl)
-      } catch (err: unknown) {
-        throw new Error(
-          "Üretim adımı başarısız: " +
-            (err instanceof Error ? err.message : "Bilinmeyen hata.")
-        )
+      const tryOnRes = await fetch("/api/try-on", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageBase64, jewelryType, quantity }),
+      })
+
+      if (!tryOnRes.ok) {
+        const err = await tryOnRes.json().catch(() => ({}))
+        throw new Error(err?.error ?? "Görsel üretimi başarısız oldu.")
       }
+
+      const tryOnData = await tryOnRes.json()
+
+      // API { outputUrls: string[] } veya eski { outputUrl: string } döndürebilir
+      const urls: string[] = Array.isArray(tryOnData.outputUrls)
+        ? tryOnData.outputUrls
+        : tryOnData.outputUrl
+        ? [tryOnData.outputUrl]
+        : []
+
+      setResults(urls)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
     } finally {
@@ -146,19 +145,18 @@ export default function UploadPage() {
           Takı Fotoğrafı Yükle
         </h1>
         <p className="text-sm text-[#6B7280] mt-1">
-          Takı görselinizi yükleyin, takı türünü seçin ve modelde gösterin.
+          Takı görselinizi yükleyin, türünü ve adet seçin, modelde gösterin.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sol: yükleme + konsept */}
+
+        {/* ── Sol: kontroller ── */}
         <div className="space-y-5">
 
-          {/* DropZone */}
+          {/* 1. DropZone */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">
-              1. Takı fotoğrafı
-            </p>
+            <p className="text-sm font-medium text-[#111827] mb-2">1. Takı fotoğrafı</p>
             {!preview ? (
               <div
                 onDrop={onDrop}
@@ -178,29 +176,19 @@ export default function UploadPage() {
                   <p className="text-sm font-medium text-[#111827]">
                     {dragging ? "Bırakın" : "Sürükleyin veya tıklayın"}
                   </p>
-                  <p className="text-xs text-[#6B7280] mt-0.5">
-                    PNG, JPG, WEBP — max 10 MB
-                  </p>
+                  <p className="text-xs text-[#6B7280] mt-0.5">PNG, JPG, WEBP — max 10 MB</p>
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0]
-                    if (f) handleFile(f)
-                  }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
                 />
               </div>
             ) : (
               <div className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] h-52">
-                <Image
-                  src={preview}
-                  alt="Yüklenen takı"
-                  fill
-                  className="object-contain p-3"
-                />
+                <Image src={preview} alt="Yüklenen takı" fill className="object-contain p-3" />
                 <button
                   onClick={clearFile}
                   className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center shadow-sm hover:bg-[#F9FAFB] transition-colors cursor-pointer"
@@ -212,11 +200,9 @@ export default function UploadPage() {
             )}
           </div>
 
-          {/* Takı türü seçici */}
+          {/* 2. Takı türü */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">
-              2. Takı türü seçin
-            </p>
+            <p className="text-sm font-medium text-[#111827] mb-2">2. Takı türü seçin</p>
             <div className="grid grid-cols-3 gap-2.5">
               {JEWELRY_TYPES.map(({ id, label, desc, icon: Icon }) => {
                 const selected = jewelryType === id
@@ -231,24 +217,42 @@ export default function UploadPage() {
                         : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
                     }`}
                   >
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                        selected ? "bg-white/20" : "bg-[#F9FAFB]"
-                      }`}
-                    >
-                      <Icon
-                        size={16}
-                        className={selected ? "text-white" : "text-[#6B7280]"}
-                      />
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selected ? "bg-white/20" : "bg-[#F9FAFB]"}`}>
+                      <Icon size={16} className={selected ? "text-white" : "text-[#6B7280]"} />
                     </div>
                     <div>
-                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>
-                        {label}
-                      </p>
-                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>
-                        {desc}
-                      </p>
+                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>{label}</p>
+                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>{desc}</p>
                     </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 3. Adet seçici */}
+          <div>
+            <p className="text-sm font-medium text-[#111827] mb-2">3. Kaç görsel üretilsin?</p>
+            <div className="grid grid-cols-4 gap-2.5">
+              {QUANTITIES.map((q) => {
+                const selected = quantity === q
+                return (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setQuantity(q)}
+                    className={`flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      selected
+                        ? "border-[#111827] bg-[#111827]"
+                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
+                    }`}
+                  >
+                    <span className={`text-xl font-semibold tabular-nums leading-none ${selected ? "text-white" : "text-[#111827]"}`}>
+                      {q}
+                    </span>
+                    <span className={`text-[11px] leading-none ${selected ? "text-white/60" : "text-[#9CA3AF]"}`}>
+                      {q} kredi
+                    </span>
                   </button>
                 )
               })}
@@ -277,44 +281,49 @@ export default function UploadPage() {
             ) : (
               <span className="flex items-center gap-2">
                 <Sparkles size={15} />
-                Üret — 1 kredi
+                Üret — {quantity} kredi
               </span>
             )}
           </Button>
         </div>
 
-        {/* Sağ: sonuç alanı */}
+        {/* ── Sağ: sonuç alanı ── */}
         <div>
-          <p className="text-sm font-medium text-[#111827] mb-2">
-            3. Sonuç
-          </p>
+          <p className="text-sm font-medium text-[#111827] mb-2">4. Sonuç</p>
 
           {generating ? (
-            /* Skeleton loader */
-            <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-3 h-full min-h-[420px]">
-              <Skeleton className="w-full aspect-square rounded-lg" />
-              <Skeleton className="h-4 w-2/3 rounded" />
-              <Skeleton className="h-4 w-1/2 rounded" />
+            /* Skeleton — quantity kadar placeholder */
+            <div className={`rounded-xl border border-[#E5E7EB] bg-white p-4 min-h-[420px] ${quantity > 1 ? "grid grid-cols-2 gap-3 content-start" : "space-y-3"}`}>
+              {Array.from({ length: quantity }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="w-full aspect-square rounded-lg" />
+                  <Skeleton className="h-3 w-1/2 rounded" />
+                </div>
+              ))}
             </div>
-          ) : result ? (
-            /* Sonuç görseli */
-            <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-4">
-              <div className="rounded-lg overflow-hidden bg-[#F9FAFB]">
-                <img
-                  src={result}
-                  alt="Üretilen görsel"
-                  crossOrigin="anonymous"
-                  className="w-full h-auto object-contain"
-                />
-              </div>
-              <a
-                href={result}
-                download="jewelry-tryon.jpg"
-                className="flex items-center justify-center gap-2 w-full h-10 bg-[#111827] hover:bg-[#1F2937] text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
-              >
-                <Download size={14} />
-                İndir
-              </a>
+          ) : results.length > 0 ? (
+            /* Sonuç görselleri */
+            <div className={`rounded-xl border border-[#E5E7EB] bg-white p-4 ${results.length > 1 ? "grid grid-cols-2 gap-4" : "space-y-4"}`}>
+              {results.map((url, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="rounded-lg overflow-hidden bg-[#F9FAFB]">
+                    <img
+                      src={url}
+                      alt={`Üretilen görsel ${i + 1}`}
+                      crossOrigin="anonymous"
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                  <a
+                    href={url}
+                    download={`jewelry-tryon-${i + 1}.jpg`}
+                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Download size={13} />
+                    {results.length > 1 ? `İndir ${i + 1}` : "İndir"}
+                  </a>
+                </div>
+              ))}
             </div>
           ) : (
             /* Boş durum */
@@ -323,16 +332,13 @@ export default function UploadPage() {
                 <Sparkles size={20} className="text-[#9CA3AF]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#6B7280]">
-                  Sonuç burada görünecek
-                </p>
-                <p className="text-xs text-[#9CA3AF] mt-1">
-                  Görsel yükleyin ve takı türü seçin
-                </p>
+                <p className="text-sm font-medium text-[#6B7280]">Sonuç burada görünecek</p>
+                <p className="text-xs text-[#9CA3AF] mt-1">Görsel yükleyin ve ayarları seçin</p>
               </div>
             </div>
           )}
         </div>
+
       </div>
     </div>
   )
