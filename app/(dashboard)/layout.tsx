@@ -5,12 +5,11 @@ import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Separator } from "@/components/ui/separator"
 import { LogOut, Images, Upload } from "lucide-react"
 
-const SERIF = "'Cormorant Garant', Georgia, serif"
-
 const navItems = [
-  { href: "/upload", label: "Üret",  icon: Upload },
+  { href: "/upload", label: "Üret", icon: Upload },
   { href: "/gallery", label: "Galeri", icon: Images },
 ]
 
@@ -19,15 +18,21 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const router   = useRouter()
+  const router = useRouter()
   const pathname = usePathname()
   const [credits, setCredits] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) { router.push("/login"); return }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.user) {
+        router.push("/login")
+        return
+      }
 
       const { data } = await supabase
         .from("profiles")
@@ -38,6 +43,7 @@ export default function DashboardLayout({
       setCredits(data?.credits ?? 0)
       setLoading(false)
     }
+
     loadUser()
   }, [router])
 
@@ -47,69 +53,37 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F8F6F2" }}>
-
-      {/* ── Header ── */}
-      <header
-        className="sticky top-0 z-30 border-b"
-        style={{
-          backgroundColor: "rgba(248,246,242,0.92)",
-          borderColor: "#E5DFD5",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        <div className="max-w-5xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#F9FAFB]">
+      {/* Header */}
+      <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
           {/* Logo */}
           <Link href="/upload" className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="w-5 h-5 rotate-45 flex items-center justify-center"
-              style={{ border: "1px solid rgba(201,169,110,0.55)" }}
-            >
-              <div
-                className="w-1 h-1 rotate-45"
-                style={{ backgroundColor: "rgba(201,169,110,0.55)" }}
-              />
+            <div className="w-6 h-6 rotate-45 border-2 border-[#111827] flex items-center justify-center">
+              <div className="w-1.5 h-1.5 bg-[#111827] rotate-45" />
             </div>
-            <span
-              style={{ fontFamily: SERIF }}
-              className="text-[#1C1C1C] text-base tracking-[0.18em] uppercase font-light hidden sm:block"
-            >
+            <span className="text-[#111827] text-sm font-semibold tracking-tight hidden sm:block">
               Jewelry Virtual
             </span>
           </Link>
 
           {/* Nav */}
-          <nav className="flex items-center gap-0.5">
+          <nav className="flex items-center gap-1">
             {navItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href
               return (
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer relative"
-                  style={{
-                    color: active ? "#1C1C1C" : "#B0A090",
-                    backgroundColor: active ? "rgba(201,169,110,0.1)" : "transparent",
-                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                    active
+                      ? "bg-[#111827] text-white"
+                      : "text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB]"
+                  }`}
                 >
-                  <Icon size={13} style={{ color: active ? "#C9A96E" : "#C4B9AC" }} />
-                  <span
-                    style={{
-                      fontFamily: active ? SERIF : undefined,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      fontSize: "10px",
-                    }}
-                  >
-                    {label}
-                  </span>
-                  {active && (
-                    <span
-                      className="absolute bottom-0 left-3 right-3 h-px"
-                      style={{ backgroundColor: "#C9A96E", opacity: 0.5 }}
-                    />
-                  )}
+                  <Icon size={14} />
+                  <span>{label}</span>
                 </Link>
               )
             })}
@@ -117,52 +91,35 @@ export default function DashboardLayout({
 
           {/* Sağ: kredi + çıkış */}
           <div className="flex items-center gap-3">
-
-            {/* Kredi */}
-            <div
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
-              style={{ border: "1px solid #E5DFD5", backgroundColor: "rgba(201,169,110,0.07)" }}
-            >
-              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "#C9A96E" }} />
+            {/* Kredi göstergesi */}
+            <div className="flex items-center gap-1.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#111827]" />
               {loading ? (
-                <Skeleton className="h-3 w-10 rounded" />
+                <Skeleton className="h-3.5 w-8 rounded" />
               ) : (
-                <span
-                  className="tabular-nums"
-                  style={{ fontSize: "10px", letterSpacing: "0.18em", color: "#8A7060", fontWeight: 500 }}
-                >
-                  {credits} KREDİ
+                <span className="text-xs font-semibold text-[#111827] tabular-nums">
+                  {credits} kredi
                 </span>
               )}
             </div>
 
-            {/* Ayraç */}
-            <div className="h-4 w-px" style={{ backgroundColor: "#E5DFD5" }} />
+            <Separator orientation="vertical" className="h-5" />
 
             {/* Çıkış */}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 transition-colors cursor-pointer p-1.5 rounded-lg"
-              style={{ color: "#C4B9AC" }}
+              className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-[#F9FAFB]"
               aria-label="Çıkış yap"
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#1C1C1C")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#C4B9AC")}
             >
-              <LogOut size={14} />
-              <span
-                className="hidden sm:block"
-                style={{ fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase" }}
-              >
-                Çıkış
-              </span>
+              <LogOut size={15} />
+              <span className="text-sm hidden sm:block">Çıkış</span>
             </button>
           </div>
-
         </div>
       </header>
 
-      {/* İçerik */}
-      <main className="max-w-5xl mx-auto px-5 sm:px-8 py-10">
+      {/* Sayfa içeriği */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {children}
       </main>
     </div>
