@@ -10,16 +10,16 @@ import { supabase } from "@/lib/supabase/client"
 
 const SERIF = "'Cormorant Garant', Georgia, serif"
 
-/* Kulağın görsel içindeki konumu (container yüzdesi olarak)
-   Orijinal resim 896×1152 — kulak merkezi ~64% soldan, ~27% yukarıdan */
-const EAR = { x: 64, y: 27 }
+/* Küpenin görsel içindeki konumu (container yüzdesi olarak)
+   Orijinal resim 896×1152 — küpe pandantifi ~63% soldan, ~32% yukarıdan */
+const EAR = { x: 63, y: 32 }
 const ZOOM = 150   // zoom dairesi piksel boyutu
 
 /* background-position hesabı (300% zoom):
-   Görsel: 450×578px | Kulak: 288px soldan, 156px yukarıdan
-   bpx = (288-75)/(450-150) = 71%
-   bpy = (156-75)/(578-150) = 19%                                    */
-const BP = { x: 71, y: 19 }
+   Görsel: 450×578px | Küpe: 283px soldan, 185px yukarıdan
+   bpx = (283-75)/(450-150) = 69%
+   bpy = (185-75)/(578-150) = 26%                                    */
+const BP = { x: 69, y: 26 }
 
 export default function LoginPage() {
   const router = useRouter()
