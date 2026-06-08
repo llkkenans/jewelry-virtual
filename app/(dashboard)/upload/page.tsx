@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   ImagePlus,
@@ -13,6 +12,8 @@ import {
   Gem,
   Link2,
 } from "lucide-react"
+
+const SERIF = "'Cormorant Garant', Georgia, serif"
 
 type JewelryType = "ring" | "necklace" | "earring"
 
@@ -119,8 +120,6 @@ export default function UploadPage() {
       }
 
       const tryOnData = await tryOnRes.json()
-
-      // API { outputUrls: string[] } veya eski { outputUrl: string } döndürebilir
       const urls: string[] = Array.isArray(tryOnData.outputUrls)
         ? tryOnData.outputUrls
         : tryOnData.outputUrl
@@ -148,45 +147,67 @@ export default function UploadPage() {
   const canGenerate = !!file && !!jewelryType && !generating
 
   return (
-    <div className="space-y-6">
-      {/* Başlık */}
+    <div className="space-y-8">
+
+      {/* ── Başlık ── */}
       <div>
-        <h1 className="text-xl font-semibold text-[#111827] tracking-tight">
-          Takı Fotoğrafı Yükle
-        </h1>
-        <p className="text-sm text-[#6B7280] mt-1">
-          Takı görselinizi yükleyin, türünü ve adet seçin, modelde gösterin.
+        <p
+          className="mb-2"
+          style={{ fontSize: "10px", color: "#B0A090", letterSpacing: "0.38em", textTransform: "uppercase", fontWeight: 400 }}
+        >
+          Yapay Zeka Destekli
         </p>
+        <h1
+          style={{ fontFamily: SERIF, fontSize: "clamp(32px, 5vw, 44px)", color: "#1C1C1C", fontWeight: 300, lineHeight: 1.15, letterSpacing: "-0.01em" }}
+        >
+          Takı Üretimi
+        </h1>
+        <div className="flex items-center gap-3 mt-4">
+          <div className="h-px w-8" style={{ backgroundColor: "rgba(201,169,110,0.5)" }} />
+          <div className="w-1 h-1 rounded-full" style={{ backgroundColor: "rgba(201,169,110,0.7)" }} />
+          <div className="h-px w-16" style={{ backgroundColor: "#E5DFD5" }} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {/* ── Sol: kontroller ── */}
-        <div className="space-y-5">
+        <div className="space-y-6">
 
-          {/* 1. DropZone */}
+          {/* 1. Fotoğraf */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">1. Takı fotoğrafı</p>
+            <p
+              className="mb-3"
+              style={{ fontSize: "10px", color: "#B0A090", letterSpacing: "0.32em", textTransform: "uppercase" }}
+            >
+              01 — Takı Fotoğrafı
+            </p>
+
             {!preview ? (
               <div
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors h-52 select-none ${
-                  dragging
-                    ? "border-[#111827] bg-[#111827]/5"
-                    : "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#9CA3AF] hover:bg-white"
-                }`}
+                className="relative flex flex-col items-center justify-center gap-3 rounded-2xl cursor-pointer transition-all h-52 select-none"
+                style={{
+                  border: `1.5px dashed ${dragging ? "#C9A96E" : "#D9D3CB"}`,
+                  backgroundColor: dragging ? "rgba(201,169,110,0.05)" : "rgba(255,255,255,0.7)",
+                }}
               >
-                <div className="w-11 h-11 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center shadow-sm">
-                  <ImagePlus size={20} className="text-[#6B7280]" />
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center"
+                  style={{ border: "1px solid #E5DFD5", backgroundColor: "white" }}
+                >
+                  <ImagePlus size={18} style={{ color: "#C4B9AC" }} />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-[#111827]">
+                  <p className="text-sm font-medium" style={{ color: "#1C1C1C" }}>
                     {dragging ? "Bırakın" : "Sürükleyin veya tıklayın"}
                   </p>
-                  <p className="text-xs text-[#6B7280] mt-0.5">PNG, JPG, WEBP — max 10 MB</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#B0A090" }}>
+                    PNG, JPG, WEBP — maks 10 MB
+                  </p>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -197,14 +218,18 @@ export default function UploadPage() {
                 />
               </div>
             ) : (
-              <div className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] h-52">
+              <div
+                className="relative rounded-2xl overflow-hidden h-52"
+                style={{ border: "1px solid #E5DFD5", backgroundColor: "white" }}
+              >
                 <Image src={preview} alt="Yüklenen takı" fill className="object-contain p-3" />
                 <button
                   onClick={clearFile}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center shadow-sm hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+                  style={{ backgroundColor: "white", border: "1px solid #E5DFD5" }}
                   aria-label="Görseli kaldır"
                 >
-                  <X size={13} className="text-[#6B7280]" />
+                  <X size={13} style={{ color: "#B0A090" }} />
                 </button>
               </div>
             )}
@@ -212,7 +237,12 @@ export default function UploadPage() {
 
           {/* 2. Takı türü */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">2. Takı türü seçin</p>
+            <p
+              className="mb-3"
+              style={{ fontSize: "10px", color: "#B0A090", letterSpacing: "0.32em", textTransform: "uppercase" }}
+            >
+              02 — Takı Türü
+            </p>
             <div className="grid grid-cols-3 gap-2.5">
               {JEWELRY_TYPES.map(({ id, label, desc, icon: Icon }) => {
                 const selected = jewelryType === id
@@ -221,18 +251,38 @@ export default function UploadPage() {
                     key={id}
                     type="button"
                     onClick={() => setJewelryType(id)}
-                    className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
-                      selected
-                        ? "border-[#111827] bg-[#111827]"
-                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
-                    }`}
+                    className="flex flex-col items-center gap-2.5 p-3.5 rounded-2xl text-center transition-all cursor-pointer"
+                    style={{
+                      border: `1.5px solid ${selected ? "#C9A96E" : "#E5DFD5"}`,
+                      backgroundColor: selected ? "rgba(201,169,110,0.07)" : "rgba(255,255,255,0.7)",
+                    }}
                   >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selected ? "bg-white/20" : "bg-[#F9FAFB]"}`}>
-                      <Icon size={16} className={selected ? "text-white" : "text-[#6B7280]"} />
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center"
+                      style={{
+                        backgroundColor: selected ? "rgba(201,169,110,0.15)" : "#F8F6F2",
+                        border: `1px solid ${selected ? "rgba(201,169,110,0.3)" : "#E5DFD5"}`,
+                      }}
+                    >
+                      <Icon size={16} style={{ color: selected ? "#C9A96E" : "#B0A090" }} />
                     </div>
                     <div>
-                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>{label}</p>
-                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>{desc}</p>
+                      <p
+                        className="text-sm leading-tight"
+                        style={{
+                          fontFamily: SERIF,
+                          color: selected ? "#1C1C1C" : "#5C4F44",
+                          fontWeight: selected ? 600 : 400,
+                        }}
+                      >
+                        {label}
+                      </p>
+                      <p
+                        className="mt-0.5"
+                        style={{ fontSize: "10px", color: selected ? "#C9A96E" : "#B0A090" }}
+                      >
+                        {desc}
+                      </p>
                     </div>
                   </button>
                 )
@@ -240,9 +290,14 @@ export default function UploadPage() {
             </div>
           </div>
 
-          {/* 3. Adet seçici */}
+          {/* 3. Adet */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">3. Kaç görsel üretilsin?</p>
+            <p
+              className="mb-3"
+              style={{ fontSize: "10px", color: "#B0A090", letterSpacing: "0.32em", textTransform: "uppercase" }}
+            >
+              03 — Görsel Adedi
+            </p>
             <div className="grid grid-cols-4 gap-2.5">
               {QUANTITIES.map((q) => {
                 const selected = quantity === q
@@ -251,17 +306,25 @@ export default function UploadPage() {
                     key={q}
                     type="button"
                     onClick={() => setQuantity(q)}
-                    className={`flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-xl border text-center transition-all cursor-pointer ${
-                      selected
-                        ? "border-[#111827] bg-[#111827]"
-                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
-                    }`}
+                    className="flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-2xl text-center transition-all cursor-pointer"
+                    style={{
+                      border: `1.5px solid ${selected ? "#C9A96E" : "#E5DFD5"}`,
+                      backgroundColor: selected ? "rgba(201,169,110,0.07)" : "rgba(255,255,255,0.7)",
+                    }}
                   >
-                    <span className={`text-xl font-semibold tabular-nums leading-none ${selected ? "text-white" : "text-[#111827]"}`}>
+                    <span
+                      style={{
+                        fontFamily: SERIF,
+                        fontSize: "22px",
+                        fontWeight: 300,
+                        color: selected ? "#1C1C1C" : "#8A7060",
+                        lineHeight: 1,
+                      }}
+                    >
                       {q}
                     </span>
-                    <span className={`text-[11px] leading-none ${selected ? "text-white/60" : "text-[#9CA3AF]"}`}>
-                      {q} kredi
+                    <span style={{ fontSize: "10px", color: selected ? "#C9A96E" : "#C4B9AC", letterSpacing: "0.1em" }}>
+                      kredi
                     </span>
                   </button>
                 )
@@ -271,52 +334,73 @@ export default function UploadPage() {
 
           {/* Hata */}
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <p className="text-sm rounded-xl px-4 py-2.5" style={{ color: "#991B1B", backgroundColor: "#FEF2F2", border: "1px solid #FEE2E2" }}>
               {error}
             </p>
           )}
 
-          {/* Üret butonu */}
-          <Button
+          {/* ── Üret butonu ── */}
+          <button
             type="button"
             onClick={handleGenerate}
             disabled={!canGenerate}
-            className="w-full h-11 bg-[#111827] hover:bg-[#1F2937] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full h-12 rounded-xl transition-all"
+            style={{
+              backgroundColor: canGenerate ? "#1C1C1C" : "#D9D3CB",
+              color: "white",
+              fontSize: "11px",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              fontWeight: 500,
+              cursor: canGenerate ? "pointer" : "not-allowed",
+            }}
           >
             {generating ? (
-              <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="flex items-center justify-center gap-2">
+                <span
+                  className="w-3.5 h-3.5 rounded-full border-2 animate-spin"
+                  style={{ borderColor: "rgba(255,255,255,0.25)", borderTopColor: "white" }}
+                />
                 Üretiliyor...
               </span>
             ) : (
-              <span className="flex items-center gap-2">
-                <Sparkles size={15} />
-                Üret — {quantity} kredi
+              <span className="flex items-center justify-center gap-2">
+                <Sparkles size={14} />
+                Üret — {quantity} Kredi
               </span>
             )}
-          </Button>
+          </button>
         </div>
 
-        {/* ── Sağ: sonuç alanı ── */}
+        {/* ── Sağ: sonuç ── */}
         <div>
-          <p className="text-sm font-medium text-[#111827] mb-2">4. Sonuç</p>
+          <p
+            className="mb-3"
+            style={{ fontSize: "10px", color: "#B0A090", letterSpacing: "0.32em", textTransform: "uppercase" }}
+          >
+            04 — Sonuç
+          </p>
 
           {generating ? (
-            /* Skeleton — quantity kadar placeholder */
-            <div className={`rounded-xl border border-[#E5E7EB] bg-white p-4 min-h-[420px] ${quantity > 1 ? "grid grid-cols-2 gap-3 content-start" : "space-y-3"}`}>
+            <div
+              className={`rounded-2xl p-4 min-h-[420px] ${quantity > 1 ? "grid grid-cols-2 gap-3 content-start" : "space-y-3"}`}
+              style={{ border: "1px solid #E5DFD5", backgroundColor: "rgba(255,255,255,0.7)" }}
+            >
               {Array.from({ length: quantity }).map((_, i) => (
                 <div key={i} className="space-y-2">
-                  <Skeleton className="w-full aspect-square rounded-lg" />
+                  <Skeleton className="w-full aspect-square rounded-xl" />
                   <Skeleton className="h-3 w-1/2 rounded" />
                 </div>
               ))}
             </div>
           ) : results.length > 0 ? (
-            /* Sonuç görselleri */
-            <div className={`rounded-xl border border-[#E5E7EB] bg-white p-4 ${results.length > 1 ? "grid grid-cols-2 gap-4" : "space-y-4"}`}>
+            <div
+              className={`rounded-2xl p-4 ${results.length > 1 ? "grid grid-cols-2 gap-4" : "space-y-4"}`}
+              style={{ border: "1px solid #E5DFD5", backgroundColor: "rgba(255,255,255,0.7)" }}
+            >
               {results.map((url, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="rounded-lg overflow-hidden bg-[#F9FAFB]">
+                <div key={i} className="space-y-2.5">
+                  <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#F8F6F2" }}>
                     <img
                       src={url}
                       alt={`Üretilen görsel ${i + 1}`}
@@ -326,23 +410,54 @@ export default function UploadPage() {
                   </div>
                   <button
                     onClick={() => handleDownload(url, i)}
-                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                    className="flex items-center justify-center gap-2 w-full h-9 rounded-xl transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: "#1C1C1C",
+                      color: "white",
+                      fontSize: "10px",
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2E2E2E")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#1C1C1C")}
                   >
-                    <Download size={13} />
+                    <Download size={12} />
                     {results.length > 1 ? `İndir ${i + 1}` : "İndir"}
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            /* Boş durum */
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white h-full min-h-[420px] gap-3 text-center px-6">
-              <div className="w-12 h-12 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
-                <Sparkles size={20} className="text-[#9CA3AF]" />
+            <div
+              className="flex flex-col items-center justify-center rounded-2xl min-h-[420px] gap-4 text-center px-6"
+              style={{ border: "1.5px dashed #D9D3CB", backgroundColor: "rgba(255,255,255,0.5)" }}
+            >
+              {/* Dekoratif elmas */}
+              <div className="relative">
+                <div
+                  className="w-14 h-14 rotate-45 flex items-center justify-center"
+                  style={{ border: "1px solid rgba(201,169,110,0.3)", backgroundColor: "rgba(201,169,110,0.05)" }}
+                >
+                  <Sparkles size={18} style={{ color: "rgba(201,169,110,0.6)", transform: "rotate(-45deg)" }} />
+                </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-[#6B7280]">Sonuç burada görünecek</p>
-                <p className="text-xs text-[#9CA3AF] mt-1">Görsel yükleyin ve ayarları seçin</p>
+                <p
+                  style={{ fontFamily: SERIF, fontSize: "20px", color: "#1C1C1C", fontWeight: 300 }}
+                >
+                  Sonuç burada görünecek
+                </p>
+                <p
+                  className="mt-1.5"
+                  style={{ fontSize: "11px", color: "#B0A090", letterSpacing: "0.1em" }}
+                >
+                  Görsel yükleyin, takı türünü ve adedi seçin
+                </p>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="h-px w-8" style={{ backgroundColor: "rgba(201,169,110,0.3)" }} />
+                <div className="w-1 h-1 rounded-full" style={{ backgroundColor: "rgba(201,169,110,0.4)" }} />
+                <div className="h-px w-8" style={{ backgroundColor: "rgba(201,169,110,0.3)" }} />
               </div>
             </div>
           )}
