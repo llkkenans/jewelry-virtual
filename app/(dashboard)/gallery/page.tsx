@@ -28,6 +28,16 @@ function formatDate(iso: string) {
   })
 }
 
+async function handleDownload(url: string, index: number) {
+  const response = await fetch(url)
+  const blob = await response.blob()
+  const a = document.createElement("a")
+  a.href = URL.createObjectURL(blob)
+  a.download = `jewelry-virtual-${index + 1}.jpg`
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
 export default function GalleryPage() {
   const [items, setItems] = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,16 +130,13 @@ export default function GalleryPage() {
                   </span>
                 </div>
 
-                <a
-                  href={item.output_image_url}
-                  download={`jewelry-${item.id}.jpg`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleDownload(item.output_image_url, items.indexOf(item))}
                   className="flex items-center justify-center gap-1.5 w-full h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer"
                 >
                   <Download size={13} />
                   İndir
-                </a>
+                </button>
               </div>
             )
           })}

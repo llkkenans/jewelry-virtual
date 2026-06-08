@@ -135,6 +135,16 @@ export default function UploadPage() {
     }
   }
 
+  async function handleDownload(url: string, index: number) {
+    const response = await fetch(url)
+    const blob = await response.blob()
+    const a = document.createElement("a")
+    a.href = URL.createObjectURL(blob)
+    a.download = `jewelry-virtual-${index + 1}.jpg`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
   const canGenerate = !!file && !!jewelryType && !generating
 
   return (
@@ -314,14 +324,13 @@ export default function UploadPage() {
                       className="w-full h-auto object-contain"
                     />
                   </div>
-                  <a
-                    href={url}
-                    download={`jewelry-tryon-${i + 1}.jpg`}
+                  <button
+                    onClick={() => handleDownload(url, i)}
                     className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
                   >
                     <Download size={13} />
                     {results.length > 1 ? `İndir ${i + 1}` : "İndir"}
-                  </a>
+                  </button>
                 </div>
               ))}
             </div>
