@@ -5,13 +5,14 @@ import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, ImageOff, Sparkles, Gem, Link2 } from "lucide-react"
+import { Download, ImageOff, Sparkles, Gem, Link2, Heart } from "lucide-react"
 
 type Generation = {
   id: string
   output_image_url: string
   jewelry_type: string
   created_at: string
+  is_favorite: boolean
 }
 
 const JEWELRY_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
@@ -38,9 +39,12 @@ async function handleDownload(url: string, index: number) {
   URL.revokeObjectURL(a.href)
 }
 
+type Tab = "all" | "favorites"
+
 export default function GalleryPage() {
-  const [items, setItems] = useState<Generation[]>([])
+  const [items, setItems]   = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab]       = useState<Tab>("all")
 
   useEffect(() => {
     async function load() {
@@ -49,7 +53,7 @@ export default function GalleryPage() {
 
       const { data } = await supabase
         .from("generations")
-        .select("id, output_image_url, jewelry_type, created_at")
+        .select("id, output_image_url, jewelry_type, created_at, is_favorite")
         .eq("status", "done")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
@@ -60,15 +64,48 @@ export default function GalleryPage() {
     load()
   }, [])
 
+  async function toggleFavorite(id: string, current: boolean) {
+    setItems((prev) =>
+      prev.map((item) => item.id === id ? { ...item, is_favorite: !current } : item)
+    )
+    await supabase
+      .from("generations")
+      .update({ is_favorite: !current })
+      .eq("id", id)
+  }
+
+  const displayed = tab === "favorites" ? items.filter((i) => i.is_favorite) : items
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-[#111827] tracking-tight">
-          Galeri
-        </h1>
-        <p className="text-sm text-[#6B7280] mt-1">
-          Ürettiğiniz takı görsellerinin tamamı burada.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-[#111827] tracking-tight">Galeri</h1>
+          <p className="text-sm text-[#6B7280] mt-1">Ürettiğiniz takı görsellerinin tamamı burada.</p>
+        </div>
+
+        {/* Tab seçici */}
+        <div className="flex items-center gap-1 bg-[#F3F4F6] rounded-lg p-1 self-start sm:self-auto">
+          {(["all", "favorites"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
+                tab === t
+                  ? "bg-white text-[#111827] shadow-sm"
+                  : "text-[#6B7280] hover:text-[#111827]"
+              }`}
+            >
+              {t === "favorites" && (
+                <Heart
+                  size={13}
+                  className={tab === "favorites" ? "fill-red-500 text-red-500" : ""}
+                />
+              )}
+              {t === "all" ? "Tümü" : "Favoriler"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -81,17 +118,19 @@ export default function GalleryPage() {
             </div>
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white min-h-[420px] gap-4 text-center px-6">
           <div className="w-14 h-14 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
             <ImageOff size={22} className="text-[#9CA3AF]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-[#111827]">
-              Henüz üretim yok
+              {tab === "favorites" ? "Henüz favori yok" : "Henüz üretim yok"}
             </p>
             <p className="text-xs text-[#6B7280] mt-1">
-              İlk takı görselinizi üretin ve burada görün.
+              {tab === "favorites"
+                ? "Beğendiğiniz görsellerin kalbine tıklayın."
+                : "İlk takı görselinizi üretin ve burada görün."}
             </p>
           </div>
           <Link href="/upload">
@@ -103,7 +142,7 @@ export default function GalleryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {items.map((item) => {
+          {displayed.map((item) => {
             const type = JEWELRY_LABELS[item.jewelry_type]
             const Icon = type?.icon ?? Gem
             return (
@@ -111,13 +150,24 @@ export default function GalleryPage() {
                 key={item.id}
                 className="rounded-xl border border-[#E5E7EB] bg-white p-3 space-y-3 hover:shadow-sm transition-shadow"
               >
-                <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
                   <img
                     src={item.output_image_url}
                     alt={type?.label ?? item.jewelry_type}
                     crossOrigin="anonymous"
                     className="w-full h-full object-cover"
                   />
+                  {/* Favori butonu */}
+                  <button
+                    onClick={() => toggleFavorite(item.id, item.is_favorite)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                    aria-label={item.is_favorite ? "Favoriden çıkar" : "Favoriye ekle"}
+                  >
+                    <Heart
+                      size={14}
+                      className={item.is_favorite ? "fill-red-500 text-red-500" : "text-[#9CA3AF]"}
+                    />
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-1.5">
