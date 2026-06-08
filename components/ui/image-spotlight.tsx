@@ -38,6 +38,7 @@ export default function ImageSpotlight({
   const finalConfig = { ...defaultConfig, ...config };
 
   const [perspective, setPerspective] = useState<PerspectiveState>({ rotateX: 0, rotateY: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
@@ -56,7 +57,12 @@ export default function ImageSpotlight({
     setPerspective({ rotateX, rotateY });
   }, []);
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
   const handleMouseLeave = () => {
+    setIsHovered(false);
     setPerspective({ rotateX: 0, rotateY: 0 });
   };
 
@@ -78,7 +84,7 @@ export default function ImageSpotlight({
         ref={containerRef}
         className={containerClasses}
         onMouseMove={handleMouseMove}
-        onMouseEnter={() => {}}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         role="img"
         aria-label={alt}
@@ -108,38 +114,46 @@ export default function ImageSpotlight({
           style={{ filter: 'blur(5px)' }}
         />
 
-        {/* Sharp image revealed by spotlight */}
-        <img
-          src={src}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          draggable={false}
-          style={{
-            maskImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black ${finalConfig.spotlightSize * 0.4}px, transparent ${finalConfig.spotlightSize * 1.6}px)`,
-            WebkitMaskImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black ${finalConfig.spotlightSize * 0.4}px, transparent ${finalConfig.spotlightSize * 1.6}px)`,
-            zIndex: 2
-          }}
-        />
+        {/* Sharp image revealed by spotlight — only when hovered */}
+        {isHovered && (
+          <img
+            src={src}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            draggable={false}
+            style={{
+              maskImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black ${finalConfig.spotlightSize * 0.4}px, transparent ${finalConfig.spotlightSize * 1.6}px)`,
+              WebkitMaskImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black ${finalConfig.spotlightSize * 0.4}px, transparent ${finalConfig.spotlightSize * 1.6}px)`,
+              zIndex: 2
+            }}
+          />
+        )}
 
-        {/* Dark overlay with spotlight cutout */}
+        {/* Dark overlay — full when not hovered, spotlight cutout when hovered */}
         <div
           className="absolute inset-0 bg-black will-change-[mask-position] transition-all duration-100 ease-out"
           style={{
             opacity: finalConfig.overlayOpacity,
-            maskImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent ${finalConfig.spotlightSize * 0.4}px, black ${finalConfig.spotlightSize * 1.6}px)`,
-            WebkitMaskImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent ${finalConfig.spotlightSize * 0.4}px, black ${finalConfig.spotlightSize * 1.6}px)`,
+            maskImage: isHovered
+              ? `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent ${finalConfig.spotlightSize * 0.4}px, black ${finalConfig.spotlightSize * 1.6}px)`
+              : 'none',
+            WebkitMaskImage: isHovered
+              ? `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent ${finalConfig.spotlightSize * 0.4}px, black ${finalConfig.spotlightSize * 1.6}px)`
+              : 'none',
             zIndex: 10
           }}
         />
 
-        {/* Light bloom — warm glow at cursor center */}
-        <div
-          className="absolute inset-0 pointer-events-none transition-all duration-100 ease-out"
-          style={{
-            background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,248,220,0.35) 0px, rgba(255,220,120,0.12) ${finalConfig.spotlightSize * 0.6}px, transparent ${finalConfig.spotlightSize * 1.4}px)`,
-            zIndex: 15
-          }}
-        />
+        {/* Light bloom — only when hovered */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none transition-all duration-100 ease-out"
+            style={{
+              background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,248,220,0.35) 0px, rgba(255,220,120,0.12) ${finalConfig.spotlightSize * 0.6}px, transparent ${finalConfig.spotlightSize * 1.4}px)`,
+              zIndex: 15
+            }}
+          />
+        )}
       </div>
     </div>
   );
