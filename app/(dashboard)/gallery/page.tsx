@@ -59,6 +59,7 @@ export default function GalleryPage() {
   const [items, setItems] = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>("all")
+  const [zipping, setZipping] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -87,15 +88,51 @@ export default function GalleryPage() {
 
   const displayed = tab === "favorites" ? items.filter((i) => i.is_favorite) : items
 
+  async function handleDownloadAll() {
+    if (displayed.length === 0 || zipping) return
+    setZipping(true)
+    try {
+      const JSZip = (await import("jszip")).default
+      const zip = new JSZip()
+      await Promise.all(
+        displayed.map(async (gen, i) => {
+          const response = await fetch(gen.output_image_url)
+          const blob = await response.blob()
+          zip.file(`jewelry-virtual-${i + 1}.jpg`, blob)
+        })
+      )
+      const content = await zip.generateAsync({ type: "blob" })
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(content)
+      a.download = "jewelry-virtual-photos.zip"
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } finally {
+      setZipping(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-[#111827] tracking-tight">
-          Galeri
-        </h1>
-        <p className="text-sm text-[#6B7280] mt-1">
-          Ürettiğiniz takı görsellerinin tamamı burada.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-[#111827] tracking-tight">
+            Galeri
+          </h1>
+          <p className="text-sm text-[#6B7280] mt-1">
+            Ürettiğiniz takı görsellerinin tamamı burada.
+          </p>
+        </div>
+        {!loading && displayed.length > 0 && (
+          <button
+            onClick={handleDownloadAll}
+            disabled={zipping}
+            className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            <Download size={13} />
+            {zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
+          </button>
+        )}
       </div>
 
       {/* Tab selector */}
