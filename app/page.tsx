@@ -245,7 +245,7 @@ export default function LandingPage() {
                 orientation="portrait"
                 width={300}
                 height={400}
-                config={{ spotlightSize: 90, overlayOpacity: 0.55 }}
+                config={{ spotlightSize: 120, overlayOpacity: 0.45 }}
               />
               <div className="px-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -271,7 +271,7 @@ export default function LandingPage() {
                 orientation="portrait"
                 width={300}
                 height={400}
-                config={{ spotlightSize: 90, overlayOpacity: 0.55 }}
+                config={{ spotlightSize: 120, overlayOpacity: 0.45 }}
               />
               <div className="px-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -297,7 +297,7 @@ export default function LandingPage() {
                 orientation="portrait"
                 width={300}
                 height={400}
-                config={{ spotlightSize: 90, overlayOpacity: 0.55 }}
+                config={{ spotlightSize: 120, overlayOpacity: 0.45 }}
               />
               <div className="px-1">
                 <div className="flex items-center gap-3 mb-2">

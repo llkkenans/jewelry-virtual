@@ -131,6 +131,15 @@ export default function ImageSpotlight({
             zIndex: 10
           }}
         />
+
+        {/* Light bloom — warm glow at cursor center */}
+        <div
+          className="absolute inset-0 pointer-events-none transition-all duration-100 ease-out"
+          style={{
+            background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,248,220,0.35) 0px, rgba(255,220,120,0.12) ${finalConfig.spotlightSize * 0.6}px, transparent ${finalConfig.spotlightSize * 1.4}px)`,
+            zIndex: 15
+          }}
+        />
       </div>
     </div>
   );
