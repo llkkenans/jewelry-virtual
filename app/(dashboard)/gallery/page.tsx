@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, ImageOff, Sparkles, Gem, Link2, Heart } from "lucide-react"
+import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2 } from "lucide-react"
+import { toast } from "sonner"
 
 type Generation = {
   id: string
@@ -29,6 +30,19 @@ function formatDate(iso: string) {
     month: "short",
     year: "numeric",
   })
+}
+
+async function handleShare(url: string) {
+  if (navigator.share) {
+    await navigator.share({
+      title: "Jewelry Virtual Try-On",
+      text: "Takılarımı AI ile fotoğrafladım!",
+      url: url,
+    })
+  } else {
+    await navigator.clipboard.writeText(url)
+    toast("Link kopyalandı!")
+  }
 }
 
 async function handleDownload(url: string, index: number) {
@@ -200,13 +214,22 @@ export default function GalleryPage() {
                   </span>
                 </div>
 
-                <button
-                  onClick={() => handleDownload(item.output_image_url, items.indexOf(item))}
-                  className="flex items-center justify-center gap-1.5 w-full h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer"
-                >
-                  <Download size={13} />
-                  İndir
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleDownload(item.output_image_url, items.indexOf(item))}
+                    className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Download size={13} />
+                    İndir
+                  </button>
+                  <button
+                    onClick={() => handleShare(item.output_image_url)}
+                    className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Share2 size={13} />
+                    Paylaş
+                  </button>
+                </div>
               </div>
             )
           })}

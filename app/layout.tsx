@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Jewelry Virtual Try-On",
@@ -20,6 +21,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-white text-[#111827]">
         {children}
+        <Toaster position="bottom-center" />
       </body>
     </html>
   );
