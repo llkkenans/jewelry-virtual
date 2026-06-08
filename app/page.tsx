@@ -1,3 +1,6 @@
+"use client"
+
+import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -49,6 +52,70 @@ const features = [
 /* ─── Sayfa ─────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
+  /* Parallax */
+  const heroContentRef = useRef<HTMLDivElement>(null)
+
+  /* Fade-in state'leri */
+  const howRef = useRef<HTMLElement>(null)
+  const [howVisible, setHowVisible] = useState(false)
+
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [cardsVisible, setCardsVisible] = useState([false, false, false])
+
+  const ctaRef = useRef<HTMLElement>(null)
+  const [ctaVisible, setCtaVisible] = useState(false)
+
+  /* Parallax — scroll dinle */
+  useEffect(() => {
+    function onScroll() {
+      if (heroContentRef.current) {
+        heroContentRef.current.style.transform =
+          `translateY(${window.scrollY * 0.2}px)`
+      }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  /* IntersectionObserver — fade-in */
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+
+          if (entry.target === howRef.current) {
+            setHowVisible(true)
+          } else if (entry.target === ctaRef.current) {
+            setCtaVisible(true)
+          } else {
+            const idx = cardRefs.current.indexOf(
+              entry.target as HTMLDivElement
+            )
+            if (idx !== -1) {
+              setTimeout(() => {
+                setCardsVisible((prev) => {
+                  const next = [...prev]
+                  next[idx] = true
+                  return next
+                })
+              }, idx * 120)
+            }
+          }
+
+          obs.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.12 }
+    )
+
+    if (howRef.current) obs.observe(howRef.current)
+    if (ctaRef.current) obs.observe(ctaRef.current)
+    cardRefs.current.forEach((el) => { if (el) obs.observe(el) })
+
+    return () => obs.disconnect()
+  }, [])
+
   return (
     <div className="min-h-screen bg-white text-[#111827]">
 
@@ -78,49 +145,80 @@ export default function LandingPage() {
       </header>
 
       <main>
+
         {/* ── Hero ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-24">
-          <div className="max-w-2xl">
-            <Badge
-              variant="secondary"
-              className="mb-6 bg-[#F9FAFB] text-[#6B7280] border border-[#E5E7EB] text-xs font-medium px-3 py-1 rounded-full"
-            >
-              B2B Kuyumcu Çözümü
-            </Badge>
-            <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.15] text-[#111827] mb-6">
-              Takılarınızı Saniyeler
-              <br />
-              İçinde Canlandırın
-            </h1>
-            <p className="text-base sm:text-lg text-[#6B7280] leading-relaxed mb-10 max-w-xl">
-              Pahalı stüdyo çekimine gerek yok. Yapay zeka ile takınızı gerçek
-              modeller üzerinde görün.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/register">
-                <Button className="h-11 px-6 bg-[#111827] hover:bg-[#1F2937] text-white text-sm font-medium rounded-xl cursor-pointer">
-                  Ücretsiz Dene →
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button
-                  variant="outline"
-                  className="h-11 px-6 border-[#E5E7EB] text-[#111827] text-sm font-medium rounded-xl hover:bg-[#F9FAFB] cursor-pointer"
+        <section className="overflow-hidden">
+          <div
+            ref={heroContentRef}
+            style={{ willChange: "transform" }}
+            className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-20"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+              {/* Sol: metin */}
+              <div>
+                <Badge
+                  variant="secondary"
+                  className="mb-6 bg-[#F9FAFB] text-[#6B7280] border border-[#E5E7EB] text-xs font-medium px-3 py-1 rounded-full"
                 >
-                  Giriş Yap
-                </Button>
-              </Link>
+                  B2B Kuyumcu Çözümü
+                </Badge>
+                <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.15] text-[#111827] mb-6">
+                  Takılarınızı Saniyeler
+                  <br />
+                  İçinde Canlandırın
+                </h1>
+                <p className="text-base text-[#6B7280] leading-relaxed mb-10 max-w-md">
+                  Pahalı stüdyo çekimine gerek yok. Yapay zeka ile takınızı
+                  gerçek modeller üzerinde görün.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/register">
+                    <Button className="h-11 px-6 bg-[#111827] hover:bg-[#1F2937] text-white text-sm font-medium rounded-xl cursor-pointer">
+                      Ücretsiz Dene →
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button
+                      variant="outline"
+                      className="h-11 px-6 border-[#E5E7EB] text-[#111827] text-sm font-medium rounded-xl hover:bg-[#F9FAFB] cursor-pointer"
+                    >
+                      Giriş Yap
+                    </Button>
+                  </Link>
+                </div>
+                <p className="mt-5 text-xs text-[#9CA3AF]">
+                  Kredi kartı gerekmez &nbsp;·&nbsp; 10 ücretsiz kredi &nbsp;·&nbsp; Anında başla
+                </p>
+              </div>
+
+              {/* Sağ: video */}
+              <div className="w-full">
+                <video
+                  src="/videos/luxury.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full rounded-2xl shadow-2xl object-cover"
+                />
+              </div>
             </div>
-            <p className="mt-5 text-xs text-[#9CA3AF]">
-              Kredi kartı gerekmez &nbsp;·&nbsp; 10 ücretsiz kredi &nbsp;·&nbsp; Anında başla
-            </p>
           </div>
         </section>
 
         <Separator className="bg-[#E5E7EB]" />
 
         {/* ── Nasıl Çalışır ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
+        <section
+          ref={howRef}
+          style={{
+            opacity: howVisible ? 1 : 0,
+            transform: howVisible ? "translateY(0)" : "translateY(24px)",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+          }}
+          className="max-w-5xl mx-auto px-4 sm:px-6 py-20"
+        >
           <div className="mb-12">
             <p className="text-xs font-medium text-[#6B7280] uppercase tracking-widest mb-3">
               Nasıl Çalışır
@@ -163,21 +261,28 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {features.map(({ icon: Icon, title, desc }) => (
-              <Card
+            {features.map(({ icon: Icon, title, desc }, i) => (
+              <div
                 key={title}
-                className="border border-[#E5E7EB] shadow-none rounded-xl bg-white"
+                ref={(el) => { cardRefs.current[i] = el }}
+                style={{
+                  opacity: cardsVisible[i] ? 1 : 0,
+                  transform: cardsVisible[i] ? "translateY(0)" : "translateY(20px)",
+                  transition: "opacity 0.6s ease, transform 0.6s ease",
+                }}
               >
-                <CardContent className="p-6 space-y-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
-                    <Icon size={18} className="text-[#111827]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#111827] mb-1.5">{title}</p>
-                    <p className="text-sm text-[#6B7280] leading-relaxed">{desc}</p>
-                  </div>
-                </CardContent>
-              </Card>
+                <Card className="border border-[#E5E7EB] shadow-none rounded-xl bg-white h-full">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
+                      <Icon size={18} className="text-[#111827]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#111827] mb-1.5">{title}</p>
+                      <p className="text-sm text-[#6B7280] leading-relaxed">{desc}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         </section>
@@ -185,7 +290,15 @@ export default function LandingPage() {
         <Separator className="bg-[#E5E7EB]" />
 
         {/* ── CTA ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
+        <section
+          ref={ctaRef}
+          style={{
+            opacity: ctaVisible ? 1 : 0,
+            transform: ctaVisible ? "translateY(0)" : "translateY(24px)",
+            transition: "opacity 0.7s ease, transform 0.7s ease",
+          }}
+          className="max-w-5xl mx-auto px-4 sm:px-6 py-20"
+        >
           <div className="bg-[#111827] rounded-2xl px-8 py-14 text-center space-y-6">
             <h2 className="text-2xl sm:text-3xl font-semibold text-white tracking-tight">
               Hemen Başla
@@ -200,6 +313,7 @@ export default function LandingPage() {
             </Link>
           </div>
         </section>
+
       </main>
 
       {/* ── Footer ── */}
