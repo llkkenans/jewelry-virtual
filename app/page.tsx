@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
 import { Zap, Gift, Star } from "lucide-react"
+import ImageSpotlight from "@/components/ui/image-spotlight"
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
 
@@ -209,6 +210,111 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <Separator className="bg-[#E5E7EB]" />
+
+        {/* ── Koleksiyon Spotlight ── */}
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
+          <div className="mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+            <div>
+              <p className="text-[10px] font-medium text-[#9CA3AF] uppercase tracking-[0.35em] mb-4">
+                Koleksiyonunuz
+              </p>
+              <h2
+                style={{ fontFamily: SERIF }}
+                className="text-3xl sm:text-5xl font-light tracking-tight text-[#111827] leading-tight"
+              >
+                Her takı türü için<br />
+                <em className="text-[#9CA3AF]">stüdyo kalitesi</em>
+              </h2>
+            </div>
+            <p className="text-sm text-[#9CA3AF] leading-relaxed font-light max-w-xs sm:text-right">
+              Fareyi görselin üzerinde gezdirerek detayları keşfedin.
+            </p>
+          </div>
+
+          <div className="flex justify-center gap-4 flex-wrap sm:flex-nowrap">
+
+            {/* Yüzük */}
+            <div className="flex flex-col gap-4 w-full sm:w-auto">
+              <ImageSpotlight
+                src="/images/landing/ring.jpg"
+                alt="Elmas solitaire yüzük stüdyo çekimi"
+                orientation="portrait"
+                width={300}
+                height={400}
+                config={{ spotlightSize: 90, overlayOpacity: 0.55 }}
+              />
+              <div className="px-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px w-5 bg-[#E5E7EB]" />
+                  <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
+                    Yüzük
+                  </span>
+                </div>
+                <p style={{ fontFamily: SERIF }} className="text-lg font-light text-[#111827] mb-1 tracking-tight">
+                  Nişan & Tektaş
+                </p>
+                <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
+                  Dört pençeli solitaire&apos;den pavé bantlara, her yüzüğü model eli üzerinde gerçekçi biçimde canlandırın.
+                </p>
+              </div>
+            </div>
+
+            {/* Küpe */}
+            <div className="flex flex-col gap-4 w-full sm:w-auto">
+              <ImageSpotlight
+                src="/images/landing/earrings.jpg"
+                alt="Altın halka küpeler stüdyo çekimi"
+                orientation="portrait"
+                width={300}
+                height={400}
+                config={{ spotlightSize: 90, overlayOpacity: 0.55 }}
+              />
+              <div className="px-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px w-5 bg-[#E5E7EB]" />
+                  <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
+                    Küpe
+                  </span>
+                </div>
+                <p style={{ fontFamily: SERIF }} className="text-lg font-light text-[#111827] mb-1 tracking-tight">
+                  Halka & Sarkıt
+                </p>
+                <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
+                  Halka, çivi ve sarkıt küpeleri doğal ışıkta, gerçek kulak pozisyonunda sergileyin.
+                </p>
+              </div>
+            </div>
+
+            {/* Kolye */}
+            <div className="flex flex-col gap-4 w-full sm:w-auto">
+              <ImageSpotlight
+                src="/images/landing/necklace.jpg"
+                alt="İnce altın kolye ve pendant stüdyo çekimi"
+                orientation="portrait"
+                width={300}
+                height={400}
+                config={{ spotlightSize: 90, overlayOpacity: 0.55 }}
+              />
+              <div className="px-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px w-5 bg-[#E5E7EB]" />
+                  <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
+                    Kolye
+                  </span>
+                </div>
+                <p style={{ fontFamily: SERIF }} className="text-lg font-light text-[#111827] mb-1 tracking-tight">
+                  Kolye & Pendant
+                </p>
+                <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
+                  Zincir ve pendant kombinasyonlarını boyun üzerinde, stüdyo ışığıyla mükemmel şekilde gösterin.
+                </p>
+              </div>
+            </div>
+
           </div>
         </section>
 
