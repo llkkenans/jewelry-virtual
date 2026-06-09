@@ -1,11 +1,18 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
 import { Zap, Gift, Star } from "lucide-react"
 import ImageSpotlight from "@/components/ui/image-spotlight"
+
+const HERO_VIDEOS = [
+  "/videos/luxury.mp4",
+  "/videos/hailuo-2_3_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_closely_inspecti-0.mp4",
+  "/videos/kling-3.0_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_slowly_rotating_-0.mp4",
+]
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
 
@@ -56,6 +63,16 @@ const features = [
 /* ─── Sayfa ─────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
+  const [videoSrc, setVideoSrc] = useState<string | null>(null)
+
+  useEffect(() => {
+    const key = "jv_hero_video_idx"
+    const current = parseInt(sessionStorage.getItem(key) ?? "0", 10)
+    const next = (current + 1) % HERO_VIDEOS.length
+    sessionStorage.setItem(key, String(next))
+    setVideoSrc(HERO_VIDEOS[current])
+  }, [])
+
   return (
     <div className="min-h-screen bg-white text-[#111827]">
 
@@ -87,14 +104,17 @@ export default function LandingPage() {
 
         {/* ── Hero: Tam Ekran Video ── */}
         <section className="relative h-screen flex items-center justify-center overflow-hidden">
-          <video
-            src="/videos/luxury.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          {videoSrc && (
+            <video
+              key={videoSrc}
+              src={videoSrc}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/65" />
 
           <div className="relative z-10 text-center text-white px-4 max-w-3xl mx-auto pt-14">
