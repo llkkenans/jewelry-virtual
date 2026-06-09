@@ -131,7 +131,7 @@ export default function ImageSpotlight({
 
         {/* Dark overlay — full when not hovered, spotlight cutout when hovered */}
         <div
-          className="absolute inset-0 bg-black will-change-[mask-position] transition-all duration-100 ease-out"
+          className="absolute inset-0 bg-black transition-opacity duration-200 ease-out"
           style={{
             opacity: finalConfig.overlayOpacity,
             maskImage: isHovered
@@ -147,7 +147,7 @@ export default function ImageSpotlight({
         {/* Light bloom — only when hovered */}
         {isHovered && (
           <div
-            className="absolute inset-0 pointer-events-none transition-all duration-100 ease-out"
+            className="absolute inset-0 pointer-events-none"
             style={{
               background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,248,220,0.35) 0px, rgba(255,220,120,0.12) ${finalConfig.spotlightSize * 0.6}px, transparent ${finalConfig.spotlightSize * 1.4}px)`,
               zIndex: 15
