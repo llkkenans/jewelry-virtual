@@ -15,6 +15,12 @@ import {
 } from "lucide-react"
 
 type JewelryType = "ring" | "necklace" | "earring"
+type DisplayType = "woman" | "stand"
+
+const DISPLAY_TYPES: { id: DisplayType; emoji: string; label: string; desc: string }[] = [
+  { id: "woman", emoji: "👩", label: "Model Üzerinde", desc: "Gerçek el / boyun" },
+  { id: "stand", emoji: "🏷️", label: "Stant Üzerinde", desc: "Ürün standı" },
+]
 
 const JEWELRY_TYPES: {
   id: JewelryType
@@ -35,6 +41,7 @@ export default function UploadPage() {
   const [file, setFile]               = useState<File | null>(null)
   const [preview, setPreview]         = useState<string | null>(null)
   const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
+  const [displayType, setDisplayType] = useState<DisplayType>("woman")
   const [quantity, setQuantity]       = useState<number>(1)
   const [generating, setGenerating]   = useState(false)
   const [results, setResults]         = useState<string[]>([])
@@ -110,7 +117,7 @@ export default function UploadPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageBase64, jewelryType, quantity }),
+        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType }),
       })
 
       if (!tryOnRes.ok) {
@@ -240,9 +247,37 @@ export default function UploadPage() {
             </div>
           </div>
 
-          {/* 3. Adet seçici */}
+          {/* 3. Gösterim türü */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">3. Kaç görsel üretilsin?</p>
+            <p className="text-sm font-medium text-[#111827] mb-2">3. Nasıl gösterilsin?</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {DISPLAY_TYPES.map(({ id, emoji, label, desc }) => {
+                const selected = displayType === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setDisplayType(id)}
+                    className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                      selected
+                        ? "border-[#111827] bg-[#111827]"
+                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
+                    }`}
+                  >
+                    <span className="text-2xl leading-none">{emoji}</span>
+                    <div>
+                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>{label}</p>
+                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>{desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 4. Adet seçici */}
+          <div>
+            <p className="text-sm font-medium text-[#111827] mb-2">4. Kaç görsel üretilsin?</p>
             <div className="grid grid-cols-4 gap-2.5">
               {QUANTITIES.map((q) => {
                 const selected = quantity === q
@@ -299,7 +334,7 @@ export default function UploadPage() {
 
         {/* ── Sağ: sonuç alanı ── */}
         <div>
-          <p className="text-sm font-medium text-[#111827] mb-2">4. Sonuç</p>
+          <p className="text-sm font-medium text-[#111827] mb-2">5. Sonuç</p>
 
           {generating ? (
             /* Skeleton — quantity kadar placeholder */
