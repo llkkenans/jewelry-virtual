@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase/client"
 
-const SERIF = "'Cormorant Garant', Georgia, serif"
+const SERIF = "'Audrey', Georgia, serif"
 
 /* Küpenin görsel içindeki konumu (container yüzdesi olarak)
    Orijinal resim 896×1152 — küpe pandantifi ~63% soldan, ~32% yukarıdan */
