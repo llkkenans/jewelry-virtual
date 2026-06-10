@@ -116,10 +116,10 @@ export default function GalleryPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-[#111827] tracking-tight">
+          <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
             Galeri
           </h1>
-          <p className="text-sm text-[#6B7280] mt-1">
+          <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed">
             Ürettiğiniz takı görsellerinin tamamı burada.
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function GalleryPage() {
           <button
             onClick={handleDownloadAll}
             disabled={zipping}
-            className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
             <Download size={13} />
             {zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
@@ -254,14 +254,14 @@ export default function GalleryPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleDownload(item.output_image_url, items.indexOf(item))}
-                    className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer"
                   >
                     <Download size={13} />
                     İndir
                   </button>
                   <button
                     onClick={() => handleShare(item.output_image_url)}
-                    className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer"
                   >
                     <Share2 size={13} />
                     Paylaş

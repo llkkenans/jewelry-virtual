@@ -12,14 +12,16 @@ import {
   X,
   Gem,
   Link2,
+  User,
+  Package,
 } from "lucide-react"
 
 type JewelryType = "ring" | "necklace" | "earring"
 type DisplayType = "woman" | "stand"
 
-const DISPLAY_TYPES: { id: DisplayType; emoji: string; label: string; desc: string }[] = [
-  { id: "woman", emoji: "👩", label: "Model Üzerinde", desc: "Gerçek el / boyun" },
-  { id: "stand", emoji: "🏷️", label: "Stant Üzerinde", desc: "Ürün standı" },
+const DISPLAY_TYPES: { id: DisplayType; icon: React.ElementType; label: string; desc: string }[] = [
+  { id: "woman", icon: User,    label: "Model Üzerinde", desc: "Gerçek el / boyun" },
+  { id: "stand", icon: Package, label: "Stant Üzerinde", desc: "Ürün standı" },
 ]
 
 const JEWELRY_TYPES: {
@@ -158,11 +160,11 @@ export default function UploadPage() {
     <div className="space-y-6">
       {/* Başlık */}
       <div>
-        <h1 className="text-xl font-semibold text-[#111827] tracking-tight">
-          Takı Fotoğrafı Yükle
+        <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
+          Yeni Üretim
         </h1>
-        <p className="text-sm text-[#6B7280] mt-1">
-          Takı görselinizi yükleyin, türünü ve adet seçin, modelde gösterin.
+        <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed">
+          Takı görselinizi yükleyin, sunum biçimini seçin ve yapay zeka destekli fotoğrafınızı oluşturun.
         </p>
       </div>
 
@@ -173,7 +175,7 @@ export default function UploadPage() {
 
           {/* 1. DropZone */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">1. Takı fotoğrafı</p>
+            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Takı Görseli</p>
             {!preview ? (
               <div
                 onDrop={onDrop}
@@ -219,7 +221,7 @@ export default function UploadPage() {
 
           {/* 2. Takı türü */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">2. Takı türü seçin</p>
+            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Takı Türü</p>
             <div className="grid grid-cols-3 gap-2.5">
               {JEWELRY_TYPES.map(({ id, label, desc, icon: Icon }) => {
                 const selected = jewelryType === id
@@ -249,9 +251,9 @@ export default function UploadPage() {
 
           {/* 3. Gösterim türü */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">3. Nasıl gösterilsin?</p>
+            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Sunum Biçimi</p>
             <div className="grid grid-cols-2 gap-2.5">
-              {DISPLAY_TYPES.map(({ id, emoji, label, desc }) => {
+              {DISPLAY_TYPES.map(({ id, icon: Icon, label, desc }) => {
                 const selected = displayType === id
                 return (
                   <button
@@ -264,7 +266,9 @@ export default function UploadPage() {
                         : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
                     }`}
                   >
-                    <span className="text-2xl leading-none">{emoji}</span>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selected ? "bg-white/20" : "bg-[#F9FAFB]"}`}>
+                      <Icon size={16} className={selected ? "text-white" : "text-[#6B7280]"} />
+                    </div>
                     <div>
                       <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>{label}</p>
                       <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>{desc}</p>
@@ -277,7 +281,7 @@ export default function UploadPage() {
 
           {/* 4. Adet seçici */}
           <div>
-            <p className="text-sm font-medium text-[#111827] mb-2">4. Kaç görsel üretilsin?</p>
+            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Görsel Adedi</p>
             <div className="grid grid-cols-4 gap-2.5">
               {QUANTITIES.map((q) => {
                 const selected = quantity === q
@@ -306,7 +310,7 @@ export default function UploadPage() {
 
           {/* Hata */}
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
               {error}
             </p>
           )}
@@ -326,7 +330,7 @@ export default function UploadPage() {
             ) : (
               <span className="flex items-center gap-2">
                 <Sparkles size={15} />
-                Üret — {quantity} kredi
+                Görsel Oluştur · {quantity} Kredi
               </span>
             )}
           </Button>
@@ -334,7 +338,7 @@ export default function UploadPage() {
 
         {/* ── Sağ: sonuç alanı ── */}
         <div>
-          <p className="text-sm font-medium text-[#111827] mb-2">5. Sonuç</p>
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Üretilen Görsel</p>
 
           {generating ? (
             /* Skeleton — quantity kadar placeholder */
@@ -361,7 +365,7 @@ export default function UploadPage() {
                   </div>
                   <button
                     onClick={() => handleDownload(url, i)}
-                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-xl transition-colors cursor-pointer"
                   >
                     <Download size={13} />
                     {results.length > 1 ? `İndir ${i + 1}` : "İndir"}

@@ -63,7 +63,7 @@ export default function DashboardLayout({
             <div className="w-6 h-6 rotate-45 border-2 border-[#111827] flex items-center justify-center">
               <div className="w-1.5 h-1.5 bg-[#111827] rotate-45" />
             </div>
-            <span className="text-[#111827] text-sm font-semibold tracking-tight hidden sm:block">
+            <span className="text-[#111827] text-sm font-semibold tracking-wide hidden sm:block">
               Jewelry Virtual
             </span>
           </Link>
@@ -76,7 +76,7 @@ export default function DashboardLayout({
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
                     active
                       ? "bg-[#111827] text-white"
                       : "text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB]"
@@ -92,13 +92,13 @@ export default function DashboardLayout({
           {/* Sağ: kredi + çıkış */}
           <div className="flex items-center gap-3">
             {/* Kredi göstergesi */}
-            <div className="flex items-center gap-1.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-2.5 py-1.5">
+            <div className="flex items-center gap-1.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-2.5 py-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-[#111827]" />
               {loading ? (
                 <Skeleton className="h-3.5 w-8 rounded" />
               ) : (
                 <span className="text-xs font-semibold text-[#111827] tabular-nums">
-                  {credits} kredi
+                  {credits} Kredi
                 </span>
               )}
             </div>
@@ -108,7 +108,7 @@ export default function DashboardLayout({
             {/* Çıkış */}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-[#F9FAFB]"
+              className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer p-1.5 rounded-xl hover:bg-[#F9FAFB]"
               aria-label="Çıkış yap"
             >
               <LogOut size={15} />
