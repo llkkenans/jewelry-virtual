@@ -3,6 +3,7 @@ import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import fs from 'fs'
 import path from 'path'
+import sharp from 'sharp'
 
 type JewelryType = 'ring' | 'necklace' | 'earring'
 type DisplayType = 'woman' | 'stand'
@@ -30,10 +31,72 @@ function buildPrompts(): Record<JewelryType, string> {
   }
 }
 
-const standPrompts: Record<JewelryType, string> = {
-  ring:     'This is a luxury jewelry display stand. Place the ring shown in the reference image on the stand naturally. Professional jewelry store photography, white background, soft studio lighting, ultra realistic, 8k.',
-  necklace: 'This is a luxury jewelry display stand. Drape the necklace shown in the reference image on the stand naturally. Professional jewelry store photography, white background, soft studio lighting, ultra realistic, 8k.',
-  earring:  'This is a luxury jewelry display stand. Place the earring shown in the reference image on the stand naturally. Professional jewelry store photography, white background, soft studio lighting, ultra realistic, 8k.',
+// Bir pikselin açık/beyaz arka plan olup olmadığını belirler (mask/route.ts ile aynı mantık)
+function isBackground(r: number, g: number, b: number): boolean {
+  const brightness = (r + g + b) / 3
+  const maxChannel = Math.max(r, g, b)
+  const minChannel = Math.min(r, g, b)
+  const saturation = maxChannel === 0 ? 0 : (maxChannel - minChannel) / maxChannel
+  return brightness > 220 && saturation < 0.15
+}
+
+// Takı görselinin arka planını şeffaflaştırır ve stant görseli üzerine ortalar
+async function compositeJewelryOnStand(
+  jewelryBase64: string,
+  standImagePath: string
+): Promise<string> {
+  const jewelryBuffer = Buffer.from(
+    jewelryBase64.replace(/^data:image\/[a-z]+;base64,/, ''),
+    'base64'
+  )
+
+  const { data: pixels, info } = await sharp(jewelryBuffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+
+  const { width: jW, height: jH } = info
+  const transparent = Buffer.alloc(jW * jH * 4)
+
+  for (let i = 0; i < jW * jH; i++) {
+    const r = pixels[i * 4]
+    const g = pixels[i * 4 + 1]
+    const b = pixels[i * 4 + 2]
+    const a = pixels[i * 4 + 3]
+
+    if (a < 10 || isBackground(r, g, b)) {
+      transparent[i * 4 + 3] = 0
+    } else {
+      transparent[i * 4]     = r
+      transparent[i * 4 + 1] = g
+      transparent[i * 4 + 2] = b
+      transparent[i * 4 + 3] = a
+    }
+  }
+
+  const jewelryPng = await sharp(transparent, {
+    raw: { width: jW, height: jH, channels: 4 },
+  })
+    .png()
+    .toBuffer()
+
+  const { width: sW = 1024, height: sH = 1024 } = await sharp(standImagePath).metadata()
+  const targetSize = Math.round(Math.min(sW, sH) * 0.65)
+
+  const resized = await sharp(jewelryPng)
+    .resize(targetSize, targetSize, { fit: 'inside', withoutEnlargement: false })
+    .toBuffer()
+
+  const { width: rW = targetSize, height: rH = targetSize } = await sharp(resized).metadata()
+  const left = Math.round((sW - rW) / 2)
+  const top  = Math.round((sH - rH) / 2)
+
+  const composited = await sharp(standImagePath)
+    .composite([{ input: resized, left, top, blend: 'over' }])
+    .png()
+    .toBuffer()
+
+  return composited.toString('base64')
 }
 
 type NanoBananaResult = {
@@ -95,7 +158,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  // 4. Klasörden rastgele referans model görseli seç
+  // 4. Klasörden referans görselleri listele
   const folder = `models/${displayType}/${folderMap[displayType][jewelryType]}`
   const modelsDir = path.join(process.cwd(), 'public', folder)
 
@@ -116,6 +179,49 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // STAND MODE — fal.ai by-pass, Sharp ile deterministik compositing
+  // Takı birebir korunur, yalnızca arka plan stant referansından alınır
+  if (displayType === 'stand') {
+    const standOutputUrls: string[] = []
+
+    for (let i = 0; i < quantity; i++) {
+      // Her generation için ayrı rastgele stant görseli seç (görsel çeşitlilik)
+      const selectedFile = files[Math.floor(Math.random() * files.length)]
+      const standPath = path.join(process.cwd(), 'public', folder, selectedFile)
+
+      try {
+        const b64 = await compositeJewelryOnStand(imageBase64, standPath)
+        const outputUrl = `data:image/png;base64,${b64}`
+
+        await supabaseAdmin.from('generations').insert({
+          user_id: user.id,
+          jewelry_type: jewelryType,
+          status: 'done',
+          credits_used: 1,
+          output_image_url: outputUrl,
+        })
+
+        standOutputUrls.push(outputUrl)
+      } catch (err) {
+        console.error(`Stand composite error [${i}]:`, err)
+
+        await supabaseAdmin.from('generations').insert({
+          user_id: user.id,
+          jewelry_type: jewelryType,
+          status: 'failed',
+          credits_used: 1,
+        })
+      }
+    }
+
+    if (standOutputUrls.length === 0) {
+      return NextResponse.json({ error: 'Tüm üretimler başarısız' }, { status: 502 })
+    }
+
+    return NextResponse.json({ outputUrls: standOutputUrls, generationId: null })
+  }
+
+  // WOMAN MODE — fal.ai / Nano Banana akışı
   const randomFile = files[Math.floor(Math.random() * files.length)]
   const modelImageUrl = `https://jewelry-virtual.vercel.app/${folder}/${encodeURIComponent(randomFile)}`
   console.log('Seçilen referans model:', modelImageUrl)
@@ -128,18 +234,14 @@ export async function POST(req: NextRequest) {
   console.log('Takı URL:', uploadedImageUrl)
 
   // 6. quantity kadar paralel Nano Banana çağrısı yap
-  // Stant: stant görseli düzenlenir, takı referans olarak verilir
-  // Woman: model görseli referans, takı düzenlenir
-  const prompt = displayType === 'stand' ? standPrompts[jewelryType] : buildPrompts()[jewelryType]
-  const primaryImage = displayType === 'stand' ? uploadedImageUrl : modelImageUrl
-  const referenceImages = displayType === 'stand' ? [modelImageUrl] : [uploadedImageUrl]
+  const prompt = buildPrompts()[jewelryType]
 
   const results = await Promise.allSettled(
     Array.from({ length: quantity }, () =>
       fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
-          image_url: primaryImage,
-          image_urls: referenceImages,
+          image_url: modelImageUrl,
+          image_urls: [uploadedImageUrl],
           prompt,
           image_size: { width: 1024, height: 1024 },
         },
