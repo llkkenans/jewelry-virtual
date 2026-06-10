@@ -12,38 +12,50 @@ import {
   X,
   Gem,
   Link2,
-  User,
-  Package,
+  ChevronLeft,
 } from "lucide-react"
 
 type JewelryType = "ring" | "necklace" | "earring"
-type DisplayType = "woman" | "stand"
-
-const DISPLAY_TYPES: { id: DisplayType; icon: React.ElementType; label: string; desc: string }[] = [
-  { id: "woman", icon: User,    label: "Model Üzerinde", desc: "Gerçek el / boyun" },
-  { id: "stand", icon: Package, label: "Stant Üzerinde", desc: "Ürün standı" },
-]
 
 const JEWELRY_TYPES: {
   id: JewelryType
   label: string
   desc: string
   icon: React.ElementType
+  cardImage: string
 }[] = [
-  { id: "ring",     label: "Yüzük",  desc: "Parmakta deneme", icon: Gem      },
-  { id: "necklace", label: "Kolye",  desc: "Boyunda deneme",  icon: Link2    },
-  { id: "earring",  label: "Küpe",   desc: "Kulakta deneme",  icon: Sparkles },
+  {
+    id: "ring",
+    label: "Yüzük",
+    desc: "Parmakta deneme",
+    icon: Gem,
+    cardImage: "/models/woman%20/ring/lucid-origin_professional_photo_of_elegant_woman_s_hand_with_manicured_nails_close-up_white_s-3.jpg",
+  },
+  {
+    id: "necklace",
+    label: "Kolye",
+    desc: "Boyunda deneme",
+    icon: Link2,
+    cardImage: "/models/woman%20/necklace/1.jpg",
+  },
+  {
+    id: "earring",
+    label: "Küpe",
+    desc: "Kulakta deneme",
+    icon: Sparkles,
+    cardImage: "/models/woman%20/kupe/lucid-origin_professional_photo_of_A_close-up_photography_focusing_purely_on_the_ear_and_neck-1.jpg",
+  },
 ]
 
 const QUANTITIES = [1, 2, 3, 4]
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [step, setStep]               = useState<1 | 2>(1)
   const [dragging, setDragging]       = useState(false)
   const [file, setFile]               = useState<File | null>(null)
   const [preview, setPreview]         = useState<string | null>(null)
   const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
-  const [displayType, setDisplayType] = useState<DisplayType>("woman")
   const [quantity, setQuantity]       = useState<number>(1)
   const [generating, setGenerating]   = useState(false)
   const [results, setResults]         = useState<string[]>([])
@@ -76,6 +88,12 @@ export default function UploadPage() {
     setResults([])
     setError("")
     if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  function goBack() {
+    clearFile()
+    setJewelryType(null)
+    setStep(1)
   }
 
   function resizeAndConvertToBase64(f: File): Promise<string> {
@@ -119,7 +137,7 @@ export default function UploadPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType }),
+        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType: "woman" }),
       })
 
       if (!tryOnRes.ok) {
@@ -129,7 +147,6 @@ export default function UploadPage() {
 
       const tryOnData = await tryOnRes.json()
 
-      // API { outputUrls: string[] } veya eski { outputUrl: string } döndürebilir
       const urls: string[] = Array.isArray(tryOnData.outputUrls)
         ? tryOnData.outputUrls
         : tryOnData.outputUrl
@@ -155,18 +172,68 @@ export default function UploadPage() {
   }
 
   const canGenerate = !!file && !!jewelryType && !generating
+  const currentJewelry = JEWELRY_TYPES.find((j) => j.id === jewelryType)
 
+  /* ── Adım 1: Takı Seçim Ekranı ── */
+  if (step === 1) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-10">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
+            Takı Türünü Seçin
+          </h1>
+          <p className="text-sm text-[#6B7280] mt-1.5">
+            Hangi takıyı modellemek istiyorsunuz?
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-6 w-full max-w-2xl px-4">
+          {JEWELRY_TYPES.map(({ id, label, cardImage }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => { setJewelryType(id); setStep(2) }}
+              className="group relative w-full aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
+            >
+              <Image
+                src={cardImage}
+                alt={label}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 33vw, 200px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 p-4">
+                <p className="text-white text-lg font-semibold leading-tight">{label}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Adım 2: Upload Ekranı ── */
   return (
     <div className="space-y-6">
-      {/* Başlık */}
-      <div>
+      {/* Başlık + Geri */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={goBack}
+          className="flex items-center gap-1 text-sm text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer"
+        >
+          <ChevronLeft size={16} />
+          {currentJewelry?.label ?? "Geri"}
+        </button>
+        <div className="w-px h-4 bg-[#E5E7EB]" />
         <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
           Yeni Üretim
         </h1>
-        <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed">
-          Takı görselinizi yükleyin, sunum biçimini seçin ve yapay zeka destekli fotoğrafınızı oluşturun.
-        </p>
       </div>
+      <p className="text-sm text-[#6B7280] -mt-4 leading-relaxed">
+        Takı görselinizi yükleyin ve yapay zeka destekli fotoğrafınızı oluşturun.
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -219,67 +286,7 @@ export default function UploadPage() {
             )}
           </div>
 
-          {/* 2. Takı türü */}
-          <div>
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Takı Türü</p>
-            <div className="grid grid-cols-3 gap-2.5">
-              {JEWELRY_TYPES.map(({ id, label, desc, icon: Icon }) => {
-                const selected = jewelryType === id
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setJewelryType(id)}
-                    className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
-                      selected
-                        ? "border-[#111827] bg-[#111827]"
-                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
-                    }`}
-                  >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selected ? "bg-white/20" : "bg-[#F9FAFB]"}`}>
-                      <Icon size={16} className={selected ? "text-white" : "text-[#6B7280]"} />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>{label}</p>
-                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>{desc}</p>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* 3. Gösterim türü */}
-          <div>
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Sunum Biçimi</p>
-            <div className="grid grid-cols-2 gap-2.5">
-              {DISPLAY_TYPES.map(({ id, icon: Icon, label, desc }) => {
-                const selected = displayType === id
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setDisplayType(id)}
-                    className={`flex flex-col items-center gap-2 p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
-                      selected
-                        ? "border-[#111827] bg-[#111827]"
-                        : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
-                    }`}
-                  >
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selected ? "bg-white/20" : "bg-[#F9FAFB]"}`}>
-                      <Icon size={16} className={selected ? "text-white" : "text-[#6B7280]"} />
-                    </div>
-                    <div>
-                      <p className={`text-sm font-medium leading-tight ${selected ? "text-white" : "text-[#111827]"}`}>{label}</p>
-                      <p className={`text-xs mt-0.5 ${selected ? "text-white/70" : "text-[#6B7280]"}`}>{desc}</p>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* 4. Adet seçici */}
+          {/* 2. Adet seçici */}
           <div>
             <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Görsel Adedi</p>
             <div className="grid grid-cols-4 gap-2.5">
@@ -341,7 +348,6 @@ export default function UploadPage() {
           <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">Üretilen Görsel</p>
 
           {generating ? (
-            /* Skeleton — quantity kadar placeholder */
             <div className={`rounded-xl border border-[#E5E7EB] bg-white p-4 min-h-[420px] ${quantity > 1 ? "grid grid-cols-2 gap-3 content-start" : "space-y-3"}`}>
               {Array.from({ length: quantity }).map((_, i) => (
                 <div key={i} className="space-y-2">
@@ -351,7 +357,6 @@ export default function UploadPage() {
               ))}
             </div>
           ) : results.length > 0 ? (
-            /* Sonuç görselleri */
             <div className={`rounded-xl border border-[#E5E7EB] bg-white p-4 ${results.length > 1 ? "grid grid-cols-2 gap-4" : "space-y-4"}`}>
               {results.map((url, i) => (
                 <div key={i} className="space-y-2">
@@ -374,7 +379,6 @@ export default function UploadPage() {
               ))}
             </div>
           ) : (
-            /* Boş durum */
             <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white h-full min-h-[420px] gap-3 text-center px-6">
               <div className="w-12 h-12 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
                 <Sparkles size={20} className="text-[#9CA3AF]" />
