@@ -31,9 +31,9 @@ function buildPrompts(): Record<JewelryType, string> {
 }
 
 const standPrompts: Record<JewelryType, string> = {
-  ring:     'Place this exact ring on the jewelry display stand, luxury jewelry store photography, white background, professional product photography, ultra realistic',
-  necklace: 'Place this exact necklace on the jewelry display stand, luxury store photography, white background, professional product photography, ultra realistic',
-  earring:  'Place this exact earring on the jewelry display stand, luxury store photography, white background, professional product photography, ultra realistic',
+  ring:     'This is a luxury jewelry display stand. Place the ring shown in the reference image on the stand naturally. Professional jewelry store photography, white background, soft studio lighting, ultra realistic, 8k.',
+  necklace: 'This is a luxury jewelry display stand. Drape the necklace shown in the reference image on the stand naturally. Professional jewelry store photography, white background, soft studio lighting, ultra realistic, 8k.',
+  earring:  'This is a luxury jewelry display stand. Place the earring shown in the reference image on the stand naturally. Professional jewelry store photography, white background, soft studio lighting, ultra realistic, 8k.',
 }
 
 type NanoBananaResult = {
@@ -128,13 +128,18 @@ export async function POST(req: NextRequest) {
   console.log('Takı URL:', uploadedImageUrl)
 
   // 6. quantity kadar paralel Nano Banana çağrısı yap
+  // Stant: stant görseli düzenlenir, takı referans olarak verilir
+  // Woman: model görseli referans, takı düzenlenir
   const prompt = displayType === 'stand' ? standPrompts[jewelryType] : buildPrompts()[jewelryType]
+  const primaryImage = displayType === 'stand' ? uploadedImageUrl : modelImageUrl
+  const referenceImages = displayType === 'stand' ? [modelImageUrl] : [uploadedImageUrl]
+
   const results = await Promise.allSettled(
     Array.from({ length: quantity }, () =>
       fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
-          image_url: modelImageUrl,
-          image_urls: [uploadedImageUrl],
+          image_url: primaryImage,
+          image_urls: referenceImages,
           prompt,
           image_size: { width: 1024, height: 1024 },
         },
