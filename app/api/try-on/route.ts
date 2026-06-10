@@ -31,63 +31,6 @@ function buildPrompts(): Record<JewelryType, string> {
   }
 }
 
-// rembg ile AI kalitesinde arka plan kaldırılmış takıyı stant üzerine composite et
-async function compositeJewelryOnStand(
-  uploadedJewelryUrl: string,
-  standImagePath: string
-): Promise<string> {
-  // 1. rembg ile arka planı AI'a temizlet → şeffaf PNG URL
-  type RembgResult = { image: { url: string } }
-  const rembgResult = await fal.subscribe('fal-ai/imageutils/rembg', {
-    input: { image_url: uploadedJewelryUrl, sync_mode: true },
-  }) as { data: RembgResult }
-
-  const transparentUrl = rembgResult.data.image.url
-
-  // 2. Şeffaf PNG'yi indir
-  const fetchRes = await fetch(transparentUrl)
-  const jewelryPngBuffer = Buffer.from(await fetchRes.arrayBuffer())
-
-  // 3. Stant görselinin boyutlarını al
-  const { width: sW = 1024, height: sH = 1024 } = await sharp(standImagePath).metadata()
-  const targetSize = Math.round(Math.min(sW, sH) * 0.65)
-
-  // 4. Takıyı stant boyutuna göre ölçekle
-  const resized = await sharp(jewelryPngBuffer)
-    .resize(targetSize, targetSize, { fit: 'inside', withoutEnlargement: false })
-    .toBuffer()
-
-  const { width: rW = targetSize, height: rH = targetSize } = await sharp(resized).metadata()
-
-  // 5. Ortalanmış konumu hesapla
-  const left = Math.round((sW - rW) / 2)
-  const top  = Math.round((sH - rH) / 2)
-
-  // 6. Hafif drop-shadow için gölge katmanı oluştur
-  const shadowBlur = Math.round(targetSize * 0.03)
-  const shadowOffset = Math.round(targetSize * 0.015)
-  const shadow = await sharp(resized)
-    .ensureAlpha()
-    .composite([{
-      input: Buffer.from([0, 0, 0, 80]),
-      raw: { width: 1, height: 1, channels: 4 },
-      tile: true,
-      blend: 'dest-in',
-    }])
-    .blur(shadowBlur)
-    .toBuffer()
-
-  // 7. Stant üzerine: önce gölge, sonra takı
-  const composited = await sharp(standImagePath)
-    .composite([
-      { input: shadow, left: left + shadowOffset, top: top + shadowOffset, blend: 'multiply' },
-      { input: resized, left, top, blend: 'over' },
-    ])
-    .png()
-    .toBuffer()
-
-  return composited.toString('base64')
-}
 
 type NanoBananaResult = {
   images: Array<{ url: string }>
@@ -169,45 +112,64 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // STAND MODE — rembg (AI kesim) + Sharp composite
-  // Takı birebir korunur, yalnızca arka plan stant referansından alınır
+  // STAND MODE
   if (displayType === 'stand') {
-    // Takıyı bir kez fal.storage'a yükle (rembg için URL gerekli)
+    const standPrompts: Record<JewelryType, string> = {
+      ring: `This exact ring displayed on the jewelry stand in the image. The ring must be placed naturally on the stand holder, preserving every detail of the ring exactly as provided: same metal color, same gemstone, same design. Professional product photography, clean studio lighting, sharp focus on the ring, ultra realistic, no changes to the jewelry design whatsoever`,
+      necklace: `This exact necklace displayed on the jewelry stand in the image. The necklace must drape naturally on the stand, preserving every detail exactly as provided: same metal, same pendants, same chain design. Professional jewelry photography, clean studio lighting, sharp focus, ultra realistic, no changes to the jewelry design whatsoever`,
+      earring: `This exact earring displayed on the jewelry stand in the image. The earring must be placed on the stand holder, preserving every detail exactly as provided: same metal, same stones, same design. Professional product photography, clean studio lighting, sharp focus, ultra realistic, no changes to the jewelry design whatsoever`,
+    }
+
     const standJewelryBuffer = Buffer.from(imageBase64, 'base64')
     const standJewelryBlob = new Blob([standJewelryBuffer], { type: 'image/jpeg' })
     const uploadedJewelryUrl = await fal.storage.upload(standJewelryBlob)
 
+    const standResults = await Promise.allSettled(
+      Array.from({ length: quantity }, () => {
+        const selectedFile = files[Math.floor(Math.random() * files.length)]
+        const standImagePath = path.join(process.cwd(), 'public', folder, selectedFile)
+        const standImageBuffer = fs.readFileSync(standImagePath)
+        const standImageBlob = new Blob([standImageBuffer], { type: 'image/jpeg' })
+
+        return fal.storage.upload(standImageBlob).then((standImageUrl: string) =>
+          fal.subscribe('fal-ai/nano-banana-pro/edit', {
+            input: {
+              image_urls: [standImageUrl, uploadedJewelryUrl],
+              prompt: standPrompts[jewelryType],
+            },
+          })
+        )
+      })
+    )
+
     const standOutputUrls: string[] = []
 
-    for (let i = 0; i < quantity; i++) {
-      // Her generation için ayrı rastgele stant görseli seç (görsel çeşitlilik)
-      const selectedFile = files[Math.floor(Math.random() * files.length)]
-      const standPath = path.join(process.cwd(), 'public', folder, selectedFile)
+    await Promise.all(
+      standResults.map(async (result) => {
+        if (result.status === 'fulfilled') {
+          const outputUrl = (result.value.data as NanoBananaResult).images[0].url
 
-      try {
-        const b64 = await compositeJewelryOnStand(uploadedJewelryUrl, standPath)
-        const outputUrl = `data:image/png;base64,${b64}`
+          await supabaseAdmin.from('generations').insert({
+            user_id: user.id,
+            jewelry_type: jewelryType,
+            status: 'done',
+            credits_used: 1,
+            output_image_url: outputUrl,
+          })
 
-        await supabaseAdmin.from('generations').insert({
-          user_id: user.id,
-          jewelry_type: jewelryType,
-          status: 'done',
-          credits_used: 1,
-          output_image_url: outputUrl,
-        })
+          standOutputUrls.push(outputUrl)
+        } else {
+          console.error('Stand nano-banana error:', JSON.stringify(result.reason, null, 2))
 
-        standOutputUrls.push(outputUrl)
-      } catch (err) {
-        console.error(`Stand composite error [${i}]:`, err)
-
-        await supabaseAdmin.from('generations').insert({
-          user_id: user.id,
-          jewelry_type: jewelryType,
-          status: 'failed',
-          credits_used: 1,
-        })
-      }
-    }
+          await supabaseAdmin.from('generations').insert({
+            user_id: user.id,
+            jewelry_type: jewelryType,
+            status: 'failed',
+            credits_used: 1,
+          })
+        }
+      })
+    )
 
     if (standOutputUrls.length === 0) {
       return NextResponse.json({ error: 'Tüm üretimler başarısız' }, { status: 502 })
@@ -235,10 +197,8 @@ export async function POST(req: NextRequest) {
     Array.from({ length: quantity }, () =>
       fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
-          image_url: modelImageUrl,
-          image_urls: [uploadedImageUrl],
+          image_urls: [modelImageUrl, uploadedImageUrl],
           prompt,
-          image_size: { width: 1024, height: 1024 },
         },
       })
     )
