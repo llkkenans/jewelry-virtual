@@ -36,6 +36,28 @@ type NanoBananaResult = {
   images: Array<{ url: string }>
 }
 
+type ClarityUpscaleResult = {
+  image: { url: string }
+}
+
+async function upscaleImage(imageUrl: string): Promise<string> {
+  try {
+    const result = await fal.subscribe('fal-ai/clarity-upscaler', {
+      input: {
+        image_url: imageUrl,
+        scale: 2,
+        prompt: 'jewelry, ultra detailed, sharp focus, high resolution',
+        creativity: 0.1,
+        resemblance: 1.0,
+      },
+    }) as { data: ClarityUpscaleResult }
+    return result.data.image.url
+  } catch (err) {
+    console.error('Upscale failed, returning original:', err)
+    return imageUrl
+  }
+}
+
 export async function POST(req: NextRequest) {
   // 1. İstek gövdesinden imageBase64, jewelryType, displayType ve quantity al
   let imageBase64: string, jewelryType: JewelryType, displayType: DisplayType, quantity: number
@@ -147,7 +169,8 @@ export async function POST(req: NextRequest) {
     await Promise.all(
       standResults.map(async (result) => {
         if (result.status === 'fulfilled') {
-          const outputUrl = (result.value.data as NanoBananaResult).images[0].url
+          const rawUrl = (result.value.data as NanoBananaResult).images[0].url
+          const outputUrl = await upscaleImage(rawUrl)
 
           await supabaseAdmin.from('generations').insert({
             user_id: user.id,
@@ -210,7 +233,8 @@ export async function POST(req: NextRequest) {
   await Promise.all(
     results.map(async (result) => {
       if (result.status === 'fulfilled') {
-        const outputUrl = (result.value.data as NanoBananaResult).images[0].url
+        const rawUrl = (result.value.data as NanoBananaResult).images[0].url
+        const outputUrl = await upscaleImage(rawUrl)
         console.log('Nano Banana output URL:', outputUrl)
 
         await supabaseAdmin
