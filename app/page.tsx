@@ -9,9 +9,9 @@ import { Zap, Gift, Star } from "lucide-react"
 import ImageSpotlight from "@/components/ui/image-spotlight"
 
 const HERO_VIDEOS = [
-  "/videos/luxury.mp4",
-  "/videos/hailuo-2_3_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_closely_inspecti-0.mp4",
-  "/videos/kling-3.0_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_slowly_rotating_-0.mp4",
+  "/landing_videos/luxury.mp4",
+  "/landing_videos/hailuo-2_3_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_closely_inspecti-0.mp4",
+  "/landing_videos/kling-3.0_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_slowly_rotating_-0.mp4",
 ]
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
@@ -21,21 +21,21 @@ const SERIF = "'Cormorant Garant', Georgia, serif"
 const steps = [
   {
     n: "01",
-    img: "/images/more/step1.jpg",
+    img: "/landing_images/more/step1.jpg",
     imgPosition: "object-top",
     title: "Ürününüzü Yükleyin",
     desc: "Takı görselinizi sürükleyip bırakın ya da dosya seçin. Beyaz zemin üzerinde çekilmiş net bir fotoğraf, en yüksek kalite çıktıyı sağlar.",
   },
   {
     n: "02",
-    img: "/images/more/step2.jpg",
+    img: "/landing_images/more/step2.jpg",
     imgPosition: "object-center",
     title: "Türü & Adedi Belirleyin",
     desc: "Yüzük, kolye, küpe ya da bileklik — kategorinizi seçin. Tek görselden dörde kadar farklı model varyasyonu üretebilirsiniz.",
   },
   {
     n: "03",
-    img: "/images/more/step3.jpg",
+    img: "/landing_images/more/step3.jpg",
     imgPosition: "object-top",
     title: "Anında İndirin, Hemen Kullanın",
     desc: "Yapay zeka motorumuz takınızı gerçekçi bir model üzerine yerleştirir. 30 saniye içinde stüdyo kalitesinde ürün görseli elinizde.",
