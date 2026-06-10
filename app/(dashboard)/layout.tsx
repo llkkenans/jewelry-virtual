@@ -6,11 +6,12 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
-import { LogOut, Images, Upload } from "lucide-react"
+import { LogOut, Images, Upload, CreditCard } from "lucide-react"
 
 const navItems = [
   { href: "/upload", label: "Üret", icon: Upload },
   { href: "/gallery", label: "Galeri", icon: Images },
+  { href: "/billing", label: "Kredi", icon: CreditCard },
 ]
 
 export default function DashboardLayout({

@@ -49,6 +49,13 @@ const JEWELRY_TYPES: {
 
 const QUANTITIES = [1, 2, 3, 4]
 
+const PROGRESS_STEPS = [
+  "Görsel analiz ediliyor...",
+  "Maske oluşturuluyor...",
+  "Model üretiyor...",
+  "Son rötuşlar yapılıyor...",
+]
+
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [step, setStep]               = useState<1 | 2>(1)
@@ -58,6 +65,7 @@ export default function UploadPage() {
   const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
   const [quantity, setQuantity]       = useState<number>(1)
   const [generating, setGenerating]   = useState(false)
+  const [progressStep, setProgressStep] = useState(0)
   const [results, setResults]         = useState<string[]>([])
   const [error, setError]             = useState("")
 
@@ -118,6 +126,10 @@ export default function UploadPage() {
   async function handleGenerate() {
     if (!file || !jewelryType) return
     setGenerating(true)
+    setProgressStep(0)
+    const progressInterval = setInterval(() => {
+      setProgressStep((s) => (s < PROGRESS_STEPS.length - 1 ? s + 1 : s))
+    }, 7000)
     setError("")
 
     try {
@@ -158,6 +170,8 @@ export default function UploadPage() {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
     } finally {
       setGenerating(false)
+      clearInterval(progressInterval)
+      setProgressStep(0)
     }
   }
 
@@ -332,7 +346,7 @@ export default function UploadPage() {
             {generating ? (
               <span className="flex items-center gap-2">
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Üretiliyor...
+                {PROGRESS_STEPS[progressStep]}
               </span>
             ) : (
               <span className="flex items-center gap-2">
