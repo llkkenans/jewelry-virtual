@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import fs from 'fs'
 import path from 'path'
-import sharp from 'sharp'
+import fs from 'fs'
 
 type JewelryType = 'ring' | 'necklace' | 'earring'
-type DisplayType = 'woman' | 'stand'
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring']
-const VALID_DISPLAY_TYPES: DisplayType[] = ['woman', 'stand']
 
-const folderMap: Record<DisplayType, Record<JewelryType, string>> = {
-  woman: { ring: 'ring', necklace: 'necklace', earring: 'kupe' },
-  stand: { ring: 'ring', necklace: 'necklace', earring: 'kupe' },
+const folderMap: Record<JewelryType, string> = {
+  ring: 'ring',
+  necklace: 'necklace',
+  earring: 'kupe',
 }
 
 const skinTones = ['fair skin', 'olive skin', 'dark skin', 'light brown skin']
@@ -30,7 +28,6 @@ function buildPrompts(): Record<JewelryType, string> {
     earring:  `Elegant woman with ${randomSkin} wearing this exact earring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
   }
 }
-
 
 type NanoBananaResult = {
   images: Array<{ url: string }>
@@ -59,12 +56,10 @@ async function upscaleImage(imageUrl: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  // 1. İstek gövdesinden imageBase64, jewelryType, displayType ve quantity al
-  let imageBase64: string, jewelryType: JewelryType, displayType: DisplayType, quantity: number
+  let imageBase64: string, jewelryType: JewelryType, quantity: number
   try {
     const body = await req.json()
     ;({ imageBase64, jewelryType } = body as { imageBase64: string; jewelryType: JewelryType })
-    displayType = (body.displayType as DisplayType) || 'woman'
     quantity = Math.min(Math.max(Number(body.quantity) || 1, 1), 4)
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
@@ -84,14 +79,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  if (!VALID_DISPLAY_TYPES.includes(displayType)) {
-    return NextResponse.json(
-      { error: `Geçersiz displayType. Geçerli değerler: ${VALID_DISPLAY_TYPES.join(', ')}` },
-      { status: 400 }
-    )
-  }
-
-  // 2. Supabase session doğrula
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
@@ -102,7 +89,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
   }
 
-  // 3. Kredi kontrolü — quantity kadar kredi gerekli
   const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('credits')
@@ -113,8 +99,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  // 4. Klasörden referans görselleri listele
-  const folder = `models/${displayType}/${folderMap[displayType][jewelryType]}`
+  const folder = `models/woman/${folderMap[jewelryType]}`
   const modelsDir = path.join(process.cwd(), 'public', folder)
 
   let files: string[]
@@ -134,86 +119,16 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // STAND MODE
-  if (displayType === 'stand') {
-    const standPrompts: Record<JewelryType, string> = {
-      ring: `The exact same ring from the second image, naturally resting on the jewelry stand from the first image. Preserve every detail of the ring perfectly: identical metal color, identical gemstone, identical design, identical proportions. The ring must look physically integrated with the stand — lighting and shadows match the stand's light source, soft natural shadow cast on the stand surface, stand fabric texture subtly visible beneath the ring base. Seamless photorealistic composite, no harsh edges, luxury product photography, ultra sharp focus, no modifications to the ring design`,
-      necklace: `The exact same necklace from the second image, naturally draped on the jewelry stand from the first image. Preserve every detail perfectly: identical metal, identical pendants, identical chain, identical proportions. The necklace must look physically integrated with the stand — lighting and shadows match the stand's light source, soft natural shadow on the stand surface, stand fabric texture visible beneath the chain. Seamless photorealistic composite, no harsh edges, luxury jewelry photography, ultra sharp focus, no modifications to the necklace design`,
-      earring: `The exact same earring from the second image, naturally placed on the jewelry stand from the first image. Preserve every detail perfectly: identical metal, identical stones, identical design, identical proportions. The earring must look physically integrated with the stand — lighting and shadows match the stand's light source, soft natural shadow cast on the stand surface. Seamless photorealistic composite, no harsh edges, luxury product photography, ultra sharp focus, no modifications to the earring design`,
-    }
-
-    const standJewelryBuffer = Buffer.from(imageBase64, 'base64')
-    const standJewelryBlob = new Blob([standJewelryBuffer], { type: 'image/jpeg' })
-    const uploadedJewelryUrl = await fal.storage.upload(standJewelryBlob)
-
-    const standResults = await Promise.allSettled(
-      Array.from({ length: quantity }, () => {
-        const selectedFile = files[Math.floor(Math.random() * files.length)]
-        const standImagePath = path.join(process.cwd(), 'public', folder, selectedFile)
-        const standImageBuffer = fs.readFileSync(standImagePath)
-        const standImageBlob = new Blob([standImageBuffer], { type: 'image/jpeg' })
-
-        return fal.storage.upload(standImageBlob).then((standImageUrl: string) =>
-          fal.subscribe('fal-ai/nano-banana-pro/edit', {
-            input: {
-              image_urls: [standImageUrl, uploadedJewelryUrl],
-              prompt: standPrompts[jewelryType],
-            },
-          })
-        )
-      })
-    )
-
-    const standOutputUrls: string[] = []
-
-    await Promise.all(
-      standResults.map(async (result) => {
-        if (result.status === 'fulfilled') {
-          const rawUrl = (result.value.data as NanoBananaResult).images[0].url
-          const outputUrl = await upscaleImage(rawUrl)
-
-          await supabaseAdmin.from('generations').insert({
-            user_id: user.id,
-            jewelry_type: jewelryType,
-            status: 'done',
-            credits_used: 1,
-            output_image_url: outputUrl,
-          })
-
-          standOutputUrls.push(outputUrl)
-        } else {
-          console.error('Stand nano-banana error:', JSON.stringify(result.reason, null, 2))
-
-          await supabaseAdmin.from('generations').insert({
-            user_id: user.id,
-            jewelry_type: jewelryType,
-            status: 'failed',
-            credits_used: 1,
-          })
-        }
-      })
-    )
-
-    if (standOutputUrls.length === 0) {
-      return NextResponse.json({ error: 'Tüm üretimler başarısız' }, { status: 502 })
-    }
-
-    return NextResponse.json({ outputUrls: standOutputUrls, generationId: null })
-  }
-
-  // WOMAN MODE — fal.ai / Nano Banana akışı
   const randomFile = files[Math.floor(Math.random() * files.length)]
   const modelImageUrl = `https://jewelry-virtual.vercel.app/${folder}/${encodeURIComponent(randomFile)}`
   console.log('Seçilen referans model:', modelImageUrl)
 
-  // 5. Takı görselini fal.storage'a yükle (bir kez, tüm üretimler için)
   const imageBuffer = Buffer.from(imageBase64, 'base64')
   const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
   const uploadedImageUrl = await fal.storage.upload(imageBlob)
   console.log('Model URL:', modelImageUrl)
   console.log('Takı URL:', uploadedImageUrl)
 
-  // 6. quantity kadar paralel Nano Banana çağrısı yap
   const prompt = buildPrompts()[jewelryType]
 
   const results = await Promise.allSettled(
@@ -227,7 +142,6 @@ export async function POST(req: NextRequest) {
     )
   )
 
-  // 7. Her sonuç için ayrı generations kaydı aç
   const outputUrls: string[] = []
 
   await Promise.all(
