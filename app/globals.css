@@ -86,6 +86,6 @@
     color: var(--foreground);
   }
   html {
-    font-family: 'Fraunces', Georgia, serif;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }

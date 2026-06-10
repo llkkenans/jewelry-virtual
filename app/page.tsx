@@ -16,7 +16,7 @@ const HERO_VIDEOS = [
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
 
-const SERIF = "'Fraunces', Georgia, serif"
+const SERIF = "'Cormorant Garamond', Georgia, serif"
 
 const steps = [
   {
