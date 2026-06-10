@@ -29,21 +29,21 @@ const JEWELRY_TYPES: {
     label: "Yüzük",
     desc: "Parmakta deneme",
     icon: Gem,
-    cardImage: "/models/woman%20/ring/lucid-origin_professional_photo_of_elegant_woman_s_hand_with_manicured_nails_close-up_white_s-3.jpg",
+    cardImage: "/models/woman/ring/lucid-origin_professional_photo_of_elegant_woman_s_hand_with_manicured_nails_close-up_white_s-3.jpg",
   },
   {
     id: "necklace",
     label: "Kolye",
     desc: "Boyunda deneme",
     icon: Link2,
-    cardImage: "/models/woman%20/necklace/1.jpg",
+    cardImage: "/models/woman/necklace/1.jpg",
   },
   {
     id: "earring",
     label: "Küpe",
     desc: "Kulakta deneme",
     icon: Sparkles,
-    cardImage: "/models/woman%20/kupe/lucid-origin_professional_photo_of_A_close-up_photography_focusing_purely_on_the_ear_and_neck-1.jpg",
+    cardImage: "/models/woman/kupe/lucid-origin_professional_photo_of_A_close-up_photography_focusing_purely_on_the_ear_and_neck-1.jpg",
   },
 ]
 
