@@ -260,7 +260,7 @@ export default function LandingPage() {
             {/* Yüzük */}
             <div className="flex flex-col gap-4 w-full sm:w-auto">
               <ImageSpotlight
-                src="/images/landing/ring.jpg"
+                src="/landing_images/landing/ring.jpg"
                 alt="Elmas solitaire yüzük stüdyo çekimi"
                 orientation="portrait"
                 width={300}
@@ -286,7 +286,7 @@ export default function LandingPage() {
             {/* Küpe */}
             <div className="flex flex-col gap-4 w-full sm:w-auto">
               <ImageSpotlight
-                src="/images/landing/earrings.jpg"
+                src="/landing_images/landing/earrings.jpg"
                 alt="Altın halka küpeler stüdyo çekimi"
                 orientation="portrait"
                 width={300}
@@ -312,7 +312,7 @@ export default function LandingPage() {
             {/* Kolye */}
             <div className="flex flex-col gap-4 w-full sm:w-auto">
               <ImageSpotlight
-                src="/images/landing/necklace.jpg"
+                src="/landing_images/landing/necklace.jpg"
                 alt="İnce altın kolye ve pendant stüdyo çekimi"
                 orientation="portrait"
                 width={300}
