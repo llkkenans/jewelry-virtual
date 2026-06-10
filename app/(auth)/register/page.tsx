@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase/client"
 
-const SERIF = "'Audrey', Georgia, serif"
+const SERIF = "'Fraunces', Georgia, serif"
 
 /* Sağ halka küpenin konumu (container yüzdesi)
    Orijinal görsel — küpe merkezi ~71% soldan, ~46% yukarıdan */
