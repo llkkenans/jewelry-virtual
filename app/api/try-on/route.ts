@@ -31,68 +31,58 @@ function buildPrompts(): Record<JewelryType, string> {
   }
 }
 
-// Bir pikselin açık/beyaz arka plan olup olmadığını belirler (mask/route.ts ile aynı mantık)
-function isBackground(r: number, g: number, b: number): boolean {
-  const brightness = (r + g + b) / 3
-  const maxChannel = Math.max(r, g, b)
-  const minChannel = Math.min(r, g, b)
-  const saturation = maxChannel === 0 ? 0 : (maxChannel - minChannel) / maxChannel
-  return brightness > 220 && saturation < 0.15
-}
-
-// Takı görselinin arka planını şeffaflaştırır ve stant görseli üzerine ortalar
+// rembg ile AI kalitesinde arka plan kaldırılmış takıyı stant üzerine composite et
 async function compositeJewelryOnStand(
-  jewelryBase64: string,
+  uploadedJewelryUrl: string,
   standImagePath: string
 ): Promise<string> {
-  const jewelryBuffer = Buffer.from(
-    jewelryBase64.replace(/^data:image\/[a-z]+;base64,/, ''),
-    'base64'
-  )
+  // 1. rembg ile arka planı AI'a temizlet → şeffaf PNG URL
+  type RembgResult = { image: { url: string } }
+  const rembgResult = await fal.subscribe('fal-ai/imageutils/rembg', {
+    input: { image_url: uploadedJewelryUrl, sync_mode: true },
+  }) as { data: RembgResult }
 
-  const { data: pixels, info } = await sharp(jewelryBuffer)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true })
+  const transparentUrl = rembgResult.data.image.url
 
-  const { width: jW, height: jH } = info
-  const transparent = Buffer.alloc(jW * jH * 4)
+  // 2. Şeffaf PNG'yi indir
+  const fetchRes = await fetch(transparentUrl)
+  const jewelryPngBuffer = Buffer.from(await fetchRes.arrayBuffer())
 
-  for (let i = 0; i < jW * jH; i++) {
-    const r = pixels[i * 4]
-    const g = pixels[i * 4 + 1]
-    const b = pixels[i * 4 + 2]
-    const a = pixels[i * 4 + 3]
-
-    if (a < 10 || isBackground(r, g, b)) {
-      transparent[i * 4 + 3] = 0
-    } else {
-      transparent[i * 4]     = r
-      transparent[i * 4 + 1] = g
-      transparent[i * 4 + 2] = b
-      transparent[i * 4 + 3] = a
-    }
-  }
-
-  const jewelryPng = await sharp(transparent, {
-    raw: { width: jW, height: jH, channels: 4 },
-  })
-    .png()
-    .toBuffer()
-
+  // 3. Stant görselinin boyutlarını al
   const { width: sW = 1024, height: sH = 1024 } = await sharp(standImagePath).metadata()
   const targetSize = Math.round(Math.min(sW, sH) * 0.65)
 
-  const resized = await sharp(jewelryPng)
+  // 4. Takıyı stant boyutuna göre ölçekle
+  const resized = await sharp(jewelryPngBuffer)
     .resize(targetSize, targetSize, { fit: 'inside', withoutEnlargement: false })
     .toBuffer()
 
   const { width: rW = targetSize, height: rH = targetSize } = await sharp(resized).metadata()
+
+  // 5. Ortalanmış konumu hesapla
   const left = Math.round((sW - rW) / 2)
   const top  = Math.round((sH - rH) / 2)
 
+  // 6. Hafif drop-shadow için gölge katmanı oluştur
+  const shadowBlur = Math.round(targetSize * 0.03)
+  const shadowOffset = Math.round(targetSize * 0.015)
+  const shadow = await sharp(resized)
+    .ensureAlpha()
+    .composite([{
+      input: Buffer.from([0, 0, 0, 80]),
+      raw: { width: 1, height: 1, channels: 4 },
+      tile: true,
+      blend: 'dest-in',
+    }])
+    .blur(shadowBlur)
+    .toBuffer()
+
+  // 7. Stant üzerine: önce gölge, sonra takı
   const composited = await sharp(standImagePath)
-    .composite([{ input: resized, left, top, blend: 'over' }])
+    .composite([
+      { input: shadow, left: left + shadowOffset, top: top + shadowOffset, blend: 'multiply' },
+      { input: resized, left, top, blend: 'over' },
+    ])
     .png()
     .toBuffer()
 
@@ -179,9 +169,14 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // STAND MODE — fal.ai by-pass, Sharp ile deterministik compositing
+  // STAND MODE — rembg (AI kesim) + Sharp composite
   // Takı birebir korunur, yalnızca arka plan stant referansından alınır
   if (displayType === 'stand') {
+    // Takıyı bir kez fal.storage'a yükle (rembg için URL gerekli)
+    const standJewelryBuffer = Buffer.from(imageBase64, 'base64')
+    const standJewelryBlob = new Blob([standJewelryBuffer], { type: 'image/jpeg' })
+    const uploadedJewelryUrl = await fal.storage.upload(standJewelryBlob)
+
     const standOutputUrls: string[] = []
 
     for (let i = 0; i < quantity; i++) {
@@ -190,7 +185,7 @@ export async function POST(req: NextRequest) {
       const standPath = path.join(process.cwd(), 'public', folder, selectedFile)
 
       try {
-        const b64 = await compositeJewelryOnStand(imageBase64, standPath)
+        const b64 = await compositeJewelryOnStand(uploadedJewelryUrl, standPath)
         const outputUrl = `data:image/png;base64,${b64}`
 
         await supabaseAdmin.from('generations').insert({
