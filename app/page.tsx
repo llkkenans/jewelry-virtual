@@ -161,89 +161,76 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <Separator className="bg-[#E5E7EB]" />
-
         {/* ── Nasıl Çalışır ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
+        <section className="bg-[#111827] py-20 sm:py-28">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-          {/* Başlık */}
-          <div className="mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-            <div>
-              <p className="text-[10px] font-medium text-[#9CA3AF] uppercase tracking-[0.35em] mb-4">
+            {/* Başlık */}
+            <div className="mb-14">
+              <p className="text-[10px] font-medium text-white/30 uppercase tracking-[0.4em] mb-5">
                 Nasıl Çalışır
               </p>
               <h2
-                style={{ fontFamily: SERIF }}
-                className="text-3xl sm:text-5xl font-normal tracking-tight text-[#111827] leading-tight"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+                className="text-3xl sm:text-[2.75rem] font-bold tracking-tight text-white leading-[1.1] uppercase"
               >
-                Üç adımda<br />
-                <em className="italic text-[#9CA3AF]">stüdyo kalitesi</em>
+                Üç Adımda<br />
+                <span className="text-white/35">Stüdyo Kalitesi</span>
               </h2>
             </div>
-            <Link href="/register">
-              <Button
-                variant="outline"
-                className="h-10 px-6 border-[#E5E7EB] text-[#111827] text-sm font-medium rounded-xl hover:bg-[#F9FAFB] cursor-pointer tracking-wide shrink-0"
-              >
-                Hemen Başla →
-              </Button>
-            </Link>
-          </div>
 
-          {/* Adım kartları */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {steps.map(({ n, img, imgPosition, title, desc }) => (
-              <div key={n} className="group flex flex-col">
+            {/* Video + Adımlar */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
 
-                {/* Görsel */}
-                <div className="relative overflow-hidden rounded-2xl aspect-[3/4] mb-5">
-                  <img
-                    src={img}
-                    alt={title}
-                    className={`w-full h-full object-cover ${imgPosition} transition-transform duration-700 ease-out group-hover:scale-[1.04]`}
-                  />
+              {/* Video */}
+              <div className="relative rounded-2xl overflow-hidden w-full max-w-sm mx-auto lg:mx-0 aspect-[9/16]">
+                <video
+                  src="/landing_videos/hailo.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-2xl" />
+              </div>
 
-                  {/* Degrade overlay — alt metin alanı */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
-                  {/* Adım numarası — sol üst */}
-                  <div className="absolute top-4 left-5">
+              {/* Adımlar */}
+              <div className="flex flex-col gap-10">
+                {steps.map(({ n, title, desc }) => (
+                  <div key={n} className="flex gap-5 items-start">
                     <span
                       style={{ fontFamily: SERIF }}
-                      className="text-5xl font-light text-white/20 italic leading-none select-none"
+                      className="text-5xl font-light text-white/15 italic leading-none select-none shrink-0 mt-1"
                     >
                       {n}
                     </span>
+                    <div className="pt-3 border-t border-white/10 flex-1">
+                      <p
+                        style={{ fontFamily: SERIF }}
+                        className="text-xl font-normal text-white mb-2 tracking-tight leading-tight"
+                      >
+                        {title}
+                      </p>
+                      <p className="text-sm text-white/45 leading-relaxed font-light">
+                        {desc}
+                      </p>
+                    </div>
                   </div>
+                ))}
 
-                  {/* İnce gold çizgi — hover'da görünür */}
-                  <div className="absolute inset-0 rounded-2xl border border-white/0 group-hover:border-white/10 transition-all duration-500" />
-                </div>
-
-                {/* Metin */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-px w-5 bg-[#E5E7EB]" />
-                    <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
-                      {n}
-                    </span>
-                  </div>
-                  <p
-                    style={{ fontFamily: SERIF }}
-                    className="text-xl font-normal text-[#111827] mb-2 tracking-tight leading-tight"
-                  >
-                    {title}
-                  </p>
-                  <p className="text-sm text-[#9CA3AF] leading-relaxed font-light">
-                    {desc}
-                  </p>
+                <div className="pt-2">
+                  <Link href="/register">
+                    <Button className="h-10 px-7 bg-white hover:bg-white/90 text-[#111827] text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all">
+                      Hemen Başla
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            ))}
+
+            </div>
           </div>
         </section>
-
-        <Separator className="bg-[#E5E7EB]" />
 
         {/* ── Koleksiyon Spotlight ── */}
         <section className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
