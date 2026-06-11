@@ -119,40 +119,24 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
-          {/* Metin — sol alt */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 pb-14 pt-14">
-            <div className="max-w-5xl mx-auto px-6 sm:px-8">
-              <p className="text-[10px] tracking-[0.45em] uppercase text-white/50 mb-6 font-light">
-                B2B Kuyumcu Çözümü
-              </p>
-              <h1
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-[2.6rem] sm:text-[4rem] lg:text-[5rem] font-black leading-[1.0] tracking-tight text-white mb-8 max-w-2xl uppercase"
-              >
-                Takılarınızı<br />
-                Saniyeler İçinde<br />
-                Canlandırın
-              </h1>
-              <p className="text-sm sm:text-base text-white/60 max-w-md mb-10 font-light leading-relaxed">
-                Pahalı stüdyo çekimine gerek yok. Yapay zeka ile takınızı
-                gerçek modeller üzerinde görün.
-              </p>
-              <div className="flex flex-row gap-3 items-center">
-                <Link href="/register">
-                  <Button className="h-11 px-8 bg-white text-[#111827] hover:bg-white/90 text-sm font-medium rounded-none cursor-pointer tracking-widest uppercase transition-all">
-                    Şimdi Dene
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button className="h-11 px-8 border border-white/40 text-white/80 hover:bg-white/10 hover:border-white/60 text-sm font-light rounded-none bg-transparent cursor-pointer tracking-widest uppercase transition-all">
-                    Giriş Yap
-                  </Button>
-                </Link>
-              </div>
-              <p className="mt-8 text-[10px] text-white/25 tracking-[0.3em] uppercase">
-                Kredi kartı gerekmez &nbsp;·&nbsp; 10 ücretsiz kredi &nbsp;·&nbsp; Anında başla
-              </p>
-            </div>
+          {/* Metin — sol alt köşe */}
+          <div className="absolute bottom-10 left-0 z-10 px-6 sm:px-10 max-w-lg">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-white/55 mb-4 font-light">
+              Yeni koleksiyonunuzu keşfedin
+            </p>
+            <h1
+              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="text-[1.85rem] sm:text-[2.4rem] font-black leading-[1.06] tracking-tight text-white mb-6 uppercase"
+            >
+              Takılarınızı<br />
+              Saniyeler İçinde<br />
+              Canlandırın
+            </h1>
+            <Link href="/register">
+              <Button className="h-9 px-5 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
+                Şimdi Keşfet
+              </Button>
+            </Link>
           </div>
         </section>
 
