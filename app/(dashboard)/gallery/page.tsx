@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2 } from "lucide-react"
+import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2, ChevronsLeftRight } from "lucide-react"
 import { toast } from "sonner"
 
 type Generation = {
@@ -14,6 +14,7 @@ type Generation = {
   jewelry_type: string
   created_at: string
   is_favorite: boolean
+  jewelry_items: { original_image_url: string } | null
 }
 
 type Tab = "all" | "favorites"
@@ -55,6 +56,95 @@ async function handleDownload(url: string, index: number) {
   URL.revokeObjectURL(a.href)
 }
 
+function BeforeAfterSlider({
+  beforeSrc,
+  afterSrc,
+  alt,
+}: {
+  beforeSrc: string
+  afterSrc: string
+  alt: string
+}) {
+  const [pos, setPos] = useState(50)
+  const dragging = useRef(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const updatePos = useCallback((clientX: number) => {
+    const el = containerRef.current
+    if (!el) return
+    const { left, width } = el.getBoundingClientRect()
+    const pct = Math.min(100, Math.max(0, ((clientX - left) / width) * 100))
+    setPos(pct)
+  }, [])
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragging.current = true
+    updatePos(e.clientX)
+  }, [updatePos])
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragging.current) return
+    updatePos(e.clientX)
+  }, [updatePos])
+
+  const onPointerUp = useCallback(() => {
+    dragging.current = false
+  }, [])
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB] select-none"
+    >
+      {/* After (right/output) — base layer */}
+      <img
+        src={afterSrc}
+        alt={alt}
+        crossOrigin="anonymous"
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      {/* Before (left/original) — clipped layer */}
+      <img
+        src={beforeSrc}
+        alt="Orijinal takı"
+        crossOrigin="anonymous"
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+      />
+
+      {/* Divider line */}
+      <div
+        className="absolute top-0 bottom-0 w-px bg-white shadow-[0_0_4px_rgba(0,0,0,0.4)] pointer-events-none"
+        style={{ left: `${pos}%` }}
+      />
+
+      {/* Drag handle */}
+      <div
+        className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center cursor-ew-resize touch-none z-10"
+        style={{ left: `${pos}%` }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <ChevronsLeftRight size={14} className="text-[#374151]" />
+      </div>
+
+      {/* Labels */}
+      <span className="absolute bottom-2 left-2 text-[9px] font-medium tracking-wide uppercase text-white/80 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">
+        Önce
+      </span>
+      <span className="absolute bottom-2 right-2 text-[9px] font-medium tracking-wide uppercase text-white/80 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">
+        Sonra
+      </span>
+    </div>
+  )
+}
+
 export default function GalleryPage() {
   const [items, setItems] = useState<Generation[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,12 +158,12 @@ export default function GalleryPage() {
 
       const { data } = await supabase
         .from("generations")
-        .select("id, output_image_url, jewelry_type, created_at, is_favorite")
+        .select("id, output_image_url, jewelry_type, created_at, is_favorite, jewelry_items(original_image_url)")
         .eq("status", "done")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
 
-      setItems(data ?? [])
+      setItems((data ?? []) as Generation[])
       setLoading(false)
     }
     load()
@@ -217,21 +307,21 @@ export default function GalleryPage() {
           {displayed.map((item) => {
             const type = JEWELRY_LABELS[item.jewelry_type]
             const Icon = type?.icon ?? Gem
+            const originalSrc = item.jewelry_items?.original_image_url ?? "/placeholder-jewelry.jpg"
             return (
               <div
                 key={item.id}
                 className="rounded-xl border border-[#E5E7EB] bg-white p-3 space-y-3 hover:shadow-sm transition-shadow"
               >
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
-                  <img
-                    src={item.output_image_url}
+                <div className="relative">
+                  <BeforeAfterSlider
+                    beforeSrc={originalSrc}
+                    afterSrc={item.output_image_url}
                     alt={type?.label ?? item.jewelry_type}
-                    crossOrigin="anonymous"
-                    className="w-full h-full object-cover"
                   />
                   <button
                     onClick={() => toggleFavorite(item.id, item.is_favorite)}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer z-20"
                     aria-label={item.is_favorite ? "Favoriden çıkar" : "Favoriye ekle"}
                   >
                     <Heart
