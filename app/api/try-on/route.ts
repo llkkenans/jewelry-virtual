@@ -42,7 +42,7 @@ async function upscaleImage(imageUrl: string): Promise<string> {
     const result = await fal.subscribe('fal-ai/clarity-upscaler', {
       input: {
         image_url: imageUrl,
-        scale: 2,
+        upscaling_factor: 2,
         prompt: 'jewelry, ultra detailed, sharp focus, high resolution',
         creativity: 0.1,
         resemblance: 1.0,
@@ -120,7 +120,8 @@ export async function POST(req: NextRequest) {
   }
 
   const randomFile = files[Math.floor(Math.random() * files.length)]
-  const modelImageUrl = `https://jewelry-virtual.vercel.app/${folder}/${encodeURIComponent(randomFile)}`
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://jewelry-virtual.vercel.app'
+  const modelImageUrl = `${appUrl}/${folder}/${encodeURIComponent(randomFile)}`
   console.log('Seçilen referans model:', modelImageUrl)
 
   const imageBuffer = Buffer.from(imageBase64, 'base64')

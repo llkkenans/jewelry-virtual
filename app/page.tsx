@@ -77,22 +77,24 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white text-[#111827]">
 
       {/* ── Navbar ── */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-md border-b border-[#E5E7EB]/60">
+      <header className="fixed top-0 left-0 right-0 z-40">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-5 h-5 rotate-45 border-2 border-[#111827] flex items-center justify-center">
-              <div className="w-1 h-1 bg-[#111827] rotate-45" />
+            <div className="w-5 h-5 rotate-45 border-2 border-white flex items-center justify-center">
+              <div className="w-1 h-1 bg-white rotate-45" />
             </div>
-            <span style={{ fontFamily: SERIF }} className="text-base font-semibold tracking-wide">
+            <span style={{ fontFamily: SERIF }} className="text-base font-semibold tracking-wide text-white">
               Jewelry Virtual
             </span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-[#6B7280] hover:text-[#111827] transition-colors">
-              Giriş Yap
+          <div className="flex items-center gap-2">
+            <Link href="/login">
+              <Button className="h-8 px-4 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
+                Giriş Yap
+              </Button>
             </Link>
             <Link href="/register">
-              <Button className="h-8 px-4 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-lg cursor-pointer tracking-wide">
+              <Button className="h-8 px-4 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
                 Ücretsiz Dene
               </Button>
             </Link>
@@ -126,7 +128,7 @@ export default function LandingPage() {
             </p>
             <h1
               style={{ fontFamily: "'Inter', sans-serif" }}
-              className="text-[1.85rem] sm:text-[2.4rem] font-black leading-[1.06] tracking-tight text-white mb-6 uppercase"
+              className="text-[1.85rem] sm:text-[2.4rem] font-bold leading-[1.25] tracking-tight text-white mb-6 uppercase"
             >
               Takılarınızı<br />
               Saniyeler İçinde<br />
