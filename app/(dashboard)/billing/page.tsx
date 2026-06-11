@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Sparkles, Zap, TrendingUp } from "lucide-react"
 
-const SERIF = "'Cormorant Garamond', Georgia, serif"
+const SERIF = "'EB Garamond', Georgia, serif"
 
 const PLANS = [
   {

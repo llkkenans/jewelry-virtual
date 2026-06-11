@@ -16,7 +16,7 @@ const HERO_VIDEOS = [
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
 
-const SERIF = "'Cormorant Garamond', Georgia, serif"
+const SERIF = "'EB Garamond', Georgia, serif"
 
 const steps = [
   {
@@ -103,7 +103,7 @@ export default function LandingPage() {
       <main>
 
         {/* ── Hero: Tam Ekran Video ── */}
-        <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        <section className="relative h-screen overflow-hidden">
           {videoSrc && (
             <video
               key={videoSrc}
@@ -115,39 +115,44 @@ export default function LandingPage() {
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/65" />
+          {/* Sol alttan sağa doğru kararlaşan gradient — Pandora tarzı */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
-          <div className="relative z-10 text-center text-white px-4 max-w-3xl mx-auto pt-14">
-            <p className="text-[10px] tracking-[0.4em] uppercase text-white/45 mb-10 font-light">
-              B2B Kuyumcu Çözümü
-            </p>
-            <h1
-              style={{ fontFamily: SERIF }}
-              className="text-5xl sm:text-[5.5rem] font-light leading-[1.08] tracking-tight text-white mb-8"
-            >
-              Takılarınızı<br />
-              <em className="font-light">Saniyeler İçinde</em><br />
-              Canlandırın
-            </h1>
-            <p className="text-[15px] text-white/55 max-w-sm mx-auto mb-12 font-light leading-relaxed tracking-wide">
-              Pahalı stüdyo çekimine gerek yok. Yapay zeka ile takınızı
-              gerçek modeller üzerinde görün.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <Link href="/register">
-                <Button className="h-12 px-9 bg-white text-[#111827] hover:bg-white/92 text-sm font-medium rounded-xl cursor-pointer tracking-wide transition-all">
-                  Ücretsiz Dene →
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button className="h-12 px-9 border border-white/30 text-white/85 hover:bg-white/10 hover:border-white/50 text-sm font-medium rounded-xl bg-transparent cursor-pointer tracking-wide transition-all">
-                  Giriş Yap
-                </Button>
-              </Link>
+          {/* Metin — sol alt */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 pb-14 pt-14">
+            <div className="max-w-5xl mx-auto px-6 sm:px-8">
+              <p className="text-[10px] tracking-[0.45em] uppercase text-white/50 mb-6 font-light">
+                B2B Kuyumcu Çözümü
+              </p>
+              <h1
+                style={{ fontFamily: SERIF }}
+                className="text-[2.8rem] sm:text-[4.5rem] lg:text-[5.5rem] font-semibold leading-[1.05] tracking-tight text-white mb-8 max-w-2xl"
+              >
+                Takılarınızı<br />
+                Saniyeler İçinde<br />
+                <em className="font-normal italic">Canlandırın</em>
+              </h1>
+              <p className="text-sm sm:text-base text-white/60 max-w-md mb-10 font-light leading-relaxed">
+                Pahalı stüdyo çekimine gerek yok. Yapay zeka ile takınızı
+                gerçek modeller üzerinde görün.
+              </p>
+              <div className="flex flex-row gap-3 items-center">
+                <Link href="/register">
+                  <Button className="h-11 px-8 bg-white text-[#111827] hover:bg-white/90 text-sm font-medium rounded-none cursor-pointer tracking-widest uppercase transition-all">
+                    Şimdi Dene
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button className="h-11 px-8 border border-white/40 text-white/80 hover:bg-white/10 hover:border-white/60 text-sm font-light rounded-none bg-transparent cursor-pointer tracking-widest uppercase transition-all">
+                    Giriş Yap
+                  </Button>
+                </Link>
+              </div>
+              <p className="mt-8 text-[10px] text-white/25 tracking-[0.3em] uppercase">
+                Kredi kartı gerekmez &nbsp;·&nbsp; 10 ücretsiz kredi &nbsp;·&nbsp; Anında başla
+              </p>
             </div>
-            <p className="mt-10 text-[11px] text-white/25 tracking-widest uppercase">
-              Kredi kartı gerekmez &nbsp;·&nbsp; 10 ücretsiz kredi &nbsp;·&nbsp; Anında başla
-            </p>
           </div>
         </section>
 
@@ -164,10 +169,10 @@ export default function LandingPage() {
               </p>
               <h2
                 style={{ fontFamily: SERIF }}
-                className="text-3xl sm:text-5xl font-light tracking-tight text-[#111827] leading-tight"
+                className="text-3xl sm:text-5xl font-normal tracking-tight text-[#111827] leading-tight"
               >
                 Üç adımda<br />
-                <em className="text-[#9CA3AF]">stüdyo kalitesi</em>
+                <em className="italic text-[#9CA3AF]">stüdyo kalitesi</em>
               </h2>
             </div>
             <Link href="/register">
@@ -220,7 +225,7 @@ export default function LandingPage() {
                   </div>
                   <p
                     style={{ fontFamily: SERIF }}
-                    className="text-xl font-light text-[#111827] mb-2 tracking-tight leading-tight"
+                    className="text-xl font-normal text-[#111827] mb-2 tracking-tight leading-tight"
                   >
                     {title}
                   </p>
@@ -244,10 +249,10 @@ export default function LandingPage() {
               </p>
               <h2
                 style={{ fontFamily: SERIF }}
-                className="text-3xl sm:text-5xl font-light tracking-tight text-[#111827] leading-tight"
+                className="text-3xl sm:text-5xl font-normal tracking-tight text-[#111827] leading-tight"
               >
                 Her takı türü için<br />
-                <em className="text-[#9CA3AF]">stüdyo kalitesi</em>
+                <em className="italic text-[#9CA3AF]">stüdyo kalitesi</em>
               </h2>
             </div>
             <p className="text-sm text-[#9CA3AF] leading-relaxed font-light max-w-xs sm:text-right">
@@ -274,7 +279,7 @@ export default function LandingPage() {
                     Yüzük
                   </span>
                 </div>
-                <p style={{ fontFamily: SERIF }} className="text-lg font-light text-[#111827] mb-1 tracking-tight">
+                <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-[#111827] mb-1 tracking-tight">
                   Nişan & Tektaş
                 </p>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
@@ -300,7 +305,7 @@ export default function LandingPage() {
                     Küpe
                   </span>
                 </div>
-                <p style={{ fontFamily: SERIF }} className="text-lg font-light text-[#111827] mb-1 tracking-tight">
+                <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-[#111827] mb-1 tracking-tight">
                   Halka & Sarkıt
                 </p>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
@@ -326,7 +331,7 @@ export default function LandingPage() {
                     Kolye
                   </span>
                 </div>
-                <p style={{ fontFamily: SERIF }} className="text-lg font-light text-[#111827] mb-1 tracking-tight">
+                <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-[#111827] mb-1 tracking-tight">
                   Kolye & Pendant
                 </p>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
@@ -349,10 +354,10 @@ export default function LandingPage() {
               </p>
               <h2
                 style={{ fontFamily: SERIF }}
-                className="text-3xl sm:text-5xl font-light tracking-tight text-[#111827] leading-tight"
+                className="text-3xl sm:text-5xl font-normal tracking-tight text-[#111827] leading-tight"
               >
                 Neden<br />
-                <em className="text-[#9CA3AF]">Jewelry Virtual?</em>
+                <em className="italic text-[#9CA3AF]">Jewelry Virtual?</em>
               </h2>
             </div>
 
@@ -369,7 +374,7 @@ export default function LandingPage() {
                     <div>
                       <p
                         style={{ fontFamily: SERIF }}
-                        className="text-xl font-light text-[#111827] mb-2 tracking-tight leading-tight"
+                        className="text-xl font-normal text-[#111827] mb-2 tracking-tight leading-tight"
                       >
                         {title}
                       </p>
@@ -394,10 +399,10 @@ export default function LandingPage() {
             </p>
             <h2
               style={{ fontFamily: SERIF }}
-              className="relative text-4xl sm:text-6xl font-light text-white tracking-tight leading-tight"
+              className="relative text-4xl sm:text-6xl font-normal text-white tracking-tight leading-tight"
             >
               Takılarınızı<br />
-              <em className="text-white/60">dünyaya tanıtın</em>
+              <em className="italic text-white/60">dünyaya tanıtın</em>
             </h2>
             <p className="relative text-sm text-white/40 max-w-sm mx-auto leading-relaxed font-light">
               10 ücretsiz kredi ile takılarınızın model görsellerini dakikalar içinde oluşturun.

@@ -64,7 +64,7 @@ export default function DashboardLayout({
             <div className="w-6 h-6 rotate-45 border-2 border-[#111827] flex items-center justify-center">
               <div className="w-1.5 h-1.5 bg-[#111827] rotate-45" />
             </div>
-            <span className="text-[#111827] text-sm font-bold tracking-wide hidden sm:block" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            <span className="text-[#111827] text-sm font-bold tracking-wide hidden sm:block" style={{ fontFamily: "'EB Garamond', Georgia, serif" }}>
               Jewelry Virtual
             </span>
           </Link>
