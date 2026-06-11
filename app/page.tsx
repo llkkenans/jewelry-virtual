@@ -162,73 +162,71 @@ export default function LandingPage() {
         </section>
 
         {/* ── Nasıl Çalışır ── */}
-        <section className="bg-[#111827] py-20 sm:py-28">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <section className="relative min-h-screen overflow-hidden flex flex-col justify-between">
 
-            {/* Başlık */}
-            <div className="mb-14">
-              <p className="text-[10px] font-medium text-white/30 uppercase tracking-[0.4em] mb-5">
+          {/* Arka plan video */}
+          <video
+            src="/landing_videos/hailo.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+
+          {/* Gradient overlay — hero ile aynı */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/15" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/35" />
+
+          {/* İçerik */}
+          <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-10 w-full pt-20 pb-16 flex flex-col justify-between min-h-screen">
+
+            {/* Üst: Başlık */}
+            <div>
+              <p className="text-[10px] tracking-[0.45em] uppercase text-white/40 mb-5 font-light">
                 Nasıl Çalışır
               </p>
               <h2
                 style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-3xl sm:text-[2.75rem] font-bold tracking-tight text-white leading-[1.1] uppercase"
+                className="text-[1.85rem] sm:text-[2.5rem] font-bold tracking-tight text-white leading-[1.1] uppercase max-w-md"
               >
                 Üç Adımda<br />
-                <span className="text-white/35">Stüdyo Kalitesi</span>
+                <span className="text-white/40">Stüdyo Kalitesi</span>
               </h2>
             </div>
 
-            {/* Video + Adımlar */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
-
-              {/* Video */}
-              <div className="relative rounded-2xl overflow-hidden w-full max-w-sm mx-auto lg:mx-0 aspect-[9/16]">
-                <video
-                  src="/landing_videos/hailo.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent rounded-2xl" />
-              </div>
-
-              {/* Adımlar */}
-              <div className="flex flex-col gap-10">
-                {steps.map(({ n, title, desc }) => (
-                  <div key={n} className="flex gap-5 items-start">
-                    <span
-                      style={{ fontFamily: SERIF }}
-                      className="text-5xl font-light text-white/15 italic leading-none select-none shrink-0 mt-1"
-                    >
-                      {n}
-                    </span>
-                    <div className="pt-3 border-t border-white/10 flex-1">
-                      <p
-                        style={{ fontFamily: SERIF }}
-                        className="text-xl font-normal text-white mb-2 tracking-tight leading-tight"
-                      >
-                        {title}
-                      </p>
-                      <p className="text-sm text-white/45 leading-relaxed font-light">
-                        {desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="pt-2">
-                  <Link href="/register">
-                    <Button className="h-10 px-7 bg-white hover:bg-white/90 text-[#111827] text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all">
-                      Hemen Başla
-                    </Button>
-                  </Link>
+            {/* Alt: Adımlar — yatay grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 mt-16">
+              {steps.map(({ n, title, desc }) => (
+                <div key={n} className="border-t border-white/20 pt-5">
+                  <span
+                    style={{ fontFamily: SERIF }}
+                    className="block text-4xl font-light text-white/20 italic leading-none mb-4 select-none"
+                  >
+                    {n}
+                  </span>
+                  <p
+                    style={{ fontFamily: SERIF }}
+                    className="text-lg font-normal text-white mb-2 tracking-tight leading-tight"
+                  >
+                    {title}
+                  </p>
+                  <p className="text-sm text-white/50 leading-relaxed font-light">
+                    {desc}
+                  </p>
                 </div>
-              </div>
-
+              ))}
             </div>
+
+            {/* CTA */}
+            <div className="mt-12">
+              <Link href="/register">
+                <Button className="h-9 px-6 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
+                  Hemen Başla
+                </Button>
+              </Link>
+            </div>
+
           </div>
         </section>
 
