@@ -229,6 +229,15 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="text-[11px] text-[#C9A96E] hover:text-[#B8965A] transition-colors font-light tracking-wide cursor-pointer"
+                  onClick={async () => {
+                    if (!email) { setError("Önce e-posta adresinizi girin."); return }
+                    setError("")
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    })
+                    if (error) setError(error.message)
+                    else setError("✓ Şifre sıfırlama bağlantısı e-postanıza gönderildi.")
+                  }}
                 >
                   Şifremi unuttum
                 </button>
