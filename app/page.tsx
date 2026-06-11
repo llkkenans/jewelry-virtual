@@ -64,6 +64,7 @@ const features = [
 
 export default function LandingPage() {
   const [videoSrc, setVideoSrc] = useState<string | null>(null)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     const key = "jv_hero_video_idx"
@@ -73,28 +74,46 @@ export default function LandingPage() {
     setVideoSrc(HERO_VIDEOS[current])
   }, [])
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
   return (
     <div className="min-h-screen bg-white text-[#111827]">
 
       {/* ── Navbar ── */}
-      <header className="fixed top-0 left-0 right-0 z-40">
+      <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/95 backdrop-blur-md border-b border-[#E5E7EB]"
+          : "bg-transparent"
+      }`}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-5 h-5 rotate-45 border-2 border-white flex items-center justify-center">
-              <div className="w-1 h-1 bg-white rotate-45" />
+            <div className={`w-5 h-5 rotate-45 border-2 flex items-center justify-center transition-colors duration-300 ${scrolled ? "border-[#111827]" : "border-white"}`}>
+              <div className={`w-1 h-1 rotate-45 transition-colors duration-300 ${scrolled ? "bg-[#111827]" : "bg-white"}`} />
             </div>
-            <span style={{ fontFamily: SERIF }} className="text-base font-semibold tracking-wide text-white">
+            <span style={{ fontFamily: SERIF }} className={`text-base font-semibold tracking-wide transition-colors duration-300 ${scrolled ? "text-[#111827]" : "text-white"}`}>
               Jewelry Virtual
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/login">
-              <Button className="h-8 px-4 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
+              <Button className={`h-8 px-4 text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all duration-300 ${
+                scrolled
+                  ? "bg-transparent hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#111827]"
+                  : "bg-white/15 hover:bg-white/25 border border-white/50 text-white backdrop-blur-sm"
+              }`}>
                 Giriş Yap
               </Button>
             </Link>
             <Link href="/register">
-              <Button className="h-8 px-4 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
+              <Button className={`h-8 px-4 text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all duration-300 ${
+                scrolled
+                  ? "bg-[#111827] hover:bg-[#1F2937] border border-[#111827] text-white"
+                  : "bg-white/15 hover:bg-white/25 border border-white/50 text-white backdrop-blur-sm"
+              }`}>
                 Ücretsiz Dene
               </Button>
             </Link>
