@@ -126,12 +126,12 @@ export default function LandingPage() {
                 B2B Kuyumcu Çözümü
               </p>
               <h1
-                style={{ fontFamily: SERIF }}
-                className="text-[2.8rem] sm:text-[4.5rem] lg:text-[5.5rem] font-semibold leading-[1.05] tracking-tight text-white mb-8 max-w-2xl"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+                className="text-[2.6rem] sm:text-[4rem] lg:text-[5rem] font-black leading-[1.0] tracking-tight text-white mb-8 max-w-2xl uppercase"
               >
                 Takılarınızı<br />
                 Saniyeler İçinde<br />
-                <em className="font-normal italic">Canlandırın</em>
+                Canlandırın
               </h1>
               <p className="text-sm sm:text-base text-white/60 max-w-md mb-10 font-light leading-relaxed">
                 Pahalı stüdyo çekimine gerek yok. Yapay zeka ile takınızı
