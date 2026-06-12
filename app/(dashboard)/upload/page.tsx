@@ -223,26 +223,27 @@ export default function UploadPage() {
   /* ── Adım 1: Cinsiyet Seçim Ekranı ── */
   if (step === 1) {
     return (
-      <div className="min-h-[calc(100vh-3.5rem)] -mx-4 sm:-mx-6 -mt-8 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12">
-
+      <div
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        style={{ top: "3.5rem" }}
+      >
         {/* Başlık */}
-        <div className="w-full max-w-3xl mb-10">
+        <div className="w-full max-w-2xl mb-12">
           <p
             style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="flex items-center gap-3 text-[10px] tracking-[0.35em] uppercase font-medium text-white/25 mb-7"
+            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
           >
-            <span className="w-6 h-px bg-white/20 shrink-0" />
             Model Seçimi
           </p>
           <h1
-            style={{ fontFamily: "'EB Garamond', serif" }}
-            className="text-[2.75rem] sm:text-[4.25rem] font-normal italic text-white leading-[1.05] tracking-[-0.01em]"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
           >
             Kimi üzerinde
             <br />
             <span
-              className="not-italic font-normal text-white/20"
-              style={{ fontFamily: "'EB Garamond', serif" }}
+              className="font-light text-white/30"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
             >
               görmek istersiniz?
             </span>
@@ -250,7 +251,7 @@ export default function UploadPage() {
         </div>
 
         {/* Kartlar */}
-        <div className="grid grid-cols-2 gap-3 w-full max-w-3xl">
+        <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
           {DISPLAY_TYPES.map(({ id, label, cardImage }) => (
             <button
               key={id}
@@ -262,37 +263,27 @@ export default function UploadPage() {
                 src={cardImage}
                 alt={label}
                 fill
-                className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.04] group-hover:brightness-110"
-                sizes="(max-width: 640px) 50vw, 460px"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                sizes="(max-width: 640px) 50vw, 400px"
               />
-
-              {/* Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
-
-              {/* Hover ring */}
-              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/0 group-hover:ring-white/12 transition-all duration-500" />
-
-              {/* Kart metni */}
-              <div className="absolute bottom-0 inset-x-0 p-5 sm:p-8">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 p-6">
                 <span
                   style={{ fontFamily: "'DM Sans', sans-serif" }}
-                  className="text-[9px] sm:text-[10px] text-white/30 tracking-[0.35em] uppercase font-medium block mb-3"
+                  className="text-[10px] text-white/35 tracking-[0.3em] uppercase font-medium block mb-2"
                 >
                   {id === "woman" ? "Kadın Modeli" : "Erkek Modeli"}
                 </span>
                 <p
-                  style={{ fontFamily: "'EB Garamond', serif" }}
-                  className="text-[2rem] sm:text-[2.5rem] font-normal italic text-white leading-none tracking-[-0.01em]"
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                  className="text-[1.5rem] sm:text-[1.75rem] font-bold text-white leading-tight tracking-[-0.02em]"
                 >
                   {label}
                 </p>
-                {/* Accent line */}
-                <div className="mt-4 h-px bg-white/20 w-6 group-hover:w-14 group-hover:bg-white/40 transition-all duration-500 ease-out" />
               </div>
             </button>
           ))}
         </div>
-
       </div>
     )
   }
