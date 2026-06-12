@@ -223,34 +223,60 @@ export default function UploadPage() {
   /* ── Adım 1: Cinsiyet Seçim Ekranı ── */
   if (step === 1) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-10">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
-            Model Seçin
-          </h1>
-          <p className="text-sm text-[#6B7280] mt-1.5">
-            Takıyı hangi modelde görmek istiyorsunuz?
+      <div className="min-h-[calc(100vh-3.5rem)] -mx-4 sm:-mx-6 -mt-8 px-6 sm:px-10 bg-[#0A0A0A] flex flex-col items-center justify-center py-20">
+        {/* Başlık */}
+        <div className="w-full max-w-2xl mb-14">
+          <p
+            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="text-[11px] tracking-[0.28em] uppercase font-medium mb-5 text-white/35"
+          >
+            Model Seçimi
           </p>
+          <h1
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
+          >
+            Kimi üzerinde
+            <br />
+            <em
+              className="not-italic font-light text-white/28"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
+              görmek istersiniz?
+            </em>
+          </h1>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 w-full max-w-lg px-4">
+        {/* Kartlar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
           {DISPLAY_TYPES.map(({ id, label, cardImage }) => (
             <button
               key={id}
               type="button"
               onClick={() => { setDisplayType(id); setStep(2) }}
-              className="group relative w-full aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
+              className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer focus:outline-none"
             >
               <Image
                 src={cardImage}
                 alt={label}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 50vw, 240px"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                sizes="(max-width: 640px) 100vw, 480px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 p-4">
-                <p className="text-white text-lg font-semibold leading-tight">{label}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 p-6">
+                <span
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  className="text-[10px] text-white/38 tracking-[0.3em] uppercase font-medium block mb-2"
+                >
+                  Model
+                </span>
+                <p
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                  className="text-[1.15rem] font-bold text-white leading-[1.2] tracking-[-0.015em]"
+                >
+                  {label}
+                </p>
               </div>
             </button>
           ))}
