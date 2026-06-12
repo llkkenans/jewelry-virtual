@@ -35,23 +35,24 @@ const steps = [
 const features = [
   {
     n: "01",
-    title: "Yapay Zeka, Gerçek Sonuç",
-    desc: "Flux inpainting teknolojisiyle takınız, gerçekçi bir model görselinin üzerine piksel hassasiyetiyle işlenir. Dijital montaj değil — stüdyo kalitesinde çıktı.",
+    img: "/landing_images/landing/ring.jpg",
+    label: "Yapay Zeka",
+    title: "Gerçek Sonuç",
+    desc: "Flux inpainting ile takınız piksel hassasiyetiyle modele işlenir",
   },
   {
     n: "02",
-    title: "Stüdyonuz 7/24 Açık",
-    desc: "Fotoğrafçı randevusu, ışık kurulumu, model ajansı — bunların hiçbirine gerek yok. Yeni koleksiyonunuzu gece yarısı bile saniyeler içinde hayata geçirin.",
+    img: "/landing_images/landing/necklace.jpg",
+    label: "7/24 Erişim",
+    title: "Stüdyonuz Açık",
+    desc: "Fotoğrafçı, ışık, model ajansı — hiçbirine gerek yok",
   },
   {
     n: "03",
-    title: "Görsel Satar, Kelime Değil",
-    desc: "Model üzerinde görülen takılar, beyaz zemin görsellere kıyasla ortalama %40 daha yüksek sepete ekleme oranı sağlar. Müşteri görmeden almaz — artık görecek.",
-  },
-  {
-    n: "04",
-    title: "Kuyumcunun Dijital Stüdyosu",
-    desc: "Yüzük, kolye, küpe, bileklik — tüm kategoriler tek platformda. Tasarımdan vitrinine, fotoğraf çekiminden sosyal medyaya tek adım.",
+    img: "/landing_images/landing/earrings.jpg",
+    label: "Dönüşüm",
+    title: "Görsel Satar",
+    desc: "Model üzerindeki takılar %40 daha yüksek sepete ekleme oranı sağlar",
   },
 ]
 
@@ -257,9 +258,9 @@ export default function LandingPage() {
         </section>
 
         {/* ── Özellikler ── */}
-        <section className="bg-[#111827] py-20 sm:py-28">
+        <section className="bg-[#0D0D0D] py-20 sm:py-28">
           <div className="max-w-5xl mx-auto px-6 sm:px-10">
-            <div className="mb-16">
+            <div className="mb-14">
               <p className="text-[10px] tracking-[0.45em] uppercase text-white/30 mb-5 font-light">
                 Neden Jewelry Virtual
               </p>
@@ -271,27 +272,31 @@ export default function LandingPage() {
                 <span className="text-white/35">Tasarlandı</span>
               </h2>
             </div>
-            <div>
-              {features.map(({ n, title, desc }) => (
-                <div key={n} className="border-t border-white/15 py-8 grid grid-cols-12 gap-4 sm:gap-8 items-start">
-                  <span
-                    style={{ fontFamily: SERIF }}
-                    className="col-span-2 sm:col-span-1 text-3xl font-light text-white/18 italic leading-none select-none"
-                  >
-                    {n}
-                  </span>
-                  <p
-                    style={{ fontFamily: SERIF }}
-                    className="col-span-10 sm:col-span-4 text-xl font-normal text-white tracking-tight leading-snug"
-                  >
-                    {title}
-                  </p>
-                  <p className="col-span-12 sm:col-span-7 text-sm text-white/45 leading-relaxed font-light">
-                    {desc}
-                  </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {features.map(({ n, img, label, title, desc }) => (
+                <div key={n} className="group relative overflow-hidden rounded-xl aspect-[3/4] cursor-default">
+                  <img
+                    src={img}
+                    alt={title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 transition-opacity duration-500 group-hover:opacity-90" />
+                  <div className="absolute bottom-0 inset-x-0 p-5 translate-y-1 group-hover:translate-y-0 transition-transform duration-500">
+                    <span className="text-[9px] text-[#C9A96E] tracking-[0.35em] uppercase font-medium block mb-2">
+                      {label}
+                    </span>
+                    <p style={{ fontFamily: SERIF }} className="text-xl font-normal text-white leading-tight mb-2">
+                      {title}
+                    </p>
+                    <p className="text-xs text-white/0 group-hover:text-white/60 font-light leading-relaxed transition-all duration-500 max-h-0 group-hover:max-h-20 overflow-hidden">
+                      {desc}
+                    </p>
+                  </div>
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <span style={{ fontFamily: SERIF }} className="text-xs text-white/30 italic">{n}</span>
+                  </div>
                 </div>
               ))}
-              <div className="border-t border-white/15" />
             </div>
           </div>
         </section>
