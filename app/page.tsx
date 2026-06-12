@@ -3,13 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Zap, Gift, Star } from "lucide-react"
-
-const HERO_VIDEOS = [
-  "/landing_videos/luxury.mp4",
-  "/landing_videos/hailuo-2_3_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_closely_inspecti-0.mp4",
-  "/landing_videos/kling-3.0_A_seamless_infinite_loop_video_of_an_elegant_fair-skinned_woman_slowly_rotating_-0.mp4",
-]
+import { Camera, Layers, TrendingUp } from "lucide-react"
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
 
@@ -41,35 +35,26 @@ const steps = [
 
 const features = [
   {
-    icon: Zap,
-    title: "30 Saniyede Sonuç",
-    desc: "Görsel yüklendikten sonra yapay zeka motorumuz ortalama 30 saniyede çıktı üretir. Sıra bekleme yok.",
+    icon: Camera,
+    title: "Stüdyo Maliyeti Sıfır",
+    desc: "Ürün başına binlerce lira tutan fotoğraf çekimi artık geride. Tek görsel yükleyin, yapay zeka gerisini halleder.",
   },
   {
-    icon: Gift,
-    title: "10 Ücretsiz Kredi",
-    desc: "Kayıt olun, kredi kartı gerekmeden 10 üretim hakkı kazanın. Beğenirseniz devam edin.",
+    icon: Layers,
+    title: "Yüzük, Kolye, Küpe",
+    desc: "Tüm takı kategorilerini destekliyoruz. Koleksiyonunuzun tamamını tek platformdan model görseline dönüştürün.",
   },
   {
-    icon: Star,
-    title: "Profesyonel Kalite",
-    desc: "Flux Inpainting modeliyle üretilen görseller, stüdyo çekimlerine rakip kalitede çıkar.",
+    icon: TrendingUp,
+    title: "Dönüşüm Artışı",
+    desc: "Model üzerinde görülen ürünler, beyaz zemin fotoğraflara kıyasla ortalama %40 daha yüksek sepete ekleme oranı sağlar.",
   },
 ]
 
 /* ─── Sayfa ─────────────────────────────────────────────────────────── */
 
 export default function LandingPage() {
-  const [videoSrc, setVideoSrc] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const key = "jv_hero_video_idx"
-    const current = parseInt(sessionStorage.getItem(key) ?? "0", 10)
-    const next = (current + 1) % HERO_VIDEOS.length
-    sessionStorage.setItem(key, String(next))
-    setVideoSrc(HERO_VIDEOS[current])
-  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -122,17 +107,14 @@ export default function LandingPage() {
 
         {/* ── Hero: Tam Ekran Video ── */}
         <section className="relative h-screen overflow-hidden">
-          {videoSrc && (
-            <video
-              key={videoSrc}
-              src={videoSrc}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          )}
+          <video
+            src="/landing_videos/main.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
           {/* Sol alttan sağa doğru kararlaşan gradient — Pandora tarzı */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
