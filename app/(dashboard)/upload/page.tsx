@@ -291,47 +291,72 @@ export default function UploadPage() {
   /* ── Adım 2: Takı Seçim Ekranı ── */
   if (step === 2) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-10">
-        <div className="w-full max-w-2xl px-4">
+      <div
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        style={{ top: "3.5rem" }}
+      >
+        {/* Geri */}
+        <div className="w-full max-w-3xl mb-10">
           <button
             type="button"
             onClick={goBack}
-            className="flex items-center gap-1 text-sm text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer mb-8"
+            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors cursor-pointer mb-8"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            <ChevronLeft size={16} />
-            Geri
+            <ChevronLeft size={14} />
+            <span className="tracking-[0.15em] uppercase font-medium">Geri</span>
           </button>
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
-              Takı Türünü Seçin
-            </h1>
-            <p className="text-sm text-[#6B7280] mt-1.5">
-              Hangi takıyı modellemek istiyorsunuz?
-            </p>
-          </div>
 
-          <div className="grid grid-cols-4 gap-4">
-            {JEWELRY_TYPES.map(({ id, label, cardImage }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => { setJewelryType(id); setStep(3) }}
-                className="group relative w-full aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
-              >
-                <Image
-                  src={cardImage}
-                  alt={label}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 768px) 25vw, 150px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 inset-x-0 p-3">
-                  <p className="text-white text-sm font-semibold leading-tight">{label}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          {/* Başlık */}
+          <p
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
+          >
+            Takı Seçimi
+          </p>
+          <h1
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
+          >
+            Hangi takıyı
+            <br />
+            <span className="font-light text-white/30">modellemek istersiniz?</span>
+          </h1>
+        </div>
+
+        {/* Kartlar */}
+        <div className="grid grid-cols-4 gap-3 w-full max-w-3xl">
+          {JEWELRY_TYPES.map(({ id, label, desc, cardImage }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => { setJewelryType(id); setStep(3) }}
+              className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer focus:outline-none"
+            >
+              <Image
+                src={cardImage}
+                alt={label}
+                fill
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                sizes="(max-width: 640px) 25vw, 200px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4">
+                <span
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                  className="text-[9px] text-white/35 tracking-[0.25em] uppercase font-medium block mb-1.5"
+                >
+                  {desc}
+                </span>
+                <p
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                  className="text-[1rem] sm:text-[1.15rem] font-bold text-white leading-tight tracking-[-0.02em]"
+                >
+                  {label}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     )
