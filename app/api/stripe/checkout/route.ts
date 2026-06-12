@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
-})
-
 const PLANS = {
   starter: { credits: 50,  price: 900,  name: 'Starter — 50 Kredi'  },
   growth:  { credits: 150, price: 2400, name: 'Growth — 150 Kredi'  },
@@ -15,6 +11,10 @@ const PLANS = {
 type PlanId = keyof typeof PLANS
 
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
+    apiVersion: '2024-06-20',
+  })
+
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
