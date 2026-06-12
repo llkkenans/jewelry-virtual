@@ -27,12 +27,12 @@ const DISPLAY_TYPES: {
   {
     id: "woman",
     label: "Kadın",
-    cardImage: "/models/woman/ring/lucid-origin_professional_photo_of_elegant_woman_s_hand_with_manicured_nails_close-up_white_s-3.jpg",
+    cardImage: "/model_sec/woman.jpg",
   },
   {
     id: "man",
     label: "Erkek",
-    cardImage: "/models/man/ring/1.jpg",
+    cardImage: "/model_sec/man.jpg",
   },
 ]
 
