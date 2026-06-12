@@ -4,28 +4,46 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import path from 'path'
 import fs from 'fs'
 
-type JewelryType = 'ring' | 'necklace' | 'earring'
-const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring']
+type JewelryType = 'ring' | 'necklace' | 'earring' | 'watch'
+const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
 
 const folderMap: Record<JewelryType, string> = {
   ring: 'ring',
   necklace: 'necklace',
   earring: 'kupe',
+  watch: 'watch',
+}
+
+const manFolderMap: Record<JewelryType, string> = {
+  ring: 'ring',
+  necklace: 'necklace',
+  earring: 'earring',
+  watch: 'watch',
 }
 
 const skinTones = ['fair skin', 'olive skin', 'dark skin', 'light brown skin']
 const backgrounds = ['white studio', 'soft beige', 'dark luxury', 'marble texture', 'outdoor soft light']
 const angles = ['front view', 'side angle', 'close-up detail', '45 degree angle']
 
-function buildPrompts(): Record<JewelryType, string> {
+function buildPrompts(displayType: 'woman' | 'man'): Record<JewelryType, string> {
   const randomSkin = skinTones[Math.floor(Math.random() * skinTones.length)]
   const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)]
   const randomAngle = angles[Math.floor(Math.random() * angles.length)]
+
+  if (displayType === 'man') {
+    return {
+      ring:     `Elegant man's hand with ${randomSkin} wearing this exact ring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
+      necklace: `Handsome man with ${randomSkin} wearing this exact necklace around his neck, ${randomBg} background, ${randomAngle}, luxury fashion photography, ultra realistic`,
+      earring:  `Stylish man with ${randomSkin} wearing this exact earring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
+      watch:    `Elegant man's wrist with ${randomSkin} wearing this exact watch, ${randomBg} background, ${randomAngle}, luxury watch photography, ultra realistic`,
+    }
+  }
 
   return {
     ring:     `Elegant woman's hand with ${randomSkin} and manicured nails wearing this exact ring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
     necklace: `Beautiful woman with ${randomSkin} wearing this exact necklace around her neck, ${randomBg} background, ${randomAngle}, luxury fashion photography, ultra realistic`,
     earring:  `Elegant woman with ${randomSkin} wearing this exact earring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
+    watch:    `Elegant woman's wrist with ${randomSkin} wearing this exact watch, ${randomBg} background, ${randomAngle}, luxury watch photography, ultra realistic`,
   }
 }
 
@@ -56,11 +74,12 @@ async function upscaleImage(imageUrl: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, jewelryType: JewelryType, quantity: number
+  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man'
   try {
     const body = await req.json()
     ;({ imageBase64, jewelryType } = body as { imageBase64: string; jewelryType: JewelryType })
     quantity = Math.min(Math.max(Number(body.quantity) || 1, 1), 4)
+    displayType = body.displayType ?? 'woman'
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
@@ -99,7 +118,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  const folder = `models/woman/${folderMap[jewelryType]}`
+  const gender = displayType === 'man' ? 'man' : 'woman'
+  const folder = `models/${gender}/${displayType === 'man' ? manFolderMap[jewelryType] : folderMap[jewelryType]}`
   const modelsDir = path.join(process.cwd(), 'public', folder)
 
   let files: string[]
@@ -130,7 +150,7 @@ export async function POST(req: NextRequest) {
   console.log('Model URL:', modelImageUrl)
   console.log('Takı URL:', uploadedImageUrl)
 
-  const prompt = buildPrompts()[jewelryType]
+  const prompt = buildPrompts(displayType)[jewelryType]
 
   const results = await Promise.allSettled(
     Array.from({ length: quantity }, () =>
