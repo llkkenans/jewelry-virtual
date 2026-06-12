@@ -143,7 +143,7 @@ export default function LandingPage() {
             {[
               { label: "Nasıl Çalışır", href: "#nasil-calisir" },
               { label: "Koleksiyon", href: "#koleksiyon" },
-              { label: "Fiyatlar", href: "/billing" },
+              { label: "Fiyatlar", href: "/dashboard/billing" },
             ].map(({ label, href }) => (
               <a
                 key={label}
@@ -445,7 +445,7 @@ export default function LandingPage() {
               {[
                 { label: "Giriş Yap", href: "/login" },
                 { label: "Kayıt Ol", href: "/register" },
-                { label: "Fiyatlar", href: "/billing" },
+                { label: "Fiyatlar", href: "/dashboard/billing" },
               ].map(({ label, href }) => (
                 <Link
                   key={label}
