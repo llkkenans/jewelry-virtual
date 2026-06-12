@@ -35,7 +35,7 @@ function formatDate(iso: string) {
 async function handleShare(url: string) {
   if (navigator.share) {
     await navigator.share({
-      title: "Jewelry Virtual Try-On",
+      title: "Lunia Studio",
       text: "Takılarımı AI ile fotoğrafladım!",
       url: url,
     })

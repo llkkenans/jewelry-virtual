@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Jewelry Virtual Try-On",
+  title: "Lunia Studio",
   description: "Takı fotoğraflarını saniyeler içinde gerçekçi model elinde göster.",
 };
 

@@ -118,23 +118,23 @@ export default function LandingPage() {
 
       {/* ─────────────── NAVBAR ─────────────── */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 backdrop-blur-xl ${
+        className={`fixed top-3 inset-x-4 z-50 rounded-2xl transition-all duration-500 backdrop-blur-xl ${
           scrolled
-            ? "bg-white/85 border-b border-black/[0.07]"
+            ? "bg-white/88 border border-black/[0.08] shadow-sm"
             : "bg-black/[0.06]"
         }`}
       >
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
+        <div className="px-5 sm:px-7 h-14 flex items-center justify-between">
 
           {/* Brand Mark */}
           <Link href="/" className="flex items-center gap-2.5">
             <span
               style={{ fontFamily: DISPLAY }}
-              className={`text-[15px] font-bold tracking-[-0.01em] transition-colors duration-400 ${
+              className={`text-[12px] font-light tracking-[0.22em] uppercase transition-colors duration-400 ${
                 scrolled ? "text-[#0A0A0A]" : "text-white"
               }`}
             >
-              Jewelry Virtual
+              Lunia Studio
             </span>
           </Link>
 
@@ -239,9 +239,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Gradient köprü: karanlık hero → beyaz stats */}
-        <div aria-hidden className="h-28 bg-gradient-to-b from-[#0A0A0A] to-white" />
-
         {/* ─────────────── STATS STRIP ─────────────── */}
         <section className="bg-white border-b border-black/[0.07]">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
@@ -327,9 +324,6 @@ export default function LandingPage() {
             </Reveal>
           </div>
         </section>
-
-        {/* Gradient köprü: beyaz how-it-works → karanlık koleksiyon */}
-        <div aria-hidden className="h-28 bg-gradient-to-b from-white to-[#0A0A0A]" />
 
         {/* ─────────────── COLLECTION — Dark ─────────────── */}
         <section id="koleksiyon" className="bg-[#0A0A0A] py-28 sm:py-36">
@@ -433,9 +427,6 @@ export default function LandingPage() {
 
       </main>
 
-      {/* Gradient köprü: karanlık CTA → beyaz footer */}
-      <div aria-hidden className="h-20 bg-gradient-to-b from-[#0A0A0A] to-white" />
-
       {/* ─────────────── FOOTER ─────────────── */}
       <footer className="bg-white border-t border-black/[0.07]">
         <div className="max-w-6xl mx-auto px-6 sm:px-10 py-10">
@@ -444,9 +435,9 @@ export default function LandingPage() {
             {/* Brand */}
             <span
               style={{ fontFamily: DISPLAY }}
-              className="text-[14px] font-bold text-[#0A0A0A]/38 tracking-[-0.01em]"
+              className="text-[11px] font-light text-[#0A0A0A]/38 tracking-[0.22em] uppercase"
             >
-              Jewelry Virtual
+              Lunia Studio
             </span>
 
             {/* Links */}
@@ -472,7 +463,7 @@ export default function LandingPage() {
               style={{ fontFamily: BODY }}
               className="text-[12px] text-[#0A0A0A]/28 font-light"
             >
-              © 2026 Jewelry Virtual
+              © 2026 Lunia Studio
             </p>
           </div>
         </div>

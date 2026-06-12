@@ -117,7 +117,7 @@ export default function LoginPage() {
             style={{ fontFamily: SERIF }}
             className="text-white/55 text-sm tracking-[0.28em] uppercase font-light"
           >
-            Jewelry Virtual
+            Lunia Studio
           </span>
         </div>
 
@@ -179,7 +179,7 @@ export default function LoginPage() {
               <div className="w-1 h-1 bg-[#1C1C1C] rotate-45" />
             </div>
             <span style={{ fontFamily: SERIF }} className="text-[#1C1C1C] text-lg tracking-wide">
-              Jewelry Virtual
+              Lunia Studio
             </span>
           </div>
 
