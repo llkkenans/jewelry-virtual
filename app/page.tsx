@@ -77,26 +77,6 @@ const steps = [
   },
 ]
 
-const features = [
-  {
-    label: "Yapay Zeka",
-    title: "Gerçek Sonuç",
-    desc: "Flux inpainting ile takınız piksel hassasiyetiyle modele işlenir.",
-    img: "/landing_images/landing/ring.jpg",
-  },
-  {
-    label: "7/24 Erişim",
-    title: "Stüdyonuz Açık",
-    desc: "Fotoğrafçı, ışık, model ajansı — hiçbirine gerek yok.",
-    img: "/landing_images/landing/necklace.jpg",
-  },
-  {
-    label: "Dönüşüm",
-    title: "Görsel Satar",
-    desc: "Model üzerindeki takılar %40 daha yüksek sepete ekleme oranı sağlar.",
-    img: "/landing_images/landing/earrings.jpg",
-  },
-]
 
 const stats = [
   { value: "30s", label: "İşlem Süresi" },
@@ -138,10 +118,10 @@ export default function LandingPage() {
 
       {/* ─────────────── NAVBAR ─────────────── */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 backdrop-blur-xl ${
           scrolled
-            ? "bg-white/88 backdrop-blur-2xl border-b border-black/[0.07]"
-            : "bg-transparent"
+            ? "bg-white/85 border-b border-black/[0.07]"
+            : "bg-black/[0.06]"
         }`}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
@@ -163,7 +143,7 @@ export default function LandingPage() {
             {[
               { label: "Nasıl Çalışır", href: "#nasil-calisir" },
               { label: "Koleksiyon", href: "#koleksiyon" },
-              { label: "Özellikler", href: "#ozellikler" },
+              { label: "Fiyatlar", href: "/billing" },
             ].map(({ label, href }) => (
               <a
                 key={label}
@@ -259,6 +239,9 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Gradient köprü: karanlık hero → beyaz stats */}
+        <div aria-hidden className="h-28 bg-gradient-to-b from-[#0A0A0A] to-white" />
+
         {/* ─────────────── STATS STRIP ─────────────── */}
         <section className="bg-white border-b border-black/[0.07]">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
@@ -345,6 +328,9 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Gradient köprü: beyaz how-it-works → karanlık koleksiyon */}
+        <div aria-hidden className="h-28 bg-gradient-to-b from-white to-[#0A0A0A]" />
+
         {/* ─────────────── COLLECTION — Dark ─────────────── */}
         <section id="koleksiyon" className="bg-[#0A0A0A] py-28 sm:py-36">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
@@ -389,62 +375,6 @@ export default function LandingPage() {
                       <p
                         style={{ fontFamily: BODY }}
                         className="text-[13px] text-white/38 font-light"
-                      >
-                        {desc}
-                      </p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ─────────────── FEATURES — Off-white ─────────────── */}
-        <section id="ozellikler" className="bg-[#F7F7F5] py-28 sm:py-36">
-          <div className="max-w-6xl mx-auto px-6 sm:px-10">
-
-            <Reveal>
-              <Overline>Neden Jewelry Virtual</Overline>
-              <h2
-                style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#0A0A0A] leading-[1.0] mb-20 max-w-xl"
-              >
-                Kuyumcular için
-                <br />
-                <em className="not-italic font-light text-black/28" style={{ fontFamily: DISPLAY }}>
-                  tasarlandı.
-                </em>
-              </h2>
-            </Reveal>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {features.map(({ label, title, desc, img }, i) => (
-                <Reveal key={label} delay={i * 110}>
-                  <div className="group bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-400 hover:shadow-2xl hover:shadow-black/[0.08] hover:-translate-y-1">
-                    <div className="aspect-[4/3] overflow-hidden">
-                      <img
-                        src={img}
-                        alt={title}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
-                      />
-                    </div>
-                    <div className="p-6">
-                      <span
-                        style={{ fontFamily: BODY }}
-                        className="text-[10px] text-black/32 tracking-[0.28em] uppercase font-medium block mb-3"
-                      >
-                        {label}
-                      </span>
-                      <h3
-                        style={{ fontFamily: DISPLAY }}
-                        className="text-[1.15rem] font-bold text-[#0A0A0A] tracking-[-0.02em] mb-2 leading-[1.2]"
-                      >
-                        {title}
-                      </h3>
-                      <p
-                        style={{ fontFamily: BODY }}
-                        className="text-[13px] text-[#0A0A0A]/48 leading-[1.7] font-light"
                       >
                         {desc}
                       </p>
@@ -502,6 +432,9 @@ export default function LandingPage() {
         </section>
 
       </main>
+
+      {/* Gradient köprü: karanlık CTA → beyaz footer */}
+      <div aria-hidden className="h-20 bg-gradient-to-b from-[#0A0A0A] to-white" />
 
       {/* ─────────────── FOOTER ─────────────── */}
       <footer className="bg-white border-t border-black/[0.07]">
