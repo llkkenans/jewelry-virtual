@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Camera, Layers, TrendingUp } from "lucide-react"
 
 /* ─── Veri ──────────────────────────────────────────────────────────── */
 
@@ -35,19 +34,24 @@ const steps = [
 
 const features = [
   {
-    icon: Camera,
-    title: "Stüdyo Maliyeti Sıfır",
-    desc: "Ürün başına binlerce lira tutan fotoğraf çekimi artık geride. Tek görsel yükleyin, yapay zeka gerisini halleder.",
+    n: "01",
+    title: "Yapay Zeka, Gerçek Sonuç",
+    desc: "Flux inpainting teknolojisiyle takınız, gerçekçi bir model görselinin üzerine piksel hassasiyetiyle işlenir. Dijital montaj değil — stüdyo kalitesinde çıktı.",
   },
   {
-    icon: Layers,
-    title: "Yüzük, Kolye, Küpe",
-    desc: "Tüm takı kategorilerini destekliyoruz. Koleksiyonunuzun tamamını tek platformdan model görseline dönüştürün.",
+    n: "02",
+    title: "Stüdyonuz 7/24 Açık",
+    desc: "Fotoğrafçı randevusu, ışık kurulumu, model ajansı — bunların hiçbirine gerek yok. Yeni koleksiyonunuzu gece yarısı bile saniyeler içinde hayata geçirin.",
   },
   {
-    icon: TrendingUp,
-    title: "Dönüşüm Artışı",
-    desc: "Model üzerinde görülen ürünler, beyaz zemin fotoğraflara kıyasla ortalama %40 daha yüksek sepete ekleme oranı sağlar.",
+    n: "03",
+    title: "Görsel Satar, Kelime Değil",
+    desc: "Model üzerinde görülen takılar, beyaz zemin görsellere kıyasla ortalama %40 daha yüksek sepete ekleme oranı sağlar. Müşteri görmeden almaz — artık görecek.",
+  },
+  {
+    n: "04",
+    title: "Kuyumcunun Dijital Stüdyosu",
+    desc: "Yüzük, kolye, küpe, bileklik — tüm kategoriler tek platformda. Tasarımdan vitrinine, fotoğraf çekiminden sosyal medyaya tek adım.",
   },
 ]
 
@@ -255,35 +259,39 @@ export default function LandingPage() {
         {/* ── Özellikler ── */}
         <section className="bg-[#111827] py-20 sm:py-28">
           <div className="max-w-5xl mx-auto px-6 sm:px-10">
-            <div className="mb-14">
+            <div className="mb-16">
               <p className="text-[10px] tracking-[0.45em] uppercase text-white/30 mb-5 font-light">
-                Özellikler
+                Neden Jewelry Virtual
               </p>
               <h2
                 style={{ fontFamily: "'Inter', sans-serif" }}
                 className="text-[1.85rem] sm:text-[2.5rem] font-bold tracking-tight text-white leading-[1.1] uppercase"
               >
-                Neden<br />
-                <span className="text-white/35">Jewelry Virtual?</span>
+                Kuyumcular İçin<br />
+                <span className="text-white/35">Tasarlandı</span>
               </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-white/10 rounded-xl overflow-hidden">
-              {features.map(({ icon: Icon, title, desc }, i) => (
-                <div key={title} className="bg-[#111827] p-8 flex flex-col gap-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
-                      <Icon size={16} className="text-white/70" />
-                    </div>
-                    <span className="text-[10px] text-white/25 tracking-widest uppercase font-light">0{i + 1}</span>
-                  </div>
-                  <div>
-                    <p style={{ fontFamily: SERIF }} className="text-xl font-normal text-white mb-2 tracking-tight leading-tight">
-                      {title}
-                    </p>
-                    <p className="text-sm text-white/45 leading-relaxed font-light">{desc}</p>
-                  </div>
+            <div>
+              {features.map(({ n, title, desc }) => (
+                <div key={n} className="border-t border-white/15 py-8 grid grid-cols-12 gap-4 sm:gap-8 items-start">
+                  <span
+                    style={{ fontFamily: SERIF }}
+                    className="col-span-2 sm:col-span-1 text-3xl font-light text-white/18 italic leading-none select-none"
+                  >
+                    {n}
+                  </span>
+                  <p
+                    style={{ fontFamily: SERIF }}
+                    className="col-span-10 sm:col-span-4 text-xl font-normal text-white tracking-tight leading-snug"
+                  >
+                    {title}
+                  </p>
+                  <p className="col-span-12 sm:col-span-7 text-sm text-white/45 leading-relaxed font-light">
+                    {desc}
+                  </p>
                 </div>
               ))}
+              <div className="border-t border-white/15" />
             </div>
           </div>
         </section>
