@@ -3,10 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Card, CardContent } from "@/components/ui/card"
 import { Zap, Gift, Star } from "lucide-react"
-import ImageSpotlight from "@/components/ui/image-spotlight"
 
 const HERO_VIDEOS = [
   "/landing_videos/luxury.mp4",
@@ -230,201 +227,132 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── Koleksiyon Spotlight ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
-          <div className="mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-            <div>
-              <p className="text-[10px] font-medium text-[#9CA3AF] uppercase tracking-[0.35em] mb-4">
+        {/* ── Koleksiyon ── */}
+        <section className="bg-[#0D0D0D] py-20 sm:py-28">
+          <div className="max-w-5xl mx-auto px-6 sm:px-10">
+            <div className="mb-14">
+              <p className="text-[10px] tracking-[0.45em] uppercase text-white/30 mb-5 font-light">
                 Koleksiyonunuz
               </p>
               <h2
-                style={{ fontFamily: SERIF }}
-                className="text-3xl sm:text-5xl font-normal tracking-tight text-[#111827] leading-tight"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+                className="text-[1.85rem] sm:text-[2.5rem] font-bold tracking-tight text-white leading-[1.1] uppercase"
               >
-                Her takı türü için<br />
-                <em className="italic text-[#9CA3AF]">stüdyo kalitesi</em>
+                Her Takı Türü<br />
+                <span className="text-white/35">İçin Stüdyo Kalitesi</span>
               </h2>
             </div>
-            <p className="text-sm text-[#9CA3AF] leading-relaxed font-light max-w-xs sm:text-right">
-              Fareyi görselin üzerinde gezdirerek detayları keşfedin.
-            </p>
-          </div>
-
-          <div className="flex justify-center gap-4 flex-wrap sm:flex-nowrap">
-
-            {/* Yüzük */}
-            <div className="flex flex-col gap-4 w-full sm:w-auto">
-              <ImageSpotlight
-                src="/landing_images/landing/ring.jpg"
-                alt="Elmas solitaire yüzük stüdyo çekimi"
-                orientation="portrait"
-                width={300}
-                height={400}
-                config={{ spotlightSize: 120, overlayOpacity: 0.45 }}
-              />
-              <div className="px-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-px w-5 bg-[#E5E7EB]" />
-                  <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
-                    Yüzük
-                  </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { src: "/landing_images/landing/ring.jpg", cat: "Yüzük", title: "Nişan & Tektaş", desc: "Parmakta gerçekçi canlandırma" },
+                { src: "/landing_images/landing/earrings.jpg", cat: "Küpe", title: "Halka & Sarkıt", desc: "Kulakta doğal ışık sergisi" },
+                { src: "/landing_images/landing/necklace.jpg", cat: "Kolye", title: "Kolye & Pendant", desc: "Boyunda stüdyo kalitesi" },
+              ].map(({ src, cat, title, desc }) => (
+                <div key={cat} className="group relative overflow-hidden rounded-xl aspect-[3/4]">
+                  <img
+                    src={src}
+                    alt={title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 inset-x-0 p-5">
+                    <span className="text-[9px] text-[#C9A96E] tracking-[0.35em] uppercase font-medium block mb-2">
+                      {cat}
+                    </span>
+                    <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-white leading-tight mb-1">
+                      {title}
+                    </p>
+                    <p className="text-xs text-white/50 font-light">{desc}</p>
+                  </div>
                 </div>
-                <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-[#111827] mb-1 tracking-tight">
-                  Nişan & Tektaş
-                </p>
-                <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
-                  Dört pençeli solitaire&apos;den pavé bantlara, her yüzüğü model eli üzerinde gerçekçi biçimde canlandırın.
-                </p>
-              </div>
+              ))}
             </div>
-
-            {/* Küpe */}
-            <div className="flex flex-col gap-4 w-full sm:w-auto">
-              <ImageSpotlight
-                src="/landing_images/landing/earrings.jpg"
-                alt="Altın halka küpeler stüdyo çekimi"
-                orientation="portrait"
-                width={300}
-                height={400}
-                config={{ spotlightSize: 120, overlayOpacity: 0.45 }}
-              />
-              <div className="px-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-px w-5 bg-[#E5E7EB]" />
-                  <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
-                    Küpe
-                  </span>
-                </div>
-                <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-[#111827] mb-1 tracking-tight">
-                  Halka & Sarkıt
-                </p>
-                <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
-                  Halka, çivi ve sarkıt küpeleri doğal ışıkta, gerçek kulak pozisyonunda sergileyin.
-                </p>
-              </div>
-            </div>
-
-            {/* Kolye */}
-            <div className="flex flex-col gap-4 w-full sm:w-auto">
-              <ImageSpotlight
-                src="/landing_images/landing/necklace.jpg"
-                alt="İnce altın kolye ve pendant stüdyo çekimi"
-                orientation="portrait"
-                width={300}
-                height={400}
-                config={{ spotlightSize: 120, overlayOpacity: 0.45 }}
-              />
-              <div className="px-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="h-px w-5 bg-[#E5E7EB]" />
-                  <span className="text-[10px] text-[#C9A96E] tracking-[0.3em] uppercase font-medium">
-                    Kolye
-                  </span>
-                </div>
-                <p style={{ fontFamily: SERIF }} className="text-lg font-normal text-[#111827] mb-1 tracking-tight">
-                  Kolye & Pendant
-                </p>
-                <p className="text-xs text-[#9CA3AF] leading-relaxed font-light">
-                  Zincir ve pendant kombinasyonlarını boyun üzerinde, stüdyo ışığıyla mükemmel şekilde gösterin.
-                </p>
-              </div>
-            </div>
-
           </div>
         </section>
 
-        <Separator className="bg-[#E5E7EB]" />
-
         {/* ── Özellikler ── */}
-        <section className="bg-[#F9FAFB] py-24">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6">
-            <div className="mb-16">
-              <p className="text-[10px] font-medium text-[#9CA3AF] uppercase tracking-[0.35em] mb-4">
+        <section className="bg-[#111827] py-20 sm:py-28">
+          <div className="max-w-5xl mx-auto px-6 sm:px-10">
+            <div className="mb-14">
+              <p className="text-[10px] tracking-[0.45em] uppercase text-white/30 mb-5 font-light">
                 Özellikler
               </p>
               <h2
-                style={{ fontFamily: SERIF }}
-                className="text-3xl sm:text-5xl font-normal tracking-tight text-[#111827] leading-tight"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+                className="text-[1.85rem] sm:text-[2.5rem] font-bold tracking-tight text-white leading-[1.1] uppercase"
               >
                 Neden<br />
-                <em className="italic text-[#9CA3AF]">Jewelry Virtual?</em>
+                <span className="text-white/35">Jewelry Virtual?</span>
               </h2>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {features.map(({ icon: Icon, title, desc }) => (
-                <Card
-                  key={title}
-                  className="border border-[#E5E7EB] shadow-none rounded-2xl bg-white"
-                >
-                  <CardContent className="p-7 space-y-5">
-                    <div className="w-10 h-10 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
-                      <Icon size={17} className="text-[#111827]" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-white/10 rounded-xl overflow-hidden">
+              {features.map(({ icon: Icon, title, desc }, i) => (
+                <div key={title} className="bg-[#111827] p-8 flex flex-col gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center">
+                      <Icon size={16} className="text-white/70" />
                     </div>
-                    <div>
-                      <p
-                        style={{ fontFamily: SERIF }}
-                        className="text-xl font-normal text-[#111827] mb-2 tracking-tight leading-tight"
-                      >
-                        {title}
-                      </p>
-                      <p className="text-sm text-[#9CA3AF] leading-relaxed font-light">{desc}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <span className="text-[10px] text-white/25 tracking-widest uppercase font-light">0{i + 1}</span>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: SERIF }} className="text-xl font-normal text-white mb-2 tracking-tight leading-tight">
+                      {title}
+                    </p>
+                    <p className="text-sm text-white/45 leading-relaxed font-light">{desc}</p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
         {/* ── CTA ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
-          <div className="bg-[#111827] rounded-3xl px-8 py-20 text-center space-y-7 relative overflow-hidden">
-            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full border border-white/5" />
-            <div className="absolute -top-8 -right-8 w-48 h-48 rounded-full border border-white/5" />
-            <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full border border-white/5" />
-
-            <p className="relative text-[10px] tracking-[0.4em] uppercase text-white/30 font-light">
-              Hemen Başla
-            </p>
+        <section className="relative min-h-[70vh] overflow-hidden flex items-end">
+          <video
+            src="/landing_videos/luxury.mp4"
+            autoPlay muted loop playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+          <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-10 w-full pb-16">
+            <p className="text-[10px] tracking-[0.45em] uppercase text-white/40 mb-5 font-light">Hemen Başla</p>
             <h2
-              style={{ fontFamily: SERIF }}
-              className="relative text-4xl sm:text-6xl font-normal text-white tracking-tight leading-tight"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="text-[1.85rem] sm:text-[2.5rem] font-bold tracking-tight text-white leading-[1.1] uppercase mb-6 max-w-lg"
             >
               Takılarınızı<br />
-              <em className="italic text-white/60">dünyaya tanıtın</em>
+              <span className="text-white/40">Dünyaya Tanıtın</span>
             </h2>
-            <p className="relative text-sm text-white/40 max-w-sm mx-auto leading-relaxed font-light">
+            <p className="text-sm text-white/55 max-w-sm mb-8 font-light leading-relaxed">
               10 ücretsiz kredi ile takılarınızın model görsellerini dakikalar içinde oluşturun.
             </p>
-            <div className="relative">
-              <Link href="/register">
-                <Button className="h-12 px-10 bg-white hover:bg-white/92 text-[#111827] text-sm font-medium rounded-xl cursor-pointer tracking-wide transition-all mt-2">
-                  Ücretsiz Hesap Oluştur →
-                </Button>
-              </Link>
-            </div>
+            <Link href="/register">
+              <Button className="h-9 px-6 bg-white/15 hover:bg-white/25 border border-white/50 text-white text-xs font-medium rounded-full cursor-pointer tracking-widest uppercase transition-all backdrop-blur-sm">
+                Ücretsiz Hesap Oluştur
+              </Button>
+            </Link>
           </div>
         </section>
 
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-[#E5E7EB]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <footer className="bg-[#0D0D0D] border-t border-white/10">
+        <div className="max-w-5xl mx-auto px-6 sm:px-10 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-3.5 h-3.5 rotate-45 border border-[#D1D5DB] flex items-center justify-center">
-              <div className="w-0.5 h-0.5 bg-[#D1D5DB] rotate-45" />
+            <div className="w-3 h-3 rotate-45 border border-white/20 flex items-center justify-center">
+              <div className="w-0.5 h-0.5 bg-white/20 rotate-45" />
             </div>
-            <span style={{ fontFamily: SERIF }} className="text-xs text-[#9CA3AF] tracking-wide">
+            <span style={{ fontFamily: SERIF }} className="text-xs text-white/30 tracking-wide">
               © 2026 Jewelry Virtual
             </span>
           </div>
           <div className="flex items-center gap-5">
-            <Link href="/login" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] transition-colors tracking-wide">
+            <Link href="/login" className="text-xs text-white/30 hover:text-white/60 transition-colors tracking-wide">
               Giriş Yap
             </Link>
-            <Link href="/register" className="text-xs text-[#9CA3AF] hover:text-[#6B7280] transition-colors tracking-wide">
+            <Link href="/register" className="text-xs text-white/30 hover:text-white/60 transition-colors tracking-wide">
               Kayıt Ol
             </Link>
           </div>
