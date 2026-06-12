@@ -13,9 +13,28 @@ import {
   Gem,
   Link2,
   ChevronLeft,
+  Clock,
 } from "lucide-react"
 
-type JewelryType = "ring" | "necklace" | "earring"
+type JewelryType = "ring" | "necklace" | "earring" | "watch"
+type DisplayType = "woman" | "man"
+
+const DISPLAY_TYPES: {
+  id: DisplayType
+  label: string
+  cardImage: string
+}[] = [
+  {
+    id: "woman",
+    label: "Kadın",
+    cardImage: "/models/woman/ring/lucid-origin_professional_photo_of_elegant_woman_s_hand_with_manicured_nails_close-up_white_s-3.jpg",
+  },
+  {
+    id: "man",
+    label: "Erkek",
+    cardImage: "/models/man/ring/1.jpg",
+  },
+]
 
 const JEWELRY_TYPES: {
   id: JewelryType
@@ -45,6 +64,13 @@ const JEWELRY_TYPES: {
     icon: Sparkles,
     cardImage: "/models/woman/kupe/lucid-origin_professional_photo_of_A_close-up_photography_focusing_purely_on_the_ear_and_neck-1.jpg",
   },
+  {
+    id: "watch",
+    label: "Saat",
+    desc: "Bilekte deneme",
+    icon: Clock,
+    cardImage: "/models/woman/watch/1.jpg",
+  },
 ]
 
 const QUANTITIES = [1, 2, 3, 4]
@@ -58,10 +84,11 @@ const PROGRESS_STEPS = [
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [step, setStep]               = useState<1 | 2>(1)
+  const [step, setStep]               = useState<1 | 2 | 3>(1)
   const [dragging, setDragging]       = useState(false)
   const [file, setFile]               = useState<File | null>(null)
   const [preview, setPreview]         = useState<string | null>(null)
+  const [displayType, setDisplayType] = useState<DisplayType | null>(null)
   const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
   const [quantity, setQuantity]       = useState<number>(1)
   const [generating, setGenerating]   = useState(false)
@@ -99,9 +126,14 @@ export default function UploadPage() {
   }
 
   function goBack() {
-    clearFile()
-    setJewelryType(null)
-    setStep(1)
+    if (step === 3) {
+      clearFile()
+      setJewelryType(null)
+      setStep(2)
+    } else if (step === 2) {
+      setDisplayType(null)
+      setStep(1)
+    }
   }
 
   function resizeAndConvertToBase64(f: File): Promise<string> {
@@ -124,7 +156,7 @@ export default function UploadPage() {
   }
 
   async function handleGenerate() {
-    if (!file || !jewelryType) return
+    if (!file || !jewelryType || !displayType) return
     setGenerating(true)
     setProgressStep(0)
     const progressInterval = setInterval(() => {
@@ -149,7 +181,7 @@ export default function UploadPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType: "woman" }),
+        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType }),
       })
 
       if (!tryOnRes.ok) {
@@ -185,28 +217,28 @@ export default function UploadPage() {
     URL.revokeObjectURL(a.href)
   }
 
-  const canGenerate = !!file && !!jewelryType && !generating
+  const canGenerate = !!file && !!jewelryType && !!displayType && !generating
   const currentJewelry = JEWELRY_TYPES.find((j) => j.id === jewelryType)
 
-  /* ── Adım 1: Takı Seçim Ekranı ── */
+  /* ── Adım 1: Cinsiyet Seçim Ekranı ── */
   if (step === 1) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-10">
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
-            Takı Türünü Seçin
+            Model Seçin
           </h1>
           <p className="text-sm text-[#6B7280] mt-1.5">
-            Hangi takıyı modellemek istiyorsunuz?
+            Takıyı hangi modelde görmek istiyorsunuz?
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 w-full max-w-2xl px-4">
-          {JEWELRY_TYPES.map(({ id, label, cardImage }) => (
+        <div className="grid grid-cols-2 gap-6 w-full max-w-lg px-4">
+          {DISPLAY_TYPES.map(({ id, label, cardImage }) => (
             <button
               key={id}
               type="button"
-              onClick={() => { setJewelryType(id); setStep(2) }}
+              onClick={() => { setDisplayType(id); setStep(2) }}
               className="group relative w-full aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
             >
               <Image
@@ -214,7 +246,7 @@ export default function UploadPage() {
                 alt={label}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 33vw, 200px"
+                sizes="(max-width: 768px) 50vw, 240px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-0 inset-x-0 p-4">
@@ -227,7 +259,56 @@ export default function UploadPage() {
     )
   }
 
-  /* ── Adım 2: Upload Ekranı ── */
+  /* ── Adım 2: Takı Seçim Ekranı ── */
+  if (step === 2) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-10">
+        <div className="w-full max-w-2xl px-4">
+          <button
+            type="button"
+            onClick={goBack}
+            className="flex items-center gap-1 text-sm text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer mb-8"
+          >
+            <ChevronLeft size={16} />
+            Geri
+          </button>
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">
+              Takı Türünü Seçin
+            </h1>
+            <p className="text-sm text-[#6B7280] mt-1.5">
+              Hangi takıyı modellemek istiyorsunuz?
+            </p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            {JEWELRY_TYPES.map(({ id, label, cardImage }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => { setJewelryType(id); setStep(3) }}
+                className="group relative w-full aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#111827]"
+              >
+                <Image
+                  src={cardImage}
+                  alt={label}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 25vw, 150px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-3">
+                  <p className="text-white text-sm font-semibold leading-tight">{label}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Adım 3: Upload Ekranı ── */
   return (
     <div className="space-y-6">
       {/* Başlık + Geri */}
