@@ -5,6 +5,9 @@ import path from 'path'
 import fs from 'fs'
 
 type JewelryType = 'ring' | 'necklace' | 'earring' | 'watch'
+type SkinTone    = 'ivory' | 'sand' | 'honey' | 'caramel' | 'espresso'
+type Background  = 'pure_white' | 'soft_grey' | 'golden_hour' | 'marble_luxe' | 'noir'
+
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
 
 const folderMap: Record<JewelryType, string> = {
@@ -21,30 +24,59 @@ const manFolderMap: Record<JewelryType, string> = {
   watch: 'watch',
 }
 
-const skinTones = ['fair skin', 'olive skin', 'dark skin', 'light brown skin']
-const backgrounds = ['white studio', 'soft beige', 'dark luxury', 'marble texture', 'outdoor soft light']
-const angles = ['front view', 'side angle', 'close-up detail', '45 degree angle']
+const SKIN_TONE_PROMPTS: Record<SkinTone, string> = {
+  ivory:    'very fair porcelain skin tone, light pink undertone',
+  sand:     'light warm sand skin tone, golden undertone',
+  honey:    'medium warm honey skin tone, golden wheat complexion',
+  caramel:  'medium-dark caramel skin tone, rich warm complexion',
+  espresso: 'deep dark espresso skin tone, rich deep complexion',
+}
 
-function buildPrompts(displayType: 'woman' | 'man'): Record<JewelryType, string> {
-  const randomSkin = skinTones[Math.floor(Math.random() * skinTones.length)]
-  const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)]
-  const randomAngle = angles[Math.floor(Math.random() * angles.length)]
+const BACKGROUND_PROMPTS: Record<Background, string> = {
+  pure_white:  'clean pure white studio background, seamless white backdrop',
+  soft_grey:   'soft neutral grey editorial background, subtle gradient',
+  golden_hour: 'warm golden hour light background, soft amber glow, bokeh',
+  marble_luxe: 'luxury white marble background with subtle grey veining',
+  noir:        'dramatic deep black background, dark luxury atmosphere',
+}
 
-  if (displayType === 'man') {
-    return {
-      ring:     `Elegant man's hand with ${randomSkin} wearing this exact ring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
-      necklace: `Handsome man with ${randomSkin} wearing this exact necklace around his neck, ${randomBg} background, ${randomAngle}, luxury fashion photography, ultra realistic`,
-      earring:  `Stylish man with ${randomSkin} wearing this exact earring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
-      watch:    `Elegant man's wrist with ${randomSkin} wearing this exact watch, ${randomBg} background, ${randomAngle}, luxury watch photography, ultra realistic`,
-    }
+function buildPrompt(
+  displayType: 'woman' | 'man',
+  jewelryType: JewelryType,
+  skinTone: SkinTone,
+  background: Background
+): string {
+  const skin = SKIN_TONE_PROMPTS[skinTone]
+  const bg   = BACKGROUND_PROMPTS[background]
+
+  const subjectMap: Record<JewelryType, { woman: string; man: string }> = {
+    ring: {
+      woman: `elegant woman's hand with ${skin}, perfectly manicured nails, wearing this exact ring on her finger`,
+      man:   `elegant man's hand with ${skin}, well-groomed nails, wearing this exact ring on his finger`,
+    },
+    necklace: {
+      woman: `beautiful woman with ${skin}, wearing this exact necklace around her neck, décolleté visible, elegant posture`,
+      man:   `handsome man with ${skin}, wearing this exact necklace around his neck, collar open, confident posture`,
+    },
+    earring: {
+      woman: `elegant woman with ${skin}, wearing this exact earring on her ear, hair swept aside to reveal the earring clearly`,
+      man:   `stylish man with ${skin}, wearing this exact earring on his ear, hair swept aside to reveal the earring clearly`,
+    },
+    watch: {
+      woman: `elegant woman's wrist with ${skin}, wearing this exact watch on her wrist, sleek and refined`,
+      man:   `strong man's wrist with ${skin}, wearing this exact watch on his wrist, powerful and refined`,
+    },
   }
 
-  return {
-    ring:     `Elegant woman's hand with ${randomSkin} and manicured nails wearing this exact ring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
-    necklace: `Beautiful woman with ${randomSkin} wearing this exact necklace around her neck, ${randomBg} background, ${randomAngle}, luxury fashion photography, ultra realistic`,
-    earring:  `Elegant woman with ${randomSkin} wearing this exact earring, ${randomBg} background, ${randomAngle}, luxury jewelry photography, ultra realistic`,
-    watch:    `Elegant woman's wrist with ${randomSkin} wearing this exact watch, ${randomBg} background, ${randomAngle}, luxury watch photography, ultra realistic`,
-  }
+  const subject = subjectMap[jewelryType][displayType]
+
+  return [
+    subject,
+    bg,
+    'luxury jewelry product photography',
+    'ultra realistic, 8K, sharp focus, professional lighting',
+    'the jewelry must be identical to the reference image',
+  ].join(', ')
 }
 
 type NanoBananaResult = {
@@ -74,12 +106,14 @@ async function upscaleImage(imageUrl: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man'
+  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man', skinTone: SkinTone, background: Background
   try {
     const body = await req.json()
     ;({ imageBase64, jewelryType } = body as { imageBase64: string; jewelryType: JewelryType })
-    quantity = Math.min(Math.max(Number(body.quantity) || 1, 1), 4)
-    displayType = body.displayType ?? 'woman'
+    quantity    = Math.min(Math.max(Number(body.quantity) || 1, 1), 4)
+    displayType = body.displayType  ?? 'woman'
+    skinTone    = (body.skinTone    as SkinTone)   ?? 'sand'
+    background  = (body.background  as Background) ?? 'pure_white'
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
@@ -144,13 +178,18 @@ export async function POST(req: NextRequest) {
   const modelImageUrl = `${appUrl}/${folder}/${encodeURIComponent(randomFile)}`
   console.log('Seçilen referans model:', modelImageUrl)
 
+  const prompt = buildPrompt(displayType, jewelryType, skinTone, background)
+
+  console.log('── try-on params ──')
+  console.log('displayType:', displayType, '| jewelryType:', jewelryType)
+  console.log('skinTone:', skinTone, '| background:', background)
+  console.log('prompt:', prompt)
+
   const imageBuffer = Buffer.from(imageBase64, 'base64')
   const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
   const uploadedImageUrl = await fal.storage.upload(imageBlob)
   console.log('Model URL:', modelImageUrl)
   console.log('Takı URL:', uploadedImageUrl)
-
-  const prompt = buildPrompts(displayType)[jewelryType]
 
   const results = await Promise.allSettled(
     Array.from({ length: quantity }, () =>
