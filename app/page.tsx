@@ -59,19 +59,19 @@ function Reveal({
 const steps = [
   {
     n: "01",
-    img: "/landing_images/more/step1.jpg",
+    img: "/landing/landing_images/how_does_it_work/step1.jpg",
     title: "Ürününüzü Yükleyin",
     desc: "Takı görselinizi sürükleyip bırakın ya da dosya seçin. Beyaz zemin üzerinde çekilmiş net bir fotoğraf, en yüksek kalite çıktıyı sağlar.",
   },
   {
     n: "02",
-    img: "/landing_images/more/step2.jpg",
+    img: "/landing/landing_images/how_does_it_work/step2.jpg",
     title: "Türü Belirleyin",
     desc: "Yüzük, kolye, küpe ya da bileklik — kategorinizi seçin. Tek görselden dörde kadar farklı model varyasyonu üretebilirsiniz.",
   },
   {
     n: "03",
-    img: "/landing_images/more/step3.jpg",
+    img: "/landing/landing_images/how_does_it_work/step3.jpg",
     title: "İndirin, Kullanın",
     desc: "Yapay zeka motorumuz takınızı gerçekçi bir model üzerine yerleştirir. 30 saniye içinde stüdyo kalitesinde ürün görseli elinizde.",
   },
@@ -86,9 +86,9 @@ const stats = [
 ]
 
 const collection = [
-  { src: "/landing_images/landing/ring.jpg", cat: "Yüzük", title: "Nişan & Tektaş", desc: "Parmakta gerçekçi canlandırma" },
-  { src: "/landing_images/landing/earrings.jpg", cat: "Küpe", title: "Halka & Sarkıt", desc: "Kulakta doğal ışık sergisi" },
-  { src: "/landing_images/landing/necklace.jpg", cat: "Kolye", title: "Kolye & Pendant", desc: "Boyunda stüdyo kalitesi" },
+  { src: "/landing/landing_images/collection/ring.jpg", cat: "Yüzük", title: "Nişan & Tektaş", desc: "Parmakta gerçekçi canlandırma" },
+  { src: "/landing/landing_images/collection/earrings.jpg", cat: "Küpe", title: "Halka & Sarkıt", desc: "Kulakta doğal ışık sergisi" },
+  { src: "/landing/landing_images/collection/necklace.jpg", cat: "Kolye", title: "Kolye & Pendant", desc: "Boyunda stüdyo kalitesi" },
 ]
 
 /* ─── Overline label ─────────────────────────────────────────────────── */
@@ -193,7 +193,7 @@ export default function LandingPage() {
         {/* ─────────────── HERO ─────────────── */}
         <section className="relative h-screen overflow-hidden">
           <video
-            src="/landing_videos/main.mp4"
+            src="/landing/landing_videos/main.mp4"
             autoPlay muted loop playsInline
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -383,7 +383,7 @@ export default function LandingPage() {
         {/* ─────────────── CTA — Video ─────────────── */}
         <section className="relative min-h-[88vh] overflow-hidden flex items-end">
           <video
-            src="/landing_videos/luxury.mp4"
+            src="/landing/landing_videos/luxury.mp4"
             autoPlay muted loop playsInline
             className="absolute inset-0 w-full h-full object-cover"
           />

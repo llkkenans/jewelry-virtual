@@ -113,7 +113,7 @@ export default function RegisterPage() {
 
         {/* Ana görsel */}
         <img
-          src="/landing_images/register/lucid2.jpg"
+          src="/landing/landing_images/register/lucid2.jpg"
           alt=""
           draggable={false}
           className="absolute inset-0 w-full h-full object-cover object-center"
@@ -162,7 +162,7 @@ export default function RegisterPage() {
             transform: `translate(-50%, -50%) scale(${zoomed ? 1 : 0.88})`,
             opacity: zoomed ? 1 : 0,
             transition: "opacity 0.4s ease, transform 0.4s ease",
-            backgroundImage: "url(/landing_images/register/lucid2.jpg)",
+            backgroundImage: "url(/landing/landing_images/register/lucid2.jpg)",
             backgroundSize: "300%",
             backgroundPosition: `${BP.x}% ${BP.y}%`,
             backgroundRepeat: "no-repeat",

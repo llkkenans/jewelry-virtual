@@ -50,7 +50,7 @@ export default function LoginPage() {
 
         {/* Ana görsel */}
         <img
-          src="/landing_images/login/lucid.jpg"
+          src="/landing/landing_images/login/lucid.jpg"
           alt=""
           draggable={false}
           className="absolute inset-0 w-full h-full object-cover object-center"
@@ -99,7 +99,7 @@ export default function LoginPage() {
             transform: `translate(-50%, -50%) scale(${zoomed ? 1 : 0.88})`,
             opacity: zoomed ? 1 : 0,
             transition: "opacity 0.4s ease, transform 0.4s ease",
-            backgroundImage: "url(/landing_images/login/lucid.jpg)",
+            backgroundImage: "url(/landing/landing_images/login/lucid.jpg)",
             backgroundSize: "300%",
             backgroundPosition: `${BP.x}% ${BP.y}%`,
             backgroundRepeat: "no-repeat",
