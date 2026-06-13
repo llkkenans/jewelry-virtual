@@ -103,13 +103,6 @@ const JEWELRY_TYPES: {
 
 const QUANTITIES = [1, 2, 3, 4]
 
-const BG_PREVIEW_CLASS: Record<Background, string> = {
-  pure_white:  "bg-white",
-  soft_grey:   "bg-gray-400",
-  golden_hour: "bg-gradient-to-br from-amber-400 to-orange-600",
-  marble_luxe: "bg-gradient-to-br from-gray-100 to-gray-300",
-  noir:        "bg-black border border-gray-700",
-}
 
 const PROGRESS_STEPS = [
   "Görsel analiz ediliyor...",
@@ -468,7 +461,15 @@ export default function UploadPage() {
                     borderColor: selected ? "#C9A96E" : "transparent",
                   }}
                 >
-                  <div className={`w-full aspect-square rounded-xl mb-6 ${BG_PREVIEW_CLASS[id]}`} />
+                  <div className="w-full aspect-square rounded-xl overflow-hidden relative mb-6">
+                    <Image
+                      src={`/backgrounds/${id}.jpg`}
+                      alt={label}
+                      fill
+                      className="object-cover"
+                      sizes="200px"
+                    />
+                  </div>
                   <p
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
                     className="text-lg font-medium text-white mb-1"
