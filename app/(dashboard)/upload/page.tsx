@@ -103,6 +103,14 @@ const JEWELRY_TYPES: {
 
 const QUANTITIES = [1, 2, 3, 4]
 
+const BG_PREVIEW_CLASS: Record<Background, string> = {
+  pure_white:  "bg-white",
+  soft_grey:   "bg-gray-400",
+  golden_hour: "bg-gradient-to-br from-amber-400 to-orange-600",
+  marble_luxe: "bg-gradient-to-br from-gray-100 to-gray-300",
+  noir:        "bg-black border border-gray-700",
+}
+
 const PROGRESS_STEPS = [
   "Görsel analiz ediliyor...",
   "Maske oluşturuluyor...",
@@ -260,63 +268,64 @@ export default function UploadPage() {
   if (step === 1) {
     return (
       <div
-        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center px-8"
         style={{ top: "3.5rem" }}
       >
-        <div className="w-full max-w-2xl mb-12">
-          <p
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
-          >
-            Model Seçimi
-          </p>
-          <h1
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
-          >
-            Kimi üzerinde
-            <br />
-            <span
-              className="font-light text-white/30"
+        <div className="w-full max-w-5xl">
+          {/* Başlık */}
+          <div className="text-center mb-16">
+            <p
               style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xs tracking-[0.3em] uppercase text-gray-500 mb-4"
             >
-              görmek istersiniz?
-            </span>
-          </h1>
-        </div>
+              Model Seçimi
+            </p>
+            <h1
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-5xl font-bold text-white mb-3"
+            >
+              Kimi üzerinde görmek istersiniz?
+            </h1>
+            <p
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xl text-gray-400"
+            >
+              Takınızın sergileneceği modeli seçin
+            </p>
+          </div>
 
-        <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
-          {DISPLAY_TYPES.map(({ id, label, cardImage }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => { setDisplayType(id); setStep(2) }}
-              className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer focus:outline-none"
-            >
-              <Image
-                src={cardImage}
-                alt={label}
-                fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                sizes="(max-width: 640px) 50vw, 400px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 p-6">
-                <span
-                  style={{ fontFamily: "'DM Sans', sans-serif" }}
-                  className="text-[10px] text-white/35 tracking-[0.3em] uppercase font-medium block mb-2"
-                >
-                  {id === "woman" ? "Kadın Modeli" : "Erkek Modeli"}
-                </span>
-                <p
-                  style={{ fontFamily: "'DM Sans', sans-serif" }}
-                  className="text-[1.5rem] sm:text-[1.75rem] font-bold text-white leading-tight tracking-[-0.02em]"
-                >
-                  {label}
-                </p>
-              </div>
-            </button>
-          ))}
+          {/* Kartlar */}
+          <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
+            {DISPLAY_TYPES.map(({ id, label, cardImage }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => { setDisplayType(id); setStep(2) }}
+                className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer focus:outline-none transition-all duration-300 hover:opacity-90 hover:scale-[1.02]"
+                style={{
+                  backgroundColor: "#111",
+                  border: displayType === id ? "2px solid #C9A96E" : "2px solid transparent",
+                }}
+              >
+                <Image
+                  src={cardImage}
+                  alt={label}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  sizes="(max-width: 640px) 50vw, 400px"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 inset-x-0 p-8">
+                  <p
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                    className="text-2xl font-light text-white leading-tight"
+                  >
+                    {label}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -326,72 +335,78 @@ export default function UploadPage() {
   if (step === 2) {
     return (
       <div
-        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center px-8"
         style={{ top: "3.5rem" }}
       >
-        <div className="w-full max-w-3xl mb-10">
+        <div className="w-full max-w-5xl">
+          {/* Geri */}
           <button
             type="button"
             onClick={goBack}
-            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors cursor-pointer mb-8"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer mb-12"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            <ChevronLeft size={14} />
-            <span className="tracking-[0.15em] uppercase font-medium">Geri</span>
+            <ChevronLeft size={16} />
+            <span className="text-sm">Geri</span>
           </button>
 
-          <p
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
-          >
-            Cilt Tonu
-          </p>
-          <h1
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
-          >
-            Cilt Tonunu Seçin
-            <br />
-            <span className="font-light text-white/30">Modelin cilt tonunu belirleyin</span>
-          </h1>
-        </div>
+          {/* Başlık */}
+          <div className="text-center mb-16">
+            <p
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xs tracking-[0.3em] uppercase text-gray-500 mb-4"
+            >
+              Cilt Tonu
+            </p>
+            <h1
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-5xl font-bold text-white mb-3"
+            >
+              Cilt Tonunu Seçin
+            </h1>
+            <p
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xl text-gray-400"
+            >
+              Modelin cilt tonunu belirleyin
+            </p>
+          </div>
 
-        <div className="grid grid-cols-5 gap-3 w-full max-w-3xl">
-          {SKIN_TONES.map(({ id, label, hex, desc }) => {
-            const selected = skinTone === id
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => { setSkinTone(id); setStep(3) }}
-                className="group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none"
-                style={{
-                  borderColor: selected ? "#C9A96E" : "rgba(255,255,255,0.08)",
-                  backgroundColor: selected ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.03)",
-                  boxShadow: selected ? "0 0 0 1px #C9A96E" : "none",
-                }}
-              >
-                <div
-                  className="w-14 h-14 rounded-full flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
-                  style={{ backgroundColor: hex, boxShadow: selected ? `0 0 12px ${hex}60` : "none" }}
-                />
-                <div className="text-center">
+          {/* Kartlar */}
+          <div className="grid grid-cols-5 gap-6 max-w-4xl mx-auto">
+            {SKIN_TONES.map(({ id, label, hex, desc }) => {
+              const selected = skinTone === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => { setSkinTone(id); setStep(3) }}
+                  className="group flex flex-col items-center py-10 px-6 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none hover:border-gray-600"
+                  style={{
+                    backgroundColor: selected ? "#1a1508" : "#111",
+                    borderColor: selected ? "#C9A96E" : "transparent",
+                  }}
+                >
+                  <div
+                    className="w-20 h-20 rounded-full mx-auto mb-6 transition-transform duration-200 group-hover:scale-105"
+                    style={{ backgroundColor: hex }}
+                  />
                   <p
-                    style={{ fontFamily: "'DM Sans', sans-serif", color: selected ? "#C9A96E" : "rgba(255,255,255,0.85)" }}
-                    className="text-[13px] font-semibold leading-tight mb-1"
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                    className="text-lg font-medium text-white mb-1"
                   >
                     {label}
                   </p>
                   <p
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
-                    className="text-[10px] text-white/30 leading-snug"
+                    className="text-sm text-gray-400 text-center"
                   >
                     {desc}
                   </p>
-                </div>
-              </button>
-            )
-          })}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
     )
@@ -401,75 +416,75 @@ export default function UploadPage() {
   if (step === 3) {
     return (
       <div
-        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center px-8"
         style={{ top: "3.5rem" }}
       >
-        <div className="w-full max-w-3xl mb-10">
+        <div className="w-full max-w-5xl">
+          {/* Geri */}
           <button
             type="button"
             onClick={goBack}
-            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors cursor-pointer mb-8"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer mb-12"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            <ChevronLeft size={14} />
-            <span className="tracking-[0.15em] uppercase font-medium">Geri</span>
+            <ChevronLeft size={16} />
+            <span className="text-sm">Geri</span>
           </button>
 
-          <p
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
-          >
-            Arka Plan
-          </p>
-          <h1
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
-          >
-            Arka Plan Seçin
-            <br />
-            <span className="font-light text-white/30">Çekim ortamını belirleyin</span>
-          </h1>
-        </div>
+          {/* Başlık */}
+          <div className="text-center mb-16">
+            <p
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xs tracking-[0.3em] uppercase text-gray-500 mb-4"
+            >
+              Arka Plan
+            </p>
+            <h1
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-5xl font-bold text-white mb-3"
+            >
+              Arka Plan Seçin
+            </h1>
+            <p
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+              className="text-xl text-gray-400"
+            >
+              Çekim ortamını belirleyin
+            </p>
+          </div>
 
-        <div className="grid grid-cols-5 gap-3 w-full max-w-3xl">
-          {BACKGROUNDS.map(({ id, label, desc, emoji }) => {
-            const selected = background === id
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => { setBackground(id); setStep(4) }}
-                className="group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none"
-                style={{
-                  borderColor: selected ? "#C9A96E" : "rgba(255,255,255,0.08)",
-                  backgroundColor: selected ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.03)",
-                  boxShadow: selected ? "0 0 0 1px #C9A96E" : "none",
-                }}
-              >
-                <span
-                  className="text-4xl leading-none select-none transition-transform duration-200 group-hover:scale-110"
-                  role="img"
-                  aria-label={label}
+          {/* Kartlar */}
+          <div className="grid grid-cols-5 gap-6 max-w-4xl mx-auto">
+            {BACKGROUNDS.map(({ id, label, desc }) => {
+              const selected = background === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => { setBackground(id); setStep(4) }}
+                  className="group flex flex-col py-10 px-6 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none hover:border-gray-600"
+                  style={{
+                    backgroundColor: selected ? "#1a1508" : "#111",
+                    borderColor: selected ? "#C9A96E" : "transparent",
+                  }}
                 >
-                  {emoji}
-                </span>
-                <div className="text-center">
+                  <div className={`w-full aspect-square rounded-xl mb-6 ${BG_PREVIEW_CLASS[id]}`} />
                   <p
-                    style={{ fontFamily: "'DM Sans', sans-serif", color: selected ? "#C9A96E" : "rgba(255,255,255,0.85)" }}
-                    className="text-[13px] font-semibold leading-tight mb-1"
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                    className="text-lg font-medium text-white mb-1"
                   >
                     {label}
                   </p>
                   <p
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
-                    className="text-[10px] text-white/30 leading-snug"
+                    className="text-sm text-gray-400"
                   >
                     {desc}
                   </p>
-                </div>
-              </button>
-            )
-          })}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
     )
