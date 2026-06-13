@@ -87,6 +87,29 @@ type ClarityUpscaleResult = {
   image: { url: string }
 }
 
+async function saveToSupabase(imageUrl: string, userId: string): Promise<string> {
+  try {
+    const res = await fetch(imageUrl)
+    if (!res.ok) return imageUrl
+    const arrayBuffer = await res.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+    const { data, error } = await supabaseAdmin.storage
+      .from('generations')
+      .upload(fileName, buffer, {
+        contentType: 'image/jpeg',
+        upsert: false,
+      })
+    if (error || !data) return imageUrl
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('generations')
+      .getPublicUrl(data.path)
+    return publicUrl
+  } catch {
+    return imageUrl
+  }
+}
+
 async function upscaleImage(imageUrl: string): Promise<string> {
   try {
     const result = await fal.subscribe('fal-ai/clarity-upscaler', {
@@ -208,7 +231,8 @@ export async function POST(req: NextRequest) {
     results.map(async (result) => {
       if (result.status === 'fulfilled') {
         const rawUrl = (result.value.data as NanoBananaResult).images[0].url
-        const outputUrl = await upscaleImage(rawUrl)
+        const upscaledUrl = await upscaleImage(rawUrl)
+        const outputUrl = await saveToSupabase(upscaledUrl, user.id)
         console.log('Nano Banana output URL:', outputUrl)
 
         await supabaseAdmin
