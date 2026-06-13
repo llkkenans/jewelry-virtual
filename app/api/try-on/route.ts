@@ -175,31 +175,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  const gender = displayType === 'man' ? 'man' : 'woman'
-  const folder = `models/${gender}/${displayType === 'man' ? manFolderMap[jewelryType] : folderMap[jewelryType]}`
-  const modelsDir = path.join(process.cwd(), 'public', folder)
+  const gender        = displayType === 'man' ? 'man' : 'woman'
+  const jewelryFolder = displayType === 'man' ? manFolderMap[jewelryType] : folderMap[jewelryType]
 
-  let files: string[]
+  const skinToneFolder = path.join(process.cwd(), 'public', 'models', gender, jewelryFolder, skinTone)
+  const baseFolderPath = path.join(process.cwd(), 'public', 'models', gender, jewelryFolder)
+
+  let files: string[] = []
+  let usedFolderUrl   = `models/${gender}/${jewelryFolder}/${skinTone}`
+
   try {
-    files = fs.readdirSync(modelsDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
-  } catch {
-    return NextResponse.json(
-      { error: `Model klasörü bulunamadı: public/${folder}/` },
-      { status: 500 }
-    )
+    files = fs.readdirSync(skinToneFolder).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
+  } catch { /* skinTone klasörü yok */ }
+
+  if (files.length === 0) {
+    usedFolderUrl = `models/${gender}/${jewelryFolder}`
+    try {
+      files = fs.readdirSync(baseFolderPath).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
+    } catch {
+      return NextResponse.json({ error: `Model klasörü bulunamadı` }, { status: 500 })
+    }
   }
 
   if (files.length === 0) {
-    return NextResponse.json(
-      { error: `public/${folder}/ klasöründe görsel yok` },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: `Model görseli bulunamadı` }, { status: 500 })
   }
 
-  const randomFile = files[Math.floor(Math.random() * files.length)]
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://jewelry-virtual.vercel.app'
-  const modelImageUrl = `${appUrl}/${folder}/${encodeURIComponent(randomFile)}`
-  console.log('Seçilen referans model:', modelImageUrl)
+  const randomFile    = files[Math.floor(Math.random() * files.length)]
+  const appUrl        = process.env.NEXT_PUBLIC_APP_URL || 'https://jewelry-virtual.vercel.app'
+  const modelImageUrl = `${appUrl}/${usedFolderUrl}/${encodeURIComponent(randomFile)}`
+  console.log('model klasör:', usedFolderUrl)
+  console.log('model dosya: ', randomFile)
 
   const prompt = buildPrompt(displayType, jewelryType, skinTone, background)
 
