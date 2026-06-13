@@ -13,7 +13,7 @@ const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watc
 const folderMap: Record<JewelryType, string> = {
   ring: 'ring',
   necklace: 'necklace',
-  earring: 'kupe',
+  earring: 'earring',
   watch: 'watch',
 }
 
