@@ -18,6 +18,8 @@ import {
 
 type JewelryType = "ring" | "necklace" | "earring" | "watch"
 type DisplayType = "woman" | "man"
+type SkinTone = "ivory" | "sand" | "honey" | "caramel" | "espresso"
+type Background = "pure_white" | "soft_grey" | "golden_hour" | "marble_luxe" | "noir"
 
 const DISPLAY_TYPES: {
   id: DisplayType
@@ -34,6 +36,32 @@ const DISPLAY_TYPES: {
     label: "Erkek",
     cardImage: "/model_sec/man.jpg",
   },
+]
+
+const SKIN_TONES: {
+  id: SkinTone
+  label: string
+  hex: string
+  desc: string
+}[] = [
+  { id: "ivory",    label: "Ivory",    hex: "#F5E6D8", desc: "Çok açık, pembe alt ton" },
+  { id: "sand",     label: "Sand",     hex: "#D4A574", desc: "Açık, sıcak alt ton" },
+  { id: "honey",    label: "Honey",    hex: "#C68642", desc: "Orta, sıcak buğday" },
+  { id: "caramel",  label: "Caramel",  hex: "#8D5524", desc: "Koyu orta ton" },
+  { id: "espresso", label: "Espresso", hex: "#3C1F0F", desc: "Derin koyu ton" },
+]
+
+const BACKGROUNDS: {
+  id: Background
+  label: string
+  desc: string
+  emoji: string
+}[] = [
+  { id: "pure_white",  label: "Pure White",  desc: "Temiz beyaz stüdyo",     emoji: "⬜" },
+  { id: "soft_grey",   label: "Soft Grey",   desc: "Editöryal nötr gri",      emoji: "🩶" },
+  { id: "golden_hour", label: "Golden Hour", desc: "Sıcak altın saati ışığı", emoji: "🌅" },
+  { id: "marble_luxe", label: "Marble Luxe", desc: "Lüks beyaz mermer",       emoji: "🏛️" },
+  { id: "noir",        label: "Noir",        desc: "Dramatik siyah fon",      emoji: "🖤" },
 ]
 
 const JEWELRY_TYPES: {
@@ -84,11 +112,13 @@ const PROGRESS_STEPS = [
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [step, setStep]               = useState<1 | 2 | 3>(1)
+  const [step, setStep]               = useState<1 | 2 | 3 | 4 | 5>(1)
   const [dragging, setDragging]       = useState(false)
   const [file, setFile]               = useState<File | null>(null)
   const [preview, setPreview]         = useState<string | null>(null)
   const [displayType, setDisplayType] = useState<DisplayType | null>(null)
+  const [skinTone, setSkinTone]       = useState<SkinTone | null>(null)
+  const [background, setBackground]   = useState<Background | null>(null)
   const [jewelryType, setJewelryType] = useState<JewelryType | null>(null)
   const [quantity, setQuantity]       = useState<number>(1)
   const [generating, setGenerating]   = useState(false)
@@ -126,9 +156,15 @@ export default function UploadPage() {
   }
 
   function goBack() {
-    if (step === 3) {
+    if (step === 5) {
       clearFile()
       setJewelryType(null)
+      setStep(4)
+    } else if (step === 4) {
+      setBackground(null)
+      setStep(3)
+    } else if (step === 3) {
+      setSkinTone(null)
       setStep(2)
     } else if (step === 2) {
       setDisplayType(null)
@@ -181,7 +217,7 @@ export default function UploadPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType }),
+        body: JSON.stringify({ imageBase64, jewelryType, quantity, displayType, skinTone, background }),
       })
 
       if (!tryOnRes.ok) {
@@ -227,7 +263,6 @@ export default function UploadPage() {
         className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
         style={{ top: "3.5rem" }}
       >
-        {/* Başlık */}
         <div className="w-full max-w-2xl mb-12">
           <p
             style={{ fontFamily: "'DM Sans', sans-serif" }}
@@ -250,7 +285,6 @@ export default function UploadPage() {
           </h1>
         </div>
 
-        {/* Kartlar */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
           {DISPLAY_TYPES.map(({ id, label, cardImage }) => (
             <button
@@ -288,14 +322,13 @@ export default function UploadPage() {
     )
   }
 
-  /* ── Adım 2: Takı Seçim Ekranı ── */
+  /* ── Adım 2: Cilt Tonu Seçim Ekranı ── */
   if (step === 2) {
     return (
       <div
         className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
         style={{ top: "3.5rem" }}
       >
-        {/* Geri */}
         <div className="w-full max-w-3xl mb-10">
           <button
             type="button"
@@ -307,7 +340,159 @@ export default function UploadPage() {
             <span className="tracking-[0.15em] uppercase font-medium">Geri</span>
           </button>
 
-          {/* Başlık */}
+          <p
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
+          >
+            Cilt Tonu
+          </p>
+          <h1
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
+          >
+            Cilt Tonunu Seçin
+            <br />
+            <span className="font-light text-white/30">Modelin cilt tonunu belirleyin</span>
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-5 gap-3 w-full max-w-3xl">
+          {SKIN_TONES.map(({ id, label, hex, desc }) => {
+            const selected = skinTone === id
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => { setSkinTone(id); setStep(3) }}
+                className="group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none"
+                style={{
+                  borderColor: selected ? "#C9A96E" : "rgba(255,255,255,0.08)",
+                  backgroundColor: selected ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.03)",
+                  boxShadow: selected ? "0 0 0 1px #C9A96E" : "none",
+                }}
+              >
+                <div
+                  className="w-14 h-14 rounded-full flex-shrink-0 transition-transform duration-200 group-hover:scale-105"
+                  style={{ backgroundColor: hex, boxShadow: selected ? `0 0 12px ${hex}60` : "none" }}
+                />
+                <div className="text-center">
+                  <p
+                    style={{ fontFamily: "'DM Sans', sans-serif", color: selected ? "#C9A96E" : "rgba(255,255,255,0.85)" }}
+                    className="text-[13px] font-semibold leading-tight mb-1"
+                  >
+                    {label}
+                  </p>
+                  <p
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                    className="text-[10px] text-white/30 leading-snug"
+                  >
+                    {desc}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Adım 3: Arka Plan Seçim Ekranı ── */
+  if (step === 3) {
+    return (
+      <div
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        style={{ top: "3.5rem" }}
+      >
+        <div className="w-full max-w-3xl mb-10">
+          <button
+            type="button"
+            onClick={goBack}
+            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors cursor-pointer mb-8"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            <ChevronLeft size={14} />
+            <span className="tracking-[0.15em] uppercase font-medium">Geri</span>
+          </button>
+
+          <p
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
+          >
+            Arka Plan
+          </p>
+          <h1
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0]"
+          >
+            Arka Plan Seçin
+            <br />
+            <span className="font-light text-white/30">Çekim ortamını belirleyin</span>
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-5 gap-3 w-full max-w-3xl">
+          {BACKGROUNDS.map(({ id, label, desc, emoji }) => {
+            const selected = background === id
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => { setBackground(id); setStep(4) }}
+                className="group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-200 cursor-pointer focus:outline-none"
+                style={{
+                  borderColor: selected ? "#C9A96E" : "rgba(255,255,255,0.08)",
+                  backgroundColor: selected ? "rgba(201,169,110,0.08)" : "rgba(255,255,255,0.03)",
+                  boxShadow: selected ? "0 0 0 1px #C9A96E" : "none",
+                }}
+              >
+                <span
+                  className="text-4xl leading-none select-none transition-transform duration-200 group-hover:scale-110"
+                  role="img"
+                  aria-label={label}
+                >
+                  {emoji}
+                </span>
+                <div className="text-center">
+                  <p
+                    style={{ fontFamily: "'DM Sans', sans-serif", color: selected ? "#C9A96E" : "rgba(255,255,255,0.85)" }}
+                    className="text-[13px] font-semibold leading-tight mb-1"
+                  >
+                    {label}
+                  </p>
+                  <p
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                    className="text-[10px] text-white/30 leading-snug"
+                  >
+                    {desc}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Adım 4: Takı Seçim Ekranı ── */
+  if (step === 4) {
+    return (
+      <div
+        className="fixed inset-x-0 bottom-0 z-10 bg-black flex flex-col items-center justify-center py-16 px-6 sm:px-12"
+        style={{ top: "3.5rem" }}
+      >
+        <div className="w-full max-w-3xl mb-10">
+          <button
+            type="button"
+            onClick={goBack}
+            className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors cursor-pointer mb-8"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            <ChevronLeft size={14} />
+            <span className="tracking-[0.15em] uppercase font-medium">Geri</span>
+          </button>
+
           <p
             style={{ fontFamily: "'DM Sans', sans-serif" }}
             className="text-[10px] tracking-[0.28em] uppercase font-medium text-white/30 mb-5"
@@ -324,13 +509,12 @@ export default function UploadPage() {
           </h1>
         </div>
 
-        {/* Kartlar */}
         <div className="grid grid-cols-4 gap-3 w-full max-w-3xl">
           {JEWELRY_TYPES.map(({ id, label, desc, cardImage }) => (
             <button
               key={id}
               type="button"
-              onClick={() => { setJewelryType(id); setStep(3) }}
+              onClick={() => { setJewelryType(id); setStep(5) }}
               className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer focus:outline-none"
             >
               <Image
@@ -362,10 +546,9 @@ export default function UploadPage() {
     )
   }
 
-  /* ── Adım 3: Upload Ekranı ── */
+  /* ── Adım 5: Upload + Üret Ekranı ── */
   return (
     <div className="space-y-6">
-      {/* Başlık + Geri */}
       <div className="flex items-center gap-3">
         <button
           type="button"
