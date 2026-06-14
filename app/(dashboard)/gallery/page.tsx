@@ -250,7 +250,7 @@ export default function GalleryPage() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-[#E5E7EB]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-white p-4 space-y-3">
               <Skeleton className="w-full aspect-square rounded-none" />
@@ -285,7 +285,7 @@ export default function GalleryPage() {
           <div className="w-px h-12 bg-[#E5E7EB]" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-[#E5E7EB]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {displayed.map((item) => {
             const type = JEWELRY_LABELS[item.jewelry_type]
             const Icon = type?.icon ?? Gem
@@ -311,21 +311,9 @@ export default function GalleryPage() {
                     </div>
                   ) : (
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
-                      <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item.id) }} className="absolute top-3 left-3 w-7 h-7 bg-white/0 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer" aria-label="Görseli sil">
-                        <Trash2 size={12} strokeWidth={1.5} className="text-[#6B7280] hover:text-red-500 transition-colors" />
-                      </button>
                       <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id, item.is_favorite) }} className="absolute top-3 right-3 w-7 h-7 bg-white/0 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer" aria-label="Favori">
                         <Heart size={12} strokeWidth={1.5} className={item.is_favorite ? "fill-[#111827] text-[#111827]" : "text-[#6B7280]"} />
                       </button>
-                      <div className="absolute bottom-0 left-0 right-0 flex opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-                        <button onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url, items.indexOf(item)) }} className="flex-1 h-9 bg-[#111827] hover:bg-black text-white text-[9px] tracking-[0.15em] uppercase font-light flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
-                          <Download size={10} strokeWidth={1.5} />İndir
-                        </button>
-                        <div className="w-px bg-white/20" />
-                        <button onClick={(e) => { e.stopPropagation(); handleShare(item.output_image_url) }} className="flex-1 h-9 bg-[#111827] hover:bg-black text-white text-[9px] tracking-[0.15em] uppercase font-light flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
-                          <Share2 size={10} strokeWidth={1.5} />Paylaş
-                        </button>
-                      </div>
                     </div>
                   )}
                   {!selectMode && item.is_favorite && (
@@ -334,11 +322,53 @@ export default function GalleryPage() {
                     </div>
                   )}
                 </div>
-                <div className="px-3 py-2.5 flex items-center justify-between">
-                  <span className="text-[9px] tracking-[0.15em] uppercase text-[#9CA3AF] font-light flex items-center gap-1">
-                    <Icon size={9} strokeWidth={1.5} />{type?.label ?? item.jewelry_type}
-                  </span>
-                  <span className="text-[9px] tracking-wide text-[#D1D5DB]">{formatDate(item.created_at)}</span>
+                <div className="pt-3 pb-1">
+                  {/* Takı türü + tarih */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] tracking-[0.15em] uppercase font-light text-[#111827]">
+                      {JEWELRY_LABELS[item.jewelry_type]?.label ?? item.jewelry_type}
+                    </span>
+                    <span className="text-[10px] text-[#9CA3AF] font-light">
+                      {formatDate(item.created_at)}
+                    </span>
+                  </div>
+
+                  {/* İnce ayırıcı çizgi */}
+                  <div className="w-6 h-px bg-[#111827] mb-3" />
+
+                  {/* Butonlar */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url, items.indexOf(item)) }}
+                      className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827]
+                        text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280]
+                        hover:text-[#111827] transition-all flex items-center justify-center
+                        gap-1.5 cursor-pointer"
+                    >
+                      <Download size={11} strokeWidth={1.5} />
+                      İndir
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleShare(item.output_image_url) }}
+                      className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827]
+                        text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280]
+                        hover:text-[#111827] transition-all flex items-center justify-center
+                        gap-1.5 cursor-pointer"
+                    >
+                      <Share2 size={11} strokeWidth={1.5} />
+                      Paylaş
+                    </button>
+                    {!selectMode && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item.id) }}
+                        className="w-8 h-8 border border-[#E5E7EB] hover:border-[#111827]
+                          text-[#9CA3AF] hover:text-[#111827] transition-all
+                          flex items-center justify-center cursor-pointer"
+                      >
+                        <Trash2 size={11} strokeWidth={1.5} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )
