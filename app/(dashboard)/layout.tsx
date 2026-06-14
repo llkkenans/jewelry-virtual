@@ -5,46 +5,29 @@ import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Separator } from "@/components/ui/separator"
-import { LogOut, Images, Upload, CreditCard } from "lucide-react"
+import { LogOut } from "lucide-react"
 
 const navItems = [
-  { href: "/upload", label: "Üret", icon: Upload },
-  { href: "/gallery", label: "Galeri", icon: Images },
-  { href: "/billing", label: "Kredi", icon: CreditCard },
+  { href: "/upload",  label: "Üret" },
+  { href: "/gallery", label: "Galeri" },
+  { href: "/billing", label: "Kredi" },
 ]
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const router = useRouter()
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router   = useRouter()
   const pathname = usePathname()
   const [credits, setCredits] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadUser() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.user) {
-        router.push("/login")
-        return
-      }
-
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) { router.push("/login"); return }
       const { data } = await supabase
-        .from("profiles")
-        .select("credits")
-        .eq("id", session.user.id)
-        .single()
-
+        .from("profiles").select("credits").eq("id", session.user.id).single()
       setCredits(data?.credits ?? 0)
       setLoading(false)
     }
-
     loadUser()
   }, [router])
 
@@ -54,73 +37,74 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
-      {/* Header */}
+    <div className="min-h-screen bg-white">
+
+      {/* ── HEADER ── */}
       <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href="/upload" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-6 h-6 rotate-45 border-2 border-[#111827] flex items-center justify-center">
-              <div className="w-1.5 h-1.5 bg-[#111827] rotate-45" />
-            </div>
-            <span className="text-[#111827] text-xs font-light tracking-[0.2em] uppercase hidden sm:block" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          <Link href="/upload" className="flex items-center gap-3 shrink-0">
+            <div className="w-5 h-5 rotate-45 border border-[#111827]" />
+            <span className="text-[#111827] text-[11px] font-light tracking-[0.25em] uppercase">
               Lunia Studio
             </span>
           </Link>
 
-          {/* Nav */}
-          <nav className="flex items-center gap-1">
-            {navItems.map(({ href, label, icon: Icon }) => {
+          {/* Nav — ortada */}
+          <nav className="flex items-center gap-8">
+            {navItems.map(({ href, label }) => {
               const active = pathname === href
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                  className={`relative text-[11px] tracking-[0.15em] uppercase font-light
+                    transition-colors pb-0.5 ${
                     active
-                      ? "bg-[#111827] text-white"
-                      : "text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB]"
+                      ? "text-[#111827]"
+                      : "text-[#9CA3AF] hover:text-[#111827]"
                   }`}
                 >
-                  <Icon size={14} />
-                  <span>{label}</span>
+                  {label}
+                  {active && (
+                    <span className="absolute -bottom-px left-0 right-0 h-px bg-[#111827]" />
+                  )}
                 </Link>
               )
             })}
           </nav>
 
           {/* Sağ: kredi + çıkış */}
-          <div className="flex items-center gap-3">
-            {/* Kredi göstergesi */}
-            <div className="flex items-center gap-1.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl px-2.5 py-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#111827]" />
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-[#111827]" />
               {loading ? (
-                <Skeleton className="h-3.5 w-8 rounded" />
+                <Skeleton className="h-3 w-12 rounded" />
               ) : (
-                <span className="text-xs font-semibold text-[#111827] tabular-nums">
+                <span className="text-[11px] tracking-[0.1em] text-[#111827] font-light">
                   {credits} Kredi
                 </span>
               )}
             </div>
 
-            <Separator orientation="vertical" className="h-5" />
+            <div className="w-px h-4 bg-[#E5E7EB]" />
 
-            {/* Çıkış */}
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer p-1.5 rounded-xl hover:bg-[#F9FAFB]"
-              aria-label="Çıkış yap"
+              className="text-[11px] tracking-[0.1em] text-[#9CA3AF]
+                hover:text-[#111827] transition-colors font-light uppercase
+                flex items-center gap-2 cursor-pointer"
             >
-              <LogOut size={15} />
-              <span className="text-sm hidden sm:block">Çıkış</span>
+              <LogOut size={12} strokeWidth={1.5} />
+              Çıkış
             </button>
           </div>
         </div>
       </header>
 
-      {/* Sayfa içeriği */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      {/* İçerik */}
+      <main className="max-w-6xl mx-auto px-6 py-10">
         {children}
       </main>
     </div>
