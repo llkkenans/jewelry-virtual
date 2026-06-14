@@ -76,8 +76,13 @@ export default function UploadPage() {
 
   function getPreviewUrl(): string | null {
     if (!gender || !ethnicity || !skinTone || !jewelryType) return null
-    const detail = jewelryType === "ring" ? (nailStyle ?? "natural") : "default"
-    return `${R2_URL}/references/${jewelryType}/${gender}/${ethnicity}/${skinTone}/${detail}.jpg`
+
+    if (jewelryType === "ring" && gender === "woman") {
+      const nail = nailStyle ?? "natural"
+      return `${R2_URL}/references/${jewelryType}/${gender}/${ethnicity}/${skinTone}/${nail}.jpg`
+    }
+
+    return `${R2_URL}/references/${jewelryType}/${gender}/${ethnicity}/${skinTone}.jpg`
   }
 
   function handleFile(f: File) {
@@ -311,8 +316,8 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* 5a. Tırnak Tarzı — sadece ring seçilince */}
-        {jewelryType === "ring" && (
+        {/* 5a. Tırnak Tarzı — sadece kadın + yüzük seçilince */}
+        {jewelryType === "ring" && gender === "woman" && (
           <div style={{ animation: "fadeSlideDown 0.3s ease" }}>
             <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
               Tırnak Tarzı
