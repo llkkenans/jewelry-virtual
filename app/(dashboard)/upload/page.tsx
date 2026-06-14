@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Image from "next/image"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ImagePlus, Sparkles, Download, X } from "lucide-react"
+import { ImagePlus, Download, X, Circle, Gem, Sparkles, Watch, Sun, ChevronRight } from "lucide-react"
 
 type JewelryType = "ring" | "necklace" | "earring" | "watch"
 type Gender      = "woman" | "man"
@@ -24,11 +24,11 @@ const SKIN_TONES: { id: SkinTone; label: string; hex: string }[] = [
   { id: "espresso", label: "Espresso", hex: "#3C1F0F" },
 ]
 
-const JEWELRY_TYPES: { id: JewelryType; label: string; icon: string }[] = [
-  { id: "ring",     label: "Yüzük",  icon: "💍" },
-  { id: "necklace", label: "Kolye",  icon: "📿" },
-  { id: "earring",  label: "Küpe",   icon: "✨" },
-  { id: "watch",    label: "Saat",   icon: "⌚" },
+const JEWELRY_TYPES: { id: JewelryType; label: string; icon: React.ReactNode }[] = [
+  { id: "ring",     label: "Yüzük",  icon: <Gem size={18} strokeWidth={1.5} /> },
+  { id: "necklace", label: "Kolye",  icon: <Circle size={18} strokeWidth={1.5} /> },
+  { id: "earring",  label: "Küpe",   icon: <Sparkles size={18} strokeWidth={1.5} /> },
+  { id: "watch",    label: "Saat",   icon: <Watch size={18} strokeWidth={1.5} /> },
 ]
 
 const NAIL_STYLES: { id: NailStyle; label: string }[] = [
@@ -203,16 +203,19 @@ export default function UploadPage() {
       <div className="space-y-5">
 
         {/* Başlık */}
-        <div>
-          <h1 className="text-2xl font-semibold text-[#111827]">Yeni Üretim</h1>
-          <p className="text-sm text-[#6B7280] mt-1">
-            Filtreleri seçin, takı görselinizi yükleyin ve oluşturun.
+        <div className="mb-8">
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-1">
+            Jewelry Virtual Studio
           </p>
+          <h1 className="text-2xl font-light tracking-wide text-[#111827]">
+            Yeni Üretim
+          </h1>
+          <div className="w-8 h-px bg-[#111827] mt-3" />
         </div>
 
         {/* 1. Cinsiyet */}
         <div>
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
+          <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
             Cinsiyet
           </p>
           <div className="flex gap-2">
@@ -220,10 +223,10 @@ export default function UploadPage() {
               <button
                 key={id}
                 onClick={() => setGender(id)}
-                className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all cursor-pointer ${
+                className={`flex-1 py-2 border text-sm font-light tracking-[0.1em] transition-all cursor-pointer rounded-none ${
                   gender === id
                     ? "border-[#111827] bg-[#111827] text-white"
-                    : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]"
+                    : "border-[#E5E7EB] bg-white text-[#111827] hover:border-[#111827]"
                 }`}
               >
                 {label}
@@ -234,34 +237,33 @@ export default function UploadPage() {
 
         {/* 2. Cilt Tonu */}
         <div>
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
+          <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
             Cilt Tonu
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             {SKIN_TONES.map(({ id, label, hex }) => (
-              <button
-                key={id}
-                onClick={() => setSkinTone(id)}
-                title={label}
-                className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                  skinTone === id ? "opacity-100 scale-110" : "opacity-60 hover:opacity-90"
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    skinTone === id ? "border-[#111827]" : "border-transparent"
+              <div key={id} className="flex flex-col items-center gap-1.5">
+                <button
+                  onClick={() => setSkinTone(id)}
+                  className={`w-7 h-7 rounded-full transition-all cursor-pointer ${
+                    skinTone === id
+                      ? "ring-1 ring-offset-2 ring-[#111827]"
+                      : "opacity-50 hover:opacity-80"
                   }`}
                   style={{ backgroundColor: hex }}
+                  title={label}
                 />
-                <span className="text-[10px] text-[#6B7280]">{label}</span>
-              </button>
+                <span className={`text-[10px] tracking-wide ${
+                  skinTone === id ? "text-[#111827] font-medium" : "text-[#9CA3AF]"
+                }`}>{label}</span>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* 4. Takı Türü */}
+        {/* 3. Takı Türü */}
         <div>
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
+          <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
             Takı Türü
           </p>
           <div className="grid grid-cols-4 gap-2">
@@ -269,23 +271,23 @@ export default function UploadPage() {
               <button
                 key={id}
                 onClick={() => { setJewelryType(id); setNailStyle(null) }}
-                className={`flex flex-col items-center gap-1.5 py-3 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                className={`flex flex-col items-center gap-1.5 py-3 border text-[11px] font-light tracking-[0.1em] uppercase transition-all cursor-pointer rounded-none ${
                   jewelryType === id
                     ? "border-[#111827] bg-[#111827] text-white"
-                    : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]"
+                    : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#111827]"
                 }`}
               >
-                <span className="text-lg">{icon}</span>
-                {label}
+                {icon}
+                <span className="mt-1.5">{label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* 5a. Tırnak Tarzı — sadece kadın + yüzük seçilince */}
+        {/* 4. Tırnak Tarzı — sadece kadın + yüzük seçilince */}
         {jewelryType === "ring" && gender === "woman" && (
           <div style={{ animation: "fadeSlideDown 0.3s ease" }}>
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
+            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
               Tırnak Tarzı
             </p>
             <div className="grid grid-cols-4 gap-2">
@@ -293,10 +295,10 @@ export default function UploadPage() {
                 <button
                   key={id}
                   onClick={() => setNailStyle(id)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                  className={`py-2 border text-[11px] font-light tracking-[0.05em] transition-all cursor-pointer rounded-none ${
                     nailStyle === id
                       ? "border-[#111827] bg-[#111827] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]"
+                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#111827]"
                   }`}
                 >
                   {label}
@@ -306,9 +308,9 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* 6. Takı Görseli — DropZone */}
+        {/* 5. Takı Görseli — DropZone */}
         <div>
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
+          <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
             Takı Görseli
           </p>
           {!preview ? (
@@ -317,20 +319,20 @@ export default function UploadPage() {
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors h-52 select-none ${
+              className={`relative flex flex-col items-center justify-center gap-3 border border-dashed cursor-pointer transition-colors h-52 select-none rounded-none ${
                 dragging
                   ? "border-[#111827] bg-[#111827]/5"
-                  : "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#9CA3AF] hover:bg-white"
+                  : "border-[#D1D5DB] bg-[#FAFAFA] hover:border-[#111827] hover:bg-white"
               }`}
             >
               <div className="w-11 h-11 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center shadow-sm">
                 <ImagePlus size={20} className="text-[#6B7280]" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-[#111827]">
+                <p className="text-sm font-light tracking-wide text-[#6B7280]">
                   {dragging ? "Bırakın" : "Sürükleyin veya tıklayın"}
                 </p>
-                <p className="text-xs text-[#6B7280] mt-0.5">PNG, JPG, WEBP — max 10 MB</p>
+                <p className="text-[11px] tracking-wide text-[#9CA3AF] mt-0.5">PNG, JPG, WEBP — max 10 MB</p>
               </div>
               <input
                 ref={fileInputRef}
@@ -341,7 +343,7 @@ export default function UploadPage() {
               />
             </div>
           ) : (
-            <div className="relative rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] h-52">
+            <div className="relative overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] h-52 rounded-none">
               <Image src={preview} alt="Yüklenen takı" fill className="object-contain p-3" />
               <button
                 onClick={clearFile}
@@ -354,9 +356,9 @@ export default function UploadPage() {
           )}
         </div>
 
-        {/* 7. Görsel Adedi */}
+        {/* 6. Görsel Adedi */}
         <div>
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
+          <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
             Görsel Adedi
           </p>
           <div className="grid grid-cols-4 gap-2">
@@ -364,10 +366,10 @@ export default function UploadPage() {
               <button
                 key={q}
                 onClick={() => setQuantity(q)}
-                className={`flex flex-col items-center gap-1 py-3 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`flex flex-col items-center gap-1 py-3 border text-center transition-all cursor-pointer rounded-none ${
                   quantity === q
                     ? "border-[#111827] bg-[#111827] text-white"
-                    : "border-[#E5E7EB] bg-white hover:border-[#9CA3AF]"
+                    : "border-[#E5E7EB] bg-white hover:border-[#111827]"
                 }`}
               >
                 <span className={`text-xl font-semibold ${quantity === q ? "text-white" : "text-[#111827]"}`}>
@@ -383,7 +385,7 @@ export default function UploadPage() {
 
         {/* Hata */}
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
             {error}
           </p>
         )}
@@ -392,7 +394,7 @@ export default function UploadPage() {
         <button
           onClick={handleGenerate}
           disabled={!canGenerate}
-          className="w-full h-11 bg-[#111827] hover:bg-[#1F2937] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full h-12 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {generating ? (
             <>
@@ -401,7 +403,7 @@ export default function UploadPage() {
             </>
           ) : (
             <>
-              <Sparkles size={15} />
+              <Sparkles size={13} strokeWidth={1.5} />
               Görsel Oluştur · {quantity} Kredi
             </>
           )}
@@ -410,11 +412,11 @@ export default function UploadPage() {
 
       {/* ── SAĞ PANEL ── */}
       <div className="relative">
-        <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-3">
+        <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
           Önizleme &amp; Sonuç
         </p>
 
-        <div className="relative rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] overflow-hidden min-h-[520px] flex items-center justify-center">
+        <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[520px] flex items-center justify-center rounded-none">
 
           {/* Canlı önizleme — filtreler seçilince silik manken */}
           {previewUrl && !results.length && !generating && (
@@ -432,8 +434,8 @@ export default function UploadPage() {
             <div className={`absolute inset-0 p-4 ${quantity > 1 ? "grid grid-cols-2 gap-3 content-start" : ""}`}>
               {Array.from({ length: quantity }).map((_, i) => (
                 <div key={i} className="space-y-2">
-                  <Skeleton className="w-full aspect-square rounded-lg" />
-                  <Skeleton className="h-3 w-1/2 rounded" />
+                  <Skeleton className="w-full aspect-square rounded-none" />
+                  <Skeleton className="h-3 w-1/2 rounded-none" />
                 </div>
               ))}
             </div>
@@ -447,12 +449,12 @@ export default function UploadPage() {
                   <img
                     src={url}
                     alt={`Sonuç ${i + 1}`}
-                    className="w-full h-auto rounded-lg object-contain"
+                    className="w-full h-auto object-contain"
                     crossOrigin="anonymous"
                   />
                   <button
                     onClick={() => handleDownload(url, i)}
-                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#1F2937] text-white text-xs font-medium rounded-xl transition-colors cursor-pointer"
+                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase rounded-none transition-colors cursor-pointer"
                   >
                     <Download size={13} />
                     {results.length > 1 ? `İndir ${i + 1}` : "İndir"}
@@ -464,14 +466,15 @@ export default function UploadPage() {
 
           {/* Placeholder — hiçbir şey yokken */}
           {!previewUrl && !generating && !results.length && (
-            <div className="flex flex-col items-center gap-3 text-center px-6">
-              <div className="w-12 h-12 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center">
-                <Sparkles size={20} className="text-[#9CA3AF]" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-[#6B7280]">Sonuç burada görünecek</p>
-                <p className="text-xs text-[#9CA3AF] mt-1">Sol taraftan filtreleri seçin</p>
-              </div>
+            <div className="flex flex-col items-center gap-4 text-center px-8">
+              <div className="w-px h-12 bg-[#E5E7EB]" />
+              <p className="text-[11px] tracking-[0.15em] uppercase text-[#9CA3AF] font-light">
+                Sonuç burada görünecek
+              </p>
+              <p className="text-[10px] tracking-wide text-[#D1D5DB]">
+                Sol taraftan filtreleri seçin
+              </p>
+              <div className="w-px h-12 bg-[#E5E7EB]" />
             </div>
           )}
         </div>
