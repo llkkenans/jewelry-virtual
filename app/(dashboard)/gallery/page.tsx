@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2, Trash2, CheckSquare, Square, X } from "lucide-react"
+import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2, Trash2, CheckSquare, Square, X, Watch } from "lucide-react"
 import { toast } from "sonner"
 
 type Generation = {
@@ -22,6 +21,7 @@ const JEWELRY_LABELS: Record<string, { label: string; icon: React.ElementType }>
   ring:     { label: "Yüzük",  icon: Gem      },
   necklace: { label: "Kolye",  icon: Link2    },
   earring:  { label: "Küpe",   icon: Sparkles },
+  watch:    { label: "Saat",   icon: Watch    },
 }
 
 function formatDate(iso: string) {
@@ -37,7 +37,7 @@ async function handleShare(url: string) {
     await navigator.share({ title: "Lunia Studio", text: "Takılarımı AI ile fotoğrafladım!", url })
   } else {
     await navigator.clipboard.writeText(url)
-    toast("Link kopyalandı!")
+    toast("Link kopyalandı.")
   }
 }
 
@@ -46,21 +46,21 @@ async function handleDownload(url: string, index: number) {
   const blob = await response.blob()
   const a = document.createElement("a")
   a.href = URL.createObjectURL(blob)
-  a.download = `jewelry-virtual-${index + 1}.jpg`
+  a.download = `lunia-studio-${index + 1}.jpg`
   a.click()
   URL.revokeObjectURL(a.href)
 }
 
 export default function GalleryPage() {
-  const [items, setItems] = useState<Generation[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<Tab>("all")
-  const [zipping, setZipping] = useState(false)
-  const [selectMode, setSelectMode] = useState(false)
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [items, setItems]                   = useState<Generation[]>([])
+  const [loading, setLoading]               = useState(true)
+  const [tab, setTab]                       = useState<Tab>("all")
+  const [zipping, setZipping]               = useState(false)
+  const [selectMode, setSelectMode]         = useState(false)
+  const [selected, setSelected]             = useState<Set<string>>(new Set())
+  const [deleteConfirm, setDeleteConfirm]   = useState<string | null>(null)
+  const [bulkConfirm, setBulkConfirm]       = useState(false)
+  const [deleting, setDeleting]             = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -98,7 +98,7 @@ export default function GalleryPage() {
     await supabase.from("generations").delete().in("id", ids)
     setItems((prev) => prev.filter((item) => !selected.has(item.id)))
     setSelected(new Set())
-    setBulkDeleteConfirm(false)
+    setBulkConfirm(false)
     setSelectMode(false)
     setDeleting(false)
     toast(`${ids.length} görsel silindi.`)
@@ -137,13 +137,13 @@ export default function GalleryPage() {
         displayed.map(async (gen, i) => {
           const response = await fetch(gen.output_image_url)
           const blob = await response.blob()
-          zip.file(`jewelry-virtual-${i + 1}.jpg`, blob)
+          zip.file(`lunia-studio-${i + 1}.jpg`, blob)
         })
       )
       const content = await zip.generateAsync({ type: "blob" })
       const a = document.createElement("a")
       a.href = URL.createObjectURL(content)
-      a.download = "jewelry-virtual-photos.zip"
+      a.download = "lunia-studio-gallery.zip"
       a.click()
       URL.revokeObjectURL(a.href)
     } finally {
@@ -152,59 +152,64 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="space-y-8">
+
+      <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">Galeri</h1>
-          <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed">
-            Ürettiğiniz takı görsellerinin tamamı burada.
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-1">
+            Jewelry Virtual Studio
           </p>
+          <h1 className="text-2xl font-light tracking-wide text-[#111827]">
+            Koleksiyon
+          </h1>
+          <div className="w-8 h-px bg-[#111827] mt-3" />
         </div>
 
         {!loading && displayed.length > 0 && (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3">
             {!selectMode ? (
               <>
-                <button
-                  onClick={() => setSelectMode(true)}
-                  className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer"
-                >
-                  <CheckSquare size={13} />
-                  Seç
+                <div className="flex items-center border border-[#E5E7EB]">
+                  <button
+                    onClick={() => setTab("all")}
+                    className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
+                      tab === "all" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+                    }`}
+                  >
+                    Tümü <span className="ml-1 opacity-60">({items.length})</span>
+                  </button>
+                  <button
+                    onClick={() => setTab("favorites")}
+                    className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      tab === "favorites" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+                    }`}
+                  >
+                    <Heart size={10} className={tab === "favorites" ? "fill-white" : ""} />
+                    Favoriler <span className="opacity-60">({items.filter(i => i.is_favorite).length})</span>
+                  </button>
+                </div>
+                <div className="w-px h-5 bg-[#E5E7EB]" />
+                <button onClick={() => setSelectMode(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
+                  <CheckSquare size={12} strokeWidth={1.5} />Seç
                 </button>
-                <button
-                  onClick={handleDownloadAll}
-                  disabled={zipping}
-                  className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Download size={13} />
-                  {zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
+                <button onClick={handleDownloadAll} disabled={zipping} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-40">
+                  <Download size={12} strokeWidth={1.5} />{zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
                 </button>
               </>
             ) : (
               <>
-                <button
-                  onClick={toggleSelectAll}
-                  className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer"
-                >
-                  {selected.size === displayed.length ? <CheckSquare size={13} className="text-[#111827]" /> : <Square size={13} />}
+                <button onClick={toggleSelectAll} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
+                  {selected.size === displayed.length ? <CheckSquare size={12} strokeWidth={1.5} className="text-[#111827]" /> : <Square size={12} strokeWidth={1.5} />}
                   {selected.size === displayed.length ? "Seçimi Kaldır" : "Tümünü Seç"}
                 </button>
                 {selected.size > 0 && (
-                  <button
-                    onClick={() => setBulkDeleteConfirm(true)}
-                    className="flex items-center gap-1.5 h-9 px-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs font-medium rounded-xl transition-colors cursor-pointer"
-                  >
-                    <Trash2 size={13} />
-                    Seçilenleri Sil ({selected.size})
+                  <button onClick={() => setBulkConfirm(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-red-500 hover:text-red-700 transition-colors cursor-pointer flex items-center gap-1.5">
+                    <Trash2 size={12} strokeWidth={1.5} />Sil ({selected.size})
                   </button>
                 )}
-                <button
-                  onClick={exitSelectMode}
-                  className="flex items-center gap-1.5 h-9 px-3 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer"
-                >
-                  <X size={13} />
-                  İptal
+                <div className="w-px h-5 bg-[#E5E7EB]" />
+                <button onClick={exitSelectMode} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
+                  <X size={12} strokeWidth={1.5} />İptal
                 </button>
               </>
             )}
@@ -212,99 +217,75 @@ export default function GalleryPage() {
         )}
       </div>
 
-      {!loading && items.length > 0 && !selectMode && (
-        <div className="flex gap-2">
-          <button onClick={() => setTab("all")} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${tab === "all" ? "bg-[#111827] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]"}`}>Tümü</button>
-          <button onClick={() => setTab("favorites")} className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${tab === "favorites" ? "bg-red-500 text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]"}`}>
-            <Heart size={13} className={tab === "favorites" ? "fill-white" : ""} />
-            Favoriler
-          </button>
-        </div>
-      )}
-
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-                <Trash2 size={18} className="text-red-500" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[#111827]">Görseli sil?</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">Bu işlem geri alınamaz.</p>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-8 w-full max-w-sm mx-4 space-y-6">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-2">Onay Gerekli</p>
+              <p className="text-base font-light text-[#111827] tracking-wide">Bu görsel kalıcı olarak silinecek.</p>
+              <div className="w-8 h-px bg-[#111827] mt-3" />
             </div>
-            <div className="flex gap-2 pt-1">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 h-9 rounded-xl border border-[#E5E7EB] text-[#374151] text-sm font-medium hover:bg-[#F9FAFB] transition-colors cursor-pointer">İptal</button>
-              <button onClick={() => deleteOne(deleteConfirm)} disabled={deleting} className="flex-1 h-9 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors cursor-pointer disabled:opacity-50">
-                {deleting ? "Siliniyor..." : "Sil"}
-              </button>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 h-10 border border-[#E5E7EB] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:border-[#111827] hover:text-[#111827] transition-colors cursor-pointer">İptal</button>
+              <button onClick={() => deleteOne(deleteConfirm)} disabled={deleting} className="flex-1 h-10 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer disabled:opacity-40">{deleting ? "Siliniyor..." : "Sil"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {bulkDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-                <Trash2 size={18} className="text-red-500" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[#111827]">{selected.size} görsel silinecek</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">Bu işlem geri alınamaz.</p>
-              </div>
+      {bulkConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-8 w-full max-w-sm mx-4 space-y-6">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-2">Onay Gerekli</p>
+              <p className="text-base font-light text-[#111827] tracking-wide">{selected.size} görsel kalıcı olarak silinecek.</p>
+              <div className="w-8 h-px bg-[#111827] mt-3" />
             </div>
-            <div className="flex gap-2 pt-1">
-              <button onClick={() => setBulkDeleteConfirm(false)} className="flex-1 h-9 rounded-xl border border-[#E5E7EB] text-[#374151] text-sm font-medium hover:bg-[#F9FAFB] transition-colors cursor-pointer">İptal</button>
-              <button onClick={deleteSelected} disabled={deleting} className="flex-1 h-9 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors cursor-pointer disabled:opacity-50">
-                {deleting ? "Siliniyor..." : `${selected.size} Görseli Sil`}
-              </button>
+            <div className="flex gap-3">
+              <button onClick={() => setBulkConfirm(false)} className="flex-1 h-10 border border-[#E5E7EB] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:border-[#111827] hover:text-[#111827] transition-colors cursor-pointer">İptal</button>
+              <button onClick={deleteSelected} disabled={deleting} className="flex-1 h-10 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer disabled:opacity-40">{deleting ? "Siliniyor..." : `${selected.size} Görseli Sil`}</button>
             </div>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-[#E5E7EB]">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-[#E5E7EB] bg-white p-3 space-y-3">
-              <Skeleton className="w-full aspect-square rounded-lg" />
-              <Skeleton className="h-4 w-2/3 rounded" />
-              <Skeleton className="h-8 w-full rounded-lg" />
+            <div key={i} className="bg-white p-4 space-y-3">
+              <Skeleton className="w-full aspect-square rounded-none" />
+              <Skeleton className="h-3 w-1/2 rounded-none" />
             </div>
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white min-h-[420px] gap-4 text-center px-6">
-          <div className="w-14 h-14 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
-            <ImageOff size={22} className="text-[#9CA3AF]" />
+        <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 border border-dashed border-[#E5E7EB]">
+          <div className="w-px h-16 bg-[#E5E7EB]" />
+          <div className="text-center space-y-2">
+            <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
+            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz üretim yok</p>
+            <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk takı görselinizi oluşturun</p>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-[#111827]">Henüz üretim yok</p>
-            <p className="text-xs text-[#6B7280] mt-1">İlk takı görselinizi üretin ve burada görün.</p>
-          </div>
-          <Link href="/upload">
-            <Button className="h-10 bg-[#111827] hover:bg-[#1F2937] text-white text-sm font-medium rounded-xl px-5 cursor-pointer">
-              <Sparkles size={14} className="mr-2" />
-              Üretmeye Başla
-            </Button>
+          <Link href="/upload" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
+            <Sparkles size={11} strokeWidth={1.5} />Üretmeye Başla
           </Link>
+          <div className="w-px h-16 bg-[#E5E7EB]" />
         </div>
       ) : displayed.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white min-h-[300px] gap-4 text-center px-6">
-          <div className="w-14 h-14 rounded-full bg-[#FFF1F2] border border-[#FECDD3] flex items-center justify-center">
-            <Heart size={22} className="text-[#FB7185]" />
+        <div className="flex flex-col items-center justify-center min-h-[360px] gap-6 border border-dashed border-[#E5E7EB]">
+          <div className="w-px h-12 bg-[#E5E7EB]" />
+          <div className="text-center space-y-2">
+            <Heart size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
+            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Favori yok</p>
+            <p className="text-[10px] tracking-wide text-[#D1D5DB]">Beğendiğiniz görsellerin üstündeki kalbi kullanın</p>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-[#111827]">Henüz favori yok</p>
-            <p className="text-xs text-[#6B7280] mt-1">Beğendiğiniz görselleri favorilere ekleyin.</p>
-          </div>
-          <button onClick={() => setTab("all")} className="text-sm text-[#374151] underline underline-offset-2 cursor-pointer">Tüm görsellere dön</button>
+          <button onClick={() => setTab("all")} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer underline underline-offset-4">
+            Tüm görsellere dön
+          </button>
+          <div className="w-px h-12 bg-[#E5E7EB]" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-[#E5E7EB]">
           {displayed.map((item) => {
             const type = JEWELRY_LABELS[item.jewelry_type]
             const Icon = type?.icon ?? Gem
@@ -313,46 +294,62 @@ export default function GalleryPage() {
               <div
                 key={item.id}
                 onClick={selectMode ? () => toggleSelect(item.id) : undefined}
-                className={`rounded-xl border bg-white p-3 space-y-3 hover:shadow-sm transition-all ${selectMode ? "cursor-pointer" : ""} ${isSelected ? "border-[#111827] ring-2 ring-[#111827]/10" : "border-[#E5E7EB]"}`}
+                className={`bg-white group transition-all ${selectMode ? "cursor-pointer" : ""} ${isSelected ? "ring-2 ring-inset ring-[#111827]" : ""}`}
               >
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#F9FAFB]">
-                  <img src={item.output_image_url} alt={type?.label ?? item.jewelry_type} crossOrigin="anonymous" className="w-full h-full object-cover" />
+                <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
+                  <img
+                    src={item.output_image_url}
+                    alt={type?.label ?? item.jewelry_type}
+                    crossOrigin="anonymous"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
                   {selectMode ? (
-                    <div className="absolute top-2 left-2 w-6 h-6 rounded-md bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm">
-                      {isSelected ? <CheckSquare size={16} className="text-[#111827]" /> : <Square size={16} className="text-[#9CA3AF]" />}
+                    <div className={`absolute inset-0 transition-colors ${isSelected ? "bg-[#111827]/10" : "bg-transparent"}`}>
+                      <div className="absolute top-3 left-3 w-5 h-5 border bg-white flex items-center justify-center">
+                        {isSelected ? <CheckSquare size={14} strokeWidth={1.5} className="text-[#111827]" /> : <Square size={14} strokeWidth={1} className="text-[#D1D5DB]" />}
+                      </div>
                     </div>
                   ) : (
-                    <>
-                      <button onClick={() => toggleFavorite(item.id, item.is_favorite)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer" aria-label={item.is_favorite ? "Favoriden çıkar" : "Favoriye ekle"}>
-                        <Heart size={14} className={item.is_favorite ? "fill-red-500 text-red-500" : "text-[#9CA3AF]"} />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item.id) }} className="absolute top-3 left-3 w-7 h-7 bg-white/0 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer" aria-label="Görseli sil">
+                        <Trash2 size={12} strokeWidth={1.5} className="text-[#6B7280] hover:text-red-500 transition-colors" />
                       </button>
-                      <button onClick={() => setDeleteConfirm(item.id)} className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 hover:bg-red-50 transition-all cursor-pointer" aria-label="Görseli sil">
-                        <Trash2 size={13} className="text-[#9CA3AF] hover:text-red-500" />
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id, item.is_favorite) }} className="absolute top-3 right-3 w-7 h-7 bg-white/0 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer" aria-label="Favori">
+                        <Heart size={12} strokeWidth={1.5} className={item.is_favorite ? "fill-[#111827] text-[#111827]" : "text-[#6B7280]"} />
                       </button>
-                    </>
+                      <div className="absolute bottom-0 left-0 right-0 flex opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+                        <button onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url, items.indexOf(item)) }} className="flex-1 h-9 bg-[#111827] hover:bg-black text-white text-[9px] tracking-[0.15em] uppercase font-light flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                          <Download size={10} strokeWidth={1.5} />İndir
+                        </button>
+                        <div className="w-px bg-white/20" />
+                        <button onClick={(e) => { e.stopPropagation(); handleShare(item.output_image_url) }} className="flex-1 h-9 bg-[#111827] hover:bg-black text-white text-[9px] tracking-[0.15em] uppercase font-light flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                          <Share2 size={10} strokeWidth={1.5} />Paylaş
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {!selectMode && item.is_favorite && (
+                    <div className="absolute top-3 right-3 w-5 h-5 bg-[#111827] flex items-center justify-center group-hover:opacity-0 transition-opacity">
+                      <Heart size={10} strokeWidth={1.5} className="fill-white text-white" />
+                    </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F3F4F6] text-[#374151] text-xs font-medium">
-                    <Icon size={11} />
-                    {type?.label ?? item.jewelry_type}
+                <div className="px-3 py-2.5 flex items-center justify-between">
+                  <span className="text-[9px] tracking-[0.15em] uppercase text-[#9CA3AF] font-light flex items-center gap-1">
+                    <Icon size={9} strokeWidth={1.5} />{type?.label ?? item.jewelry_type}
                   </span>
-                  <span className="text-xs text-[#9CA3AF] ml-auto">{formatDate(item.created_at)}</span>
+                  <span className="text-[9px] tracking-wide text-[#D1D5DB]">{formatDate(item.created_at)}</span>
                 </div>
-                {!selectMode && (
-                  <div className="flex gap-2">
-                    <button onClick={() => handleDownload(item.output_image_url, items.indexOf(item))} className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer">
-                      <Download size={13} />İndir
-                    </button>
-                    <button onClick={() => handleShare(item.output_image_url)} className="flex items-center justify-center gap-1.5 flex-1 h-8 bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-[#374151] text-xs font-medium rounded-xl transition-colors cursor-pointer">
-                      <Share2 size={13} />Paylaş
-                    </button>
-                  </div>
-                )}
               </div>
             )
           })}
         </div>
+      )}
+
+      {!loading && displayed.length > 0 && (
+        <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light pt-4">
+          {displayed.length} görsel · Lunia Studio
+        </p>
       )}
     </div>
   )
