@@ -11,7 +11,6 @@ type Gender      = "woman" | "man"
 type Ethnicity   = "european" | "asian" | "afro" | "middleeastern"
 type SkinTone    = "ivory" | "sand" | "honey" | "caramel" | "espresso"
 type NailStyle   = "natural" | "french" | "red" | "dark"
-type CollarType  = "v_neck" | "high_neck"
 
 const GENDERS: { id: Gender; label: string }[] = [
   { id: "woman", label: "Kadın" },
@@ -47,11 +46,6 @@ const NAIL_STYLES: { id: NailStyle; label: string }[] = [
   { id: "dark",    label: "Koyu Renk" },
 ]
 
-const COLLAR_TYPES: { id: CollarType; label: string }[] = [
-  { id: "v_neck",    label: "V Yaka" },
-  { id: "high_neck", label: "Dik Yaka" },
-]
-
 const PROGRESS_STEPS = [
   "Görsel analiz ediliyor...",
   "Maske oluşturuluyor...",
@@ -71,7 +65,6 @@ export default function UploadPage() {
   const [skinTone, setSkinTone]         = useState<SkinTone | null>(null)
   const [jewelryType, setJewelryType]   = useState<JewelryType | null>(null)
   const [nailStyle, setNailStyle]       = useState<NailStyle | null>(null)
-  const [collarType, setCollarType]     = useState<CollarType | null>(null)
   const [quantity, setQuantity]         = useState(1)
   const [file, setFile]                 = useState<File | null>(null)
   const [preview, setPreview]           = useState<string | null>(null)
@@ -83,10 +76,7 @@ export default function UploadPage() {
 
   function getPreviewUrl(): string | null {
     if (!gender || !ethnicity || !skinTone || !jewelryType) return null
-    const detail =
-      jewelryType === "ring" || jewelryType === "watch"
-        ? (nailStyle ?? "natural")
-        : (collarType ?? "v_neck")
+    const detail = jewelryType === "ring" ? (nailStyle ?? "natural") : "default"
     return `${R2_URL}/references/${jewelryType}/${gender}/${ethnicity}/${skinTone}/${detail}.jpg`
   }
 
@@ -173,7 +163,6 @@ export default function UploadPage() {
           background: "pure_white",
           ethnicity,
           nailStyle,
-          collarType,
         }),
       })
 
@@ -308,7 +297,7 @@ export default function UploadPage() {
             {JEWELRY_TYPES.map(({ id, label, icon }) => (
               <button
                 key={id}
-                onClick={() => { setJewelryType(id); setNailStyle(null); setCollarType(null) }}
+                onClick={() => { setJewelryType(id); setNailStyle(null) }}
                 className={`flex flex-col items-center gap-1.5 py-3 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                   jewelryType === id
                     ? "border-[#111827] bg-[#111827] text-white"
@@ -322,8 +311,8 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* 5a. Tırnak Tarzı — ring veya watch seçilince */}
-        {(jewelryType === "ring" || jewelryType === "watch") && (
+        {/* 5a. Tırnak Tarzı — sadece ring seçilince */}
+        {jewelryType === "ring" && (
           <div style={{ animation: "fadeSlideDown 0.3s ease" }}>
             <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
               Tırnak Tarzı
@@ -335,30 +324,6 @@ export default function UploadPage() {
                   onClick={() => setNailStyle(id)}
                   className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
                     nailStyle === id
-                      ? "border-[#111827] bg-[#111827] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 5b. Yaka Tipi — necklace seçilince */}
-        {jewelryType === "necklace" && (
-          <div style={{ animation: "fadeSlideDown 0.3s ease" }}>
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
-              Yaka Tipi
-            </p>
-            <div className="flex gap-2">
-              {COLLAR_TYPES.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setCollarType(id)}
-                  className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all cursor-pointer ${
-                    collarType === id
                       ? "border-[#111827] bg-[#111827] text-white"
                       : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]"
                   }`}
