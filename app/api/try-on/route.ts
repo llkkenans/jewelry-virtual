@@ -6,7 +6,6 @@ import { uploadToR2 } from '@/lib/r2'
 type JewelryType = 'ring' | 'necklace' | 'earring' | 'watch'
 type SkinTone    = 'ivory' | 'sand' | 'honey' | 'caramel' | 'espresso'
 type Background  = 'pure_white' | 'soft_grey' | 'golden_hour' | 'marble_luxe' | 'noir'
-type Ethnicity   = 'european' | 'asian' | 'afro' | 'middleeastern'
 type NailStyle   = 'natural' | 'french' | 'red' | 'dark'
 
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
@@ -27,13 +26,6 @@ const BACKGROUND_PROMPTS: Record<Background, string> = {
   noir:        'dramatic deep black background, dark luxury atmosphere',
 }
 
-const ETHNICITY_PROMPTS: Record<Ethnicity, string> = {
-  european:     'European features, light complexion',
-  asian:        'East Asian features, smooth complexion',
-  afro:         'African features, rich complexion',
-  middleeastern: 'Middle Eastern features, warm olive complexion',
-}
-
 const NAIL_STYLE_PROMPTS: Record<NailStyle, string> = {
   natural: 'natural clean nails, no polish',
   french:  'french manicure nails, white tips',
@@ -46,29 +38,27 @@ function buildPrompt(
   jewelryType: JewelryType,
   skinTone: SkinTone,
   background: Background,
-  ethnicity: Ethnicity,
   nailStyle: NailStyle
 ): string {
-  const skin      = SKIN_TONE_PROMPTS[skinTone]
-  const bg        = BACKGROUND_PROMPTS[background]
-  const ethDetail = ETHNICITY_PROMPTS[ethnicity]
+  const skin = SKIN_TONE_PROMPTS[skinTone]
+  const bg   = BACKGROUND_PROMPTS[background]
 
   const subjectMap: Record<JewelryType, { woman: string; man: string }> = {
     ring: {
-      woman: `elegant woman's hand with ${skin}, ${ethDetail}, ${NAIL_STYLE_PROMPTS[nailStyle]}, wearing this exact ring on her finger`,
-      man:   `elegant man's hand with ${skin}, ${ethDetail}, clean nails, wearing this exact ring on his finger`,
+      woman: `elegant woman's hand with ${skin}, ${NAIL_STYLE_PROMPTS[nailStyle]}, wearing this exact ring on her finger`,
+      man:   `elegant man's hand with ${skin}, clean nails, wearing this exact ring on his finger`,
     },
     necklace: {
-      woman: `beautiful woman with ${skin}, ${ethDetail}, wearing this exact necklace around her neck, décolleté visible, elegant posture`,
-      man:   `handsome man with ${skin}, ${ethDetail}, wearing this exact necklace around his neck, collar open, confident posture`,
+      woman: `beautiful woman with ${skin}, wearing this exact necklace around her neck, décolleté visible, elegant posture`,
+      man:   `handsome man with ${skin}, wearing this exact necklace around his neck, collar open, confident posture`,
     },
     earring: {
-      woman: `elegant woman with ${skin}, ${ethDetail}, wearing this exact earring on her ear, hair swept aside to reveal the earring clearly`,
-      man:   `stylish man with ${skin}, ${ethDetail}, wearing this exact earring on his ear, hair swept aside`,
+      woman: `elegant woman with ${skin}, wearing this exact earring on her ear, hair swept aside to reveal the earring clearly`,
+      man:   `stylish man with ${skin}, wearing this exact earring on his ear, hair swept aside`,
     },
     watch: {
-      woman: `elegant woman's wrist with ${skin}, ${ethDetail}, wearing this exact watch on her wrist, sleek and refined`,
-      man:   `strong man's wrist with ${skin}, ${ethDetail}, wearing this exact watch on his wrist, powerful and refined`,
+      woman: `elegant woman's wrist with ${skin}, wearing this exact watch on her wrist, sleek and refined`,
+      man:   `strong man's wrist with ${skin}, wearing this exact watch on his wrist, powerful and refined`,
     },
   }
 
@@ -124,7 +114,7 @@ async function upscaleImage(imageUrl: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man', skinTone: SkinTone, background: Background, ethnicity: Ethnicity, nailStyle: NailStyle
+  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man', skinTone: SkinTone, background: Background, nailStyle: NailStyle
   try {
     const body = await req.json()
     ;({ imageBase64, jewelryType } = body as { imageBase64: string; jewelryType: JewelryType })
@@ -132,7 +122,6 @@ export async function POST(req: NextRequest) {
     displayType = body.displayType  ?? 'woman'
     skinTone    = (body.skinTone    as SkinTone)   ?? 'sand'
     background  = (body.background  as Background) ?? 'pure_white'
-    ethnicity   = (body.ethnicity   as Ethnicity)  ?? 'european'
     nailStyle   = (body.nailStyle   as NailStyle)  ?? 'natural'
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
@@ -176,17 +165,16 @@ export async function POST(req: NextRequest) {
 
   let modelImageUrl: string
   if (jewelryType === 'ring' && displayType === 'woman') {
-    modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${ethnicity}/${skinTone}/${nailStyle}.jpg`
+    modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${skinTone}/${nailStyle}.jpg`
   } else {
-    modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${ethnicity}/${skinTone}.jpg`
+    modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${skinTone}.jpg`
   }
 
-  const prompt = buildPrompt(displayType, jewelryType, skinTone, background, ethnicity, nailStyle)
+  const prompt = buildPrompt(displayType, jewelryType, skinTone, background, nailStyle)
 
   console.log('── try-on params ──')
   console.log('displayType:', displayType, '| jewelryType:', jewelryType)
-  console.log('skinTone:', skinTone, '| ethnicity:', ethnicity)
-  console.log('nailStyle:', nailStyle, '| background:', background)
+  console.log('skinTone:', skinTone, '| nailStyle:', nailStyle, '| background:', background)
   console.log('modelImageUrl:', modelImageUrl)
   console.log('prompt:', prompt)
 

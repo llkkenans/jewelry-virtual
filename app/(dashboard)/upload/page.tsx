@@ -8,20 +8,12 @@ import { ImagePlus, Sparkles, Download, X } from "lucide-react"
 
 type JewelryType = "ring" | "necklace" | "earring" | "watch"
 type Gender      = "woman" | "man"
-type Ethnicity   = "european" | "asian" | "afro" | "middleeastern"
 type SkinTone    = "ivory" | "sand" | "honey" | "caramel" | "espresso"
 type NailStyle   = "natural" | "french" | "red" | "dark"
 
 const GENDERS: { id: Gender; label: string }[] = [
   { id: "woman", label: "Kadın" },
   { id: "man",   label: "Erkek" },
-]
-
-const ETHNICITIES: { id: Ethnicity; label: string }[] = [
-  { id: "european",      label: "Avrupalı" },
-  { id: "asian",         label: "Asyalı" },
-  { id: "afro",          label: "Afro" },
-  { id: "middleeastern", label: "Ortadoğulu" },
 ]
 
 const SKIN_TONES: { id: SkinTone; label: string; hex: string }[] = [
@@ -61,7 +53,6 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [gender, setGender]             = useState<Gender | null>(null)
-  const [ethnicity, setEthnicity]       = useState<Ethnicity | null>(null)
   const [skinTone, setSkinTone]         = useState<SkinTone | null>(null)
   const [jewelryType, setJewelryType]   = useState<JewelryType | null>(null)
   const [nailStyle, setNailStyle]       = useState<NailStyle | null>(null)
@@ -75,14 +66,14 @@ export default function UploadPage() {
   const [error, setError]               = useState("")
 
   function getPreviewUrl(): string | null {
-    if (!gender || !ethnicity || !skinTone || !jewelryType) return null
+    if (!gender || !skinTone || !jewelryType) return null
 
     if (jewelryType === "ring" && gender === "woman") {
       const nail = nailStyle ?? "natural"
-      return `${R2_URL}/references/${jewelryType}/${gender}/${ethnicity}/${skinTone}/${nail}.jpg`
+      return `${R2_URL}/references/${jewelryType}/${gender}/${skinTone}/${nail}.jpg`
     }
 
-    return `${R2_URL}/references/${jewelryType}/${gender}/${ethnicity}/${skinTone}.jpg`
+    return `${R2_URL}/references/${jewelryType}/${gender}/${skinTone}.jpg`
   }
 
   function handleFile(f: File) {
@@ -166,7 +157,6 @@ export default function UploadPage() {
           displayType: gender,
           skinTone,
           background: "pure_white",
-          ethnicity,
           nailStyle,
         }),
       })
@@ -229,7 +219,7 @@ export default function UploadPage() {
             {GENDERS.map(({ id, label }) => (
               <button
                 key={id}
-                onClick={() => { setGender(id); setEthnicity(null) }}
+                onClick={() => setGender(id)}
                 className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all cursor-pointer ${
                   gender === id
                     ? "border-[#111827] bg-[#111827] text-white"
@@ -242,31 +232,7 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* 2. Etnisite — cinsiyet seçilince animasyonlu açılır */}
-        {gender && (
-          <div style={{ animation: "fadeSlideDown 0.3s ease" }}>
-            <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
-              Etnisite
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {ETHNICITIES.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setEthnicity(id)}
-                  className={`py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                    ethnicity === id
-                      ? "border-[#111827] bg-[#111827] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#9CA3AF]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 3. Cilt Tonu */}
+        {/* 2. Cilt Tonu */}
         <div>
           <p className="text-[11px] font-semibold tracking-widest uppercase text-[#9CA3AF] mb-2">
             Cilt Tonu
