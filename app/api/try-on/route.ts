@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { uploadToR2 } from '@/lib/r2'
 import path from 'path'
 import fs from 'fs'
 
@@ -87,25 +88,16 @@ type ClarityUpscaleResult = {
   image: { url: string }
 }
 
-async function saveToSupabase(imageUrl: string, userId: string): Promise<string> {
+async function saveToR2(imageUrl: string, userId: string): Promise<string> {
   try {
     const res = await fetch(imageUrl)
     if (!res.ok) return imageUrl
-    const arrayBuffer = await res.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-    const { data, error } = await supabaseAdmin.storage
-      .from('generations')
-      .upload(fileName, buffer, {
-        contentType: 'image/jpeg',
-        upsert: false,
-      })
-    if (error || !data) return imageUrl
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('generations')
-      .getPublicUrl(data.path)
+    const buffer = Buffer.from(await res.arrayBuffer())
+    const key = `outputs/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+    const publicUrl = await uploadToR2(buffer, key, 'image/jpeg')
     return publicUrl
-  } catch {
+  } catch (err) {
+    console.error('R2 upload failed, returning original:', err)
     return imageUrl
   }
 }
@@ -238,7 +230,7 @@ export async function POST(req: NextRequest) {
       if (result.status === 'fulfilled') {
         const rawUrl = (result.value.data as NanoBananaResult).images[0].url
         const upscaledUrl = await upscaleImage(rawUrl)
-        const outputUrl = await saveToSupabase(upscaledUrl, user.id)
+        const outputUrl = await saveToR2(upscaledUrl, user.id)
         console.log('Nano Banana output URL:', outputUrl)
 
         await supabaseAdmin
