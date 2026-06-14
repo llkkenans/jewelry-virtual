@@ -9,7 +9,6 @@ import { ImagePlus, Download, X, Circle, Gem, Sparkles, Watch, Sun, ChevronRight
 type JewelryType = "ring" | "necklace" | "earring" | "watch"
 type Gender      = "woman" | "man"
 type SkinTone    = "ivory" | "sand" | "honey" | "caramel" | "espresso"
-type NailStyle   = "natural" | "french" | "red" | "dark"
 
 const GENDERS: { id: Gender; label: string }[] = [
   { id: "woman", label: "Kadın" },
@@ -31,13 +30,6 @@ const JEWELRY_TYPES: { id: JewelryType; label: string; icon: React.ReactNode }[]
   { id: "watch",    label: "Saat",   icon: <Watch size={18} strokeWidth={1.5} /> },
 ]
 
-const NAIL_STYLES: { id: NailStyle; label: string }[] = [
-  { id: "natural", label: "Doğal" },
-  { id: "french",  label: "French" },
-  { id: "red",     label: "Mat Kırmızı" },
-  { id: "dark",    label: "Koyu Renk" },
-]
-
 const PROGRESS_STEPS = [
   "Görsel analiz ediliyor...",
   "Maske oluşturuluyor...",
@@ -55,7 +47,6 @@ export default function UploadPage() {
   const [gender, setGender]             = useState<Gender | null>(null)
   const [skinTone, setSkinTone]         = useState<SkinTone | null>(null)
   const [jewelryType, setJewelryType]   = useState<JewelryType | null>(null)
-  const [nailStyle, setNailStyle]       = useState<NailStyle | null>(null)
   const [quantity, setQuantity]         = useState(1)
   const [file, setFile]                 = useState<File | null>(null)
   const [preview, setPreview]           = useState<string | null>(null)
@@ -67,12 +58,6 @@ export default function UploadPage() {
 
   function getPreviewUrl(): string | null {
     if (!gender || !skinTone || !jewelryType) return null
-
-    if (jewelryType === "ring" && gender === "woman") {
-      const nail = nailStyle ?? "natural"
-      return `${R2_URL}/references/${jewelryType}/${gender}/${skinTone}/${nail}.jpg`
-    }
-
     return `${R2_URL}/references/${jewelryType}/${gender}/${skinTone}.jpg`
   }
 
@@ -157,7 +142,6 @@ export default function UploadPage() {
           displayType: gender,
           skinTone,
           background: "pure_white",
-          nailStyle,
         }),
       })
 
@@ -270,7 +254,7 @@ export default function UploadPage() {
             {JEWELRY_TYPES.map(({ id, label, icon }) => (
               <button
                 key={id}
-                onClick={() => { setJewelryType(id); setNailStyle(null) }}
+                onClick={() => setJewelryType(id)}
                 className={`flex flex-col items-center gap-1.5 py-3 border text-[11px] font-light tracking-[0.1em] uppercase transition-all cursor-pointer rounded-none ${
                   jewelryType === id
                     ? "border-[#111827] bg-[#111827] text-white"
@@ -284,31 +268,7 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* 4. Tırnak Tarzı — sadece kadın + yüzük seçilince */}
-        {jewelryType === "ring" && gender === "woman" && (
-          <div style={{ animation: "fadeSlideDown 0.3s ease" }}>
-            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
-              Tırnak Tarzı
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {NAIL_STYLES.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setNailStyle(id)}
-                  className={`py-2 border text-[11px] font-light tracking-[0.05em] transition-all cursor-pointer rounded-none ${
-                    nailStyle === id
-                      ? "border-[#111827] bg-[#111827] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#374151] hover:border-[#111827]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 5. Takı Görseli — DropZone */}
+        {/* 4. Takı Görseli — DropZone */}
         <div>
           <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
             Takı Görseli
