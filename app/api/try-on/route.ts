@@ -120,7 +120,7 @@ async function upscaleImage(imageUrl: string): Promise<string> {
     const result = await fal.subscribe('fal-ai/clarity-upscaler', {
       input: {
         image_url: imageUrl,
-        upscaling_factor: 2,
+        upscale_factor: 2,
         prompt: 'jewelry, ultra detailed, sharp focus, high resolution',
         creativity: 0.1,
         resemblance: 1.0,

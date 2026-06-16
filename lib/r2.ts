@@ -45,7 +45,7 @@ export async function getFromR2(key: string): Promise<Buffer> {
   })
 
   const response = await client.send(command)
-  const stream = response.Body as Readable
+  const stream = response.Body as import('stream').Readable
   const chunks: Buffer[] = []
   for await (const chunk of stream) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
