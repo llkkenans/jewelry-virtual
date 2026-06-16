@@ -470,13 +470,16 @@ export default function GalleryPage() {
             <div className="flex flex-col items-center gap-4 py-24 text-center">
               <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
               <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
-                Henüz koleksiyon yok
+                Koleksiyon Yok
+              </p>
+              <p className="text-[10px] tracking-wide text-[#D1D5DB]">
+                Görsellerinizi koleksiyonlarda düzenleyin, kolayca erişin.
               </p>
               <button
                 onClick={() => setShowNewCollection(true)}
                 className="text-[10px] tracking-[0.1em] uppercase font-light text-[#111827] border-b border-[#111827] pb-px hover:opacity-60 transition-opacity cursor-pointer"
               >
-                İlk koleksiyonu oluştur
+                Koleksiyon Oluştur
               </button>
               <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
             </div>
@@ -522,11 +525,11 @@ export default function GalleryPage() {
           <div className="w-px h-16 bg-[#E5E7EB]" />
           <div className="text-center space-y-2">
             <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
-            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz üretim yok</p>
-            <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk takı görselinizi oluşturun</p>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz Üretim Yok</p>
+            <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk takınızı yükleyin, saniyeler içinde modelin üzerinde görün.</p>
           </div>
           <Link href="/upload" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
-            <Sparkles size={11} strokeWidth={1.5} />Üretmeye Başla
+            <Sparkles size={11} strokeWidth={1.5} />Üretime Başla
           </Link>
           <div className="w-px h-16 bg-[#E5E7EB]" />
         </div>
@@ -535,8 +538,8 @@ export default function GalleryPage() {
           <div className="w-px h-12 bg-[#E5E7EB]" />
           <div className="text-center space-y-2">
             <Heart size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
-            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Favori yok</p>
-            <p className="text-[10px] tracking-wide text-[#D1D5DB]">Beğendiğiniz görsellerin üstündeki kalbi kullanın</p>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Favori Yok</p>
+            <p className="text-[10px] tracking-wide text-[#D1D5DB]">Beğendiğiniz görselleri favorileyin, en sevdiklerinizi burada bulun.</p>
           </div>
           <button onClick={() => setTab("all")} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer underline underline-offset-4">
             Tüm görsellere dön

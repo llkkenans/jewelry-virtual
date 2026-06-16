@@ -424,17 +424,31 @@ export default function UploadPage() {
             </div>
           )}
 
-          {/* Placeholder — hiçbir şey yokken */}
-          {!previewUrl && !generating && !results.length && (
-            <div className="flex flex-col items-center gap-4 text-center px-8">
-              <div className="w-px h-12 bg-[#E5E7EB]" />
-              <p className="text-[11px] tracking-[0.15em] uppercase text-[#9CA3AF] font-light">
-                Sonuç burada görünecek
+          {/* Placeholder — filtre seçilmemiş */}
+          {!getPreviewUrl() && !generating && !results.length && (
+            <div className="flex flex-col items-center gap-4 text-center px-6">
+              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+              <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
+                Önizleme Hazır
               </p>
               <p className="text-[10px] tracking-wide text-[#D1D5DB]">
-                Sol taraftan filtreleri seçin
+                Seçimlerinizi yapın, önizleme burada belirsin.
               </p>
-              <div className="w-px h-12 bg-[#E5E7EB]" />
+              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+            </div>
+          )}
+
+          {/* Placeholder — filtreler seçili, görsel yüklenmemiş */}
+          {getPreviewUrl() && !file && !generating && !results.length && (
+            <div className="flex flex-col items-center gap-4 text-center px-6">
+              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+              <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
+                Son Bir Adım
+              </p>
+              <p className="text-[10px] tracking-wide text-[#D1D5DB]">
+                Takı fotoğrafınızı yükleyin, üretime hazır olun.
+              </p>
+              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
             </div>
           )}
         </div>
