@@ -27,11 +27,22 @@ export async function GET(req: NextRequest) {
   const items = await Promise.all(
     generations.map(async (gen) => {
       let imageUrl = gen.output_image_url
-      if (imageUrl && imageUrl.startsWith('outputs/')) {
-        try {
-          imageUrl = await getPresignedUrl(imageUrl, 3600)
-        } catch {
-          imageUrl = null
+      if (imageUrl) {
+        if (imageUrl.startsWith('outputs/')) {
+          try {
+            imageUrl = await getPresignedUrl(imageUrl, 3600)
+          } catch {
+            imageUrl = null
+          }
+        } else if (imageUrl.includes('r2.cloudflarestorage.com')) {
+          const keyMatch = imageUrl.match(/\.com\/(.+)$/)
+          if (keyMatch) {
+            try {
+              imageUrl = await getPresignedUrl(keyMatch[1], 3600)
+            } catch {
+              imageUrl = null
+            }
+          }
         }
       }
       return { ...gen, output_image_url: imageUrl }
