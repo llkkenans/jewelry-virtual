@@ -184,11 +184,7 @@ export async function POST(req: NextRequest) {
   const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!
 
   let modelImageUrl: string
-  if (jewelryType === 'ring' && displayType === 'woman') {
-    modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${skinTone}/${nailStyle}.jpg`
-  } else {
-    modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${skinTone}.jpg`
-  }
+  modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${skinTone}/1.png`
 
   const promptKey = `${jewelryType}/${displayType}/${skinTone}`
   const prompt = PROMPTS[promptKey] ?? `Professional jewelry photography, ${displayType === 'woman' ? 'elegant woman' : 'handsome man'} wearing this exact ${jewelryType}, ultra realistic, 8K, the jewelry must be identical to reference.`
