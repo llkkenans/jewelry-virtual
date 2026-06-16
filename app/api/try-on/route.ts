@@ -326,17 +326,17 @@ export async function POST(req: NextRequest) {
     })
   )
 
-  const outputUrls: string[] = []
+  const outputUrls: { url: string; id: string | null }[] = []
 
   await Promise.all(
     results.map(async (result) => {
       if (result.status === 'fulfilled') {
         const rawUrl = (result.value.data as NanoBananaResult).images[0].url
         const upscaledUrl = await upscaleImage(rawUrl)
-        const outputUrl = await saveToR2(upscaledUrl, user.id)
+        const outputUrl = upscaledUrl
         console.log('Nano Banana output URL:', outputUrl)
 
-        await supabaseAdmin
+        const { data: genRecord } = await supabaseAdmin
           .from('generations')
           .insert({
             user_id: user.id,
@@ -344,9 +344,12 @@ export async function POST(req: NextRequest) {
             status: 'done',
             credits_used: 1,
             output_image_url: outputUrl,
+            is_saved: false,
           })
+          .select('id')
+          .single()
 
-        outputUrls.push(outputUrl)
+        outputUrls.push({ url: outputUrl, id: genRecord?.id ?? null })
       } else {
         console.error('Nano Banana error:', JSON.stringify(result.reason, null, 2))
 
