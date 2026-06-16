@@ -217,7 +217,49 @@ export async function POST(req: NextRequest) {
   const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!
 
   let modelImageUrl: string
-  const r2Key = `references/${jewelryType}/${displayType}/${skinTone}/1.png`
+  // Her kombinasyon için mevcut görsel sayısı
+  const REFERENCE_COUNTS: Record<string, number> = {
+    'necklace/woman/ivory': 8,
+    'necklace/woman/sand': 8,
+    'necklace/woman/honey': 8,
+    'necklace/woman/caramel': 8,
+    'necklace/woman/espresso': 8,
+    'necklace/man/ivory': 2,
+    'necklace/man/sand': 2,
+    'necklace/man/honey': 2,
+    'necklace/man/caramel': 2,
+    'necklace/man/espresso': 2,
+    'earring/woman/ivory': 5,
+    'earring/woman/sand': 5,
+    'earring/woman/honey': 5,
+    'earring/woman/caramel': 5,
+    'earring/woman/espresso': 5,
+    'earring/man/ivory': 1,
+    'earring/man/sand': 1,
+    'earring/man/honey': 1,
+    'earring/man/caramel': 1,
+    'earring/man/espresso': 1,
+    'ring/man/ivory': 1,
+    'ring/man/sand': 1,
+    'ring/man/honey': 1,
+    'ring/man/caramel': 1,
+    'ring/man/espresso': 1,
+    'watch/woman/ivory': 1,
+    'watch/woman/sand': 1,
+    'watch/woman/honey': 1,
+    'watch/woman/caramel': 1,
+    'watch/woman/espresso': 1,
+    'watch/man/ivory': 1,
+    'watch/man/sand': 1,
+    'watch/man/honey': 1,
+    'watch/man/caramel': 1,
+    'watch/man/espresso': 1,
+  }
+
+  const countKey = `${jewelryType}/${displayType}/${skinTone}`
+  const totalRefs = REFERENCE_COUNTS[countKey] ?? 1
+  const randomIndex = Math.floor(Math.random() * totalRefs) + 1
+  const r2Key = `references/${jewelryType}/${displayType}/${skinTone}/${randomIndex}.png`
   console.log('R2 key:', r2Key)
   try {
     const modelImageBuffer = await getFromR2(r2Key)
