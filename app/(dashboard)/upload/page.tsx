@@ -434,13 +434,18 @@ export default function UploadPage() {
 
           {/* Generating — skeleton */}
           {generating && (
-            <div className={`absolute inset-0 p-4 ${quantity > 1 ? "grid grid-cols-2 gap-3 content-start" : ""}`}>
-              {Array.from({ length: quantity }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="w-full aspect-square rounded-none" />
-                  <Skeleton className="h-3 w-1/2 rounded-none" />
+            <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
+              <div className="flex flex-col items-center gap-6">
+                <div className="grid grid-cols-2 gap-5">
+                  <Gem size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <Circle size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
+                  <Sparkles size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
+                  <Watch size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
                 </div>
-              ))}
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">
+                  {PROGRESS_STEPS[progressStep]}
+                </p>
+              </div>
             </div>
           )}
 
@@ -455,29 +460,29 @@ export default function UploadPage() {
 
           {/* Placeholder — filtre seçilmemiş */}
           {!getPreviewUrl() && !generating && !results.length && (
-            <div className="flex flex-col items-center gap-4 text-center px-6">
-              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+              <div className="w-px h-12 bg-[#E5E7EB]" />
               <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
                 Önizleme Hazır
               </p>
               <p className="text-[10px] tracking-wide text-[#D1D5DB]">
                 Seçimlerinizi yapın, önizleme burada belirsin.
               </p>
-              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+              <div className="w-px h-12 bg-[#E5E7EB]" />
             </div>
           )}
 
           {/* Placeholder — filtreler seçili, görsel yüklenmemiş */}
           {getPreviewUrl() && !file && !generating && !results.length && (
-            <div className="flex flex-col items-center gap-4 text-center px-6">
-              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+              <div className="w-px h-12 bg-[#E5E7EB]" />
               <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
                 Son Bir Adım
               </p>
               <p className="text-[10px] tracking-wide text-[#D1D5DB]">
                 Takı fotoğrafınızı yükleyin, üretime hazır olun.
               </p>
-              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+              <div className="w-px h-12 bg-[#E5E7EB]" />
             </div>
           )}
         </div>
