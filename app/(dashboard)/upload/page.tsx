@@ -41,6 +41,40 @@ const R2_URL =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-1c98cbbb496648eaa0b68f90cd1f1e97.r2.dev"
 
+function ResultImage({ url, index, onDownload, showIndex }: {
+  url: string
+  index: number
+  onDownload: (url: string, index: number) => void
+  showIndex: boolean
+}) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="relative w-full aspect-square bg-[#F9FAFB]">
+        {!loaded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#111827] rounded-full animate-spin" />
+          </div>
+        )}
+        <img
+          src={url}
+          alt={`Sonuç ${index + 1}`}
+          className={`w-full h-full object-contain transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          crossOrigin="anonymous"
+          onLoad={() => setLoaded(true)}
+        />
+      </div>
+      <button
+        onClick={() => onDownload(url, index)}
+        className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase rounded-none transition-colors cursor-pointer"
+      >
+        <Download size={13} />
+        {showIndex ? `İndir ${index + 1}` : "İndir"}
+      </button>
+    </div>
+  )
+}
+
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -403,23 +437,9 @@ export default function UploadPage() {
 
           {/* Sonuç görseller */}
           {results.length > 0 && !generating && (
-            <div className={`absolute inset-0 p-4 ${results.length > 1 ? "grid grid-cols-2 gap-3 content-start" : ""}`}>
+            <div className={`absolute inset-0 p-4 flex flex-col gap-3 ${results.length > 1 ? "grid grid-cols-2 content-start" : ""}`}>
               {results.map((url, i) => (
-                <div key={i} className="space-y-2">
-                  <img
-                    src={url}
-                    alt={`Sonuç ${i + 1}`}
-                    className="w-full h-auto object-contain"
-                    crossOrigin="anonymous"
-                  />
-                  <button
-                    onClick={() => handleDownload(url, i)}
-                    className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase rounded-none transition-colors cursor-pointer"
-                  >
-                    <Download size={13} />
-                    {results.length > 1 ? `İndir ${i + 1}` : "İndir"}
-                  </button>
-                </div>
+                <ResultImage key={i} url={url} index={i} onDownload={handleDownload} showIndex={results.length > 1} />
               ))}
             </div>
           )}
