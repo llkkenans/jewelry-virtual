@@ -4,6 +4,12 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
+/* ─── Hero Videos ───────────────────────────────────────────────────── */
+const heroVideos = [
+  "/landing/landing_videos/main1.mp4",
+  "/landing/landing_videos/main2.mp4",
+]
+
 /* ─── Fonts ─────────────────────────────────────────────────────────── */
 const DISPLAY = "'DM Sans', sans-serif"
 const BODY = "'Inter', sans-serif"
@@ -105,6 +111,13 @@ function Overline({ children, light = false }: { children: string; light?: boole
 
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 export default function LandingPage() {
+  const [videoIndex] = useState(() => {
+    if (typeof window === 'undefined') return 0
+    const current = parseInt(sessionStorage.getItem('heroVideoIndex') || '0')
+    const next = (current + 1) % heroVideos.length
+    sessionStorage.setItem('heroVideoIndex', String(next))
+    return current
+  })
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -193,7 +206,7 @@ export default function LandingPage() {
         {/* ─────────────── HERO ─────────────── */}
         <section className="relative h-screen overflow-hidden">
           <video
-            src="/landing/landing_videos/main.mp4"
+            src={heroVideos[videoIndex]}
             autoPlay muted loop playsInline
             className="absolute inset-0 w-full h-full object-cover"
           />
