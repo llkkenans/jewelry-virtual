@@ -78,13 +78,16 @@ export default function GalleryPage() {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { setLoading(false); return }
-      const { data } = await supabase
-        .from("generations")
-        .select("id, output_image_url, jewelry_type, created_at, is_favorite")
-        .eq("status", "done")
-        .eq("user_id", session.user.id)
-        .order("created_at", { ascending: false })
-      setItems(data ?? [])
+      try {
+        const res = await fetch('/api/gallery?page=1', {
+          headers: { authorization: `Bearer ${session.access_token}` }
+        })
+        const json = await res.json()
+        setItems(json.items ?? [])
+      } catch (err) {
+        console.error('Gallery fetch error:', err)
+        setItems([])
+      }
       setLoading(false)
     }
     load()
