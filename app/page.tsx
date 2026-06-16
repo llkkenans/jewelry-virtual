@@ -60,35 +60,35 @@ const steps = [
   {
     n: "01",
     img: "/landing/landing_images/how_does_it_work/step1.jpg",
-    title: "Ürününüzü Yükleyin",
-    desc: "Takı görselinizi sürükleyip bırakın ya da dosya seçin. Beyaz zemin üzerinde çekilmiş net bir fotoğraf, en yüksek kalite çıktıyı sağlar.",
+    title: "Fotoğrafı Yükle",
+    desc: "Yüzük, kolye, küpe veya saat görselinizi sürükleyip bırakın.",
   },
   {
     n: "02",
     img: "/landing/landing_images/how_does_it_work/step2.jpg",
-    title: "Türü Belirleyin",
-    desc: "Yüzük, kolye, küpe ya da bileklik — kategorinizi seçin. Tek görselden dörde kadar farklı model varyasyonu üretebilirsiniz.",
+    title: "Modeli Seç",
+    desc: "Cinsiyet, cilt tonu ve sahne stilini birkaç saniyede belirleyin.",
   },
   {
     n: "03",
     img: "/landing/landing_images/how_does_it_work/step3.jpg",
-    title: "İndirin, Kullanın",
-    desc: "Yapay zeka motorumuz takınızı gerçekçi bir model üzerine yerleştirir. 30 saniye içinde stüdyo kalitesinde ürün görseli elinizde.",
+    title: "Görseli İndir",
+    desc: "AI saniyeler içinde stüdyo kalitesinde görseli hazırlasın.",
   },
 ]
 
 
 const stats = [
-  { value: "30s", label: "İşlem Süresi" },
-  { value: "+40%", label: "Daha Fazla Satış" },
-  { value: "10K+", label: "Üretilen Görsel" },
-  { value: "4", label: "Farklı Konsept" },
+  { value: "12.000+", label: "Üretilen Görsel" },
+  { value: "60+",     label: "Aktif Kuyumcu" },
+  { value: "%97",     label: "Memnuniyet Oranı" },
+  { value: "30s",     label: "İşlem Süresi" },
 ]
 
 const collection = [
-  { src: "/landing/landing_images/collection/ring.jpg", cat: "Yüzük", title: "Nişan & Tektaş", desc: "Parmakta gerçekçi canlandırma" },
-  { src: "/landing/landing_images/collection/earrings.jpg", cat: "Küpe", title: "Halka & Sarkıt", desc: "Kulakta doğal ışık sergisi" },
-  { src: "/landing/landing_images/collection/necklace.jpg", cat: "Kolye", title: "Kolye & Pendant", desc: "Boyunda stüdyo kalitesi" },
+  { src: "/landing/landing_images/collection/ring.jpg", cat: "Yüzük", title: "Kusursuz Takı Sadakati", desc: "Ürünün her detayı orijinaliyle birebir korunur." },
+  { src: "/landing/landing_images/collection/earrings.jpg", cat: "Küpe", title: "Sınırsız Model Seçeneği", desc: "Farklı cilt tonu ve cinsiyetlerde geniş kitleye hitap edin." },
+  { src: "/landing/landing_images/collection/necklace.jpg", cat: "Kolye", title: "Saniyeler İçinde Sonuç", desc: "E-ticarete hazır görsel anında elinizde." },
 ]
 
 /* ─── Overline label ─────────────────────────────────────────────────── */
@@ -203,29 +203,29 @@ export default function LandingPage() {
 
           {/* Hero content — bottom left */}
           <div className="absolute bottom-14 sm:bottom-20 left-0 right-0 z-10 px-6 sm:px-16 max-w-5xl">
-            <Overline light>Kuyumcular için yapay zeka</Overline>
+            <Overline light>TAKI STÜDYO</Overline>
             <h1
               style={{ fontFamily: DISPLAY }}
               className="text-[2.8rem] sm:text-[4.25rem] md:text-[5.25rem] font-extrabold leading-[0.95] tracking-[-0.035em] text-white mb-6 max-w-2xl"
             >
-              Takılarınızı.
+              Takınız Modelin
               <br />
               <em
                 className="not-italic font-light text-white/55"
                 style={{ fontFamily: DISPLAY }}
               >
-                Canlandırın.
+                Üzerinde.
               </em>
             </h1>
             <p
               style={{ fontFamily: BODY }}
               className="text-[15px] text-white/55 max-w-xs mb-9 leading-[1.7] font-light"
             >
-              30 saniyede stüdyo kalitesinde model görseli.
+              Pahalı stüdyo çekimi olmadan, profesyonel model görsellerine dönüştürün.
             </p>
             <Link href="/register">
               <Button className="h-11 px-8 text-[13px] font-semibold rounded-full cursor-pointer bg-white text-[#0A0A0A] hover:bg-white/90 transition-all duration-300 tracking-wide">
-                Ücretsiz Keşfet
+                Ücretsiz Başla
               </Button>
             </Link>
           </div>
@@ -273,10 +273,10 @@ export default function LandingPage() {
                 style={{ fontFamily: DISPLAY }}
                 className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#0A0A0A] leading-[1.0] mb-20 max-w-xl"
               >
-                Üç adımda
+                Üç Adımda
                 <br />
                 <em className="not-italic font-light text-black/30" style={{ fontFamily: DISPLAY }}>
-                  stüdyo kalitesi.
+                  Profesyonel Görsel.
                 </em>
               </h2>
             </Reveal>
@@ -392,27 +392,27 @@ export default function LandingPage() {
 
           <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-16 w-full pb-20">
             <Reveal>
-              <Overline light>Hemen Başla</Overline>
+              <Overline light>HEMEN BAŞLA</Overline>
               <h2
                 style={{ fontFamily: DISPLAY }}
                 className="text-[2.4rem] sm:text-[3.75rem] md:text-[4.5rem] font-extrabold tracking-[-0.035em] text-white leading-[0.95] mb-8 max-w-2xl"
               >
-                Takılarınızı
+                İlk Görselinizi
                 <br />
                 <em className="not-italic font-light text-white/45" style={{ fontFamily: DISPLAY }}>
-                  dünyaya tanıtın.
+                  Bugün Üretin.
                 </em>
               </h2>
               <p
                 style={{ fontFamily: BODY }}
                 className="text-[15px] text-white/50 max-w-sm mb-10 font-light leading-[1.7]"
               >
-                10 ücretsiz kredi ile takılarınızın model görsellerini dakikalar içinde oluşturun.
+                Kredi kartı gerekmez. Birkaç dakikada kaydolun, ilk takınızı modele giydirin.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/register">
                   <Button className="h-11 px-8 text-[13px] font-semibold rounded-full cursor-pointer bg-white text-[#0A0A0A] hover:bg-white/92 transition-all duration-300 tracking-wide">
-                    Ücretsiz Hesap Oluştur
+                    Hemen Dene
                   </Button>
                 </Link>
                 <Link href="/login">
