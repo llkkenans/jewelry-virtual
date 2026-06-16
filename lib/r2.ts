@@ -25,3 +25,30 @@ export async function uploadToR2(
   }))
   return `${R2_PUBLIC_URL}/${key}`
 }
+
+export async function getFromR2(key: string): Promise<Buffer> {
+  const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')
+  const { Readable } = await import('stream')
+
+  const client = new S3Client({
+    region: 'auto',
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+  })
+
+  const command = new GetObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME ?? 'jewelry-virtual',
+    Key: key,
+  })
+
+  const response = await client.send(command)
+  const stream = response.Body as Readable
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  return Buffer.concat(chunks)
+}

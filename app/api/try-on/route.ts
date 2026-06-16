@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { uploadToR2 } from '@/lib/r2'
+import { uploadToR2, getFromR2 } from '@/lib/r2'
 
 type JewelryType = 'ring' | 'necklace' | 'earring' | 'watch'
 type SkinTone    = 'ivory' | 'sand' | 'honey' | 'caramel' | 'espresso'
@@ -184,7 +184,17 @@ export async function POST(req: NextRequest) {
   const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!
 
   let modelImageUrl: string
-  modelImageUrl = `${R2_PUBLIC_URL}/references/${jewelryType}/${displayType}/${skinTone}/1.png`
+  const r2Key = `references/${jewelryType}/${displayType}/${skinTone}/1.png`
+  console.log('R2 key:', r2Key)
+  try {
+    const modelImageBuffer = await getFromR2(r2Key)
+    const modelBlob = new Blob([modelImageBuffer], { type: 'image/png' })
+    modelImageUrl = await fal.storage.upload(modelBlob)
+    console.log('Model fal URL:', modelImageUrl)
+  } catch (err) {
+    console.error('R2 model fetch failed:', err)
+    return NextResponse.json({ error: 'Referans görsel yüklenemedi' }, { status: 500 })
+  }
 
   const promptKey = `${jewelryType}/${displayType}/${skinTone}`
   const prompt = PROMPTS[promptKey] ?? `Professional jewelry photography, ${displayType === 'woman' ? 'elegant woman' : 'handsome man'} wearing this exact ${jewelryType}, ultra realistic, 8K, the jewelry must be identical to reference.`
