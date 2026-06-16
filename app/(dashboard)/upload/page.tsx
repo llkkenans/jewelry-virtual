@@ -49,28 +49,37 @@ function ResultImage({ url, index, onDownload, showIndex }: {
 }) {
   const [loaded, setLoaded] = useState(false)
   return (
-    <div className="flex flex-col gap-2">
-      <div className="relative w-full aspect-square bg-[#F9FAFB]">
+    <div className="flex flex-col h-full">
+      <div className="relative flex-1 min-h-0 bg-white flex items-center justify-center overflow-hidden">
         {!loaded && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[#E5E7EB] border-t-[#111827] rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                <Gem key="gem" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />,
+                <Circle key="circle" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />,
+                <Sparkles key="sparkles" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />,
+                <Watch key="watch" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />,
+              ]}
+            </div>
           </div>
         )}
         <img
           src={url}
           alt={`Sonuç ${index + 1}`}
-          className={`w-full h-full object-contain transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`w-full h-full object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
           crossOrigin="anonymous"
           onLoad={() => setLoaded(true)}
         />
       </div>
-      <button
-        onClick={() => onDownload(url, index)}
-        className="flex items-center justify-center gap-2 w-full h-9 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase rounded-none transition-colors cursor-pointer"
-      >
-        <Download size={13} />
-        {showIndex ? `İndir ${index + 1}` : "İndir"}
-      </button>
+      {loaded && (
+        <button
+          onClick={() => onDownload(url, index)}
+          className="flex-shrink-0 flex items-center justify-center gap-2 w-full h-10 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer"
+        >
+          <Download size={13} />
+          {showIndex ? `İndir ${index + 1}` : "İndir"}
+        </button>
+      )}
     </div>
   )
 }
@@ -410,7 +419,7 @@ export default function UploadPage() {
           Önizleme &amp; Sonuç
         </p>
 
-        <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[520px] flex items-center justify-center rounded-none">
+        <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[520px] flex flex-col rounded-none">
 
           {/* Canlı önizleme — filtreler seçilince silik manken */}
           {previewUrl && !results.length && !generating && (
@@ -437,7 +446,7 @@ export default function UploadPage() {
 
           {/* Sonuç görseller */}
           {results.length > 0 && !generating && (
-            <div className={`absolute inset-0 p-4 flex flex-col gap-3 ${results.length > 1 ? "grid grid-cols-2 content-start" : ""}`}>
+            <div className={`absolute inset-0 flex flex-col ${results.length > 1 ? "grid grid-cols-2" : ""}`}>
               {results.map((url, i) => (
                 <ResultImage key={i} url={url} index={i} onDownload={handleDownload} showIndex={results.length > 1} />
               ))}
