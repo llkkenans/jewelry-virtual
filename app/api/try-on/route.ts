@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
       if (result.status === 'fulfilled') {
         const rawUrl = (result.value.data as NanoBananaResult).images[0].url
         const upscaledUrl = await upscaleImage(rawUrl)
-        const outputUrl = await saveToR2(upscaledUrl, user.id)
+        const outputUrl = upscaledUrl
         console.log('Nano Banana output URL:', outputUrl)
 
         await supabaseAdmin
