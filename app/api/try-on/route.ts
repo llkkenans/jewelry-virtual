@@ -11,6 +11,39 @@ type PromptKey   = `${JewelryType}/${string}/${SkinTone}`
 
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
 
+const COMPOSITION_VARIATIONS = [
+  "Head turned in a soft three-quarter profile to the left.",
+  "Head angled in a three-quarter profile to the right.",
+  "Direct frontal pose with relaxed neutral expression.",
+  "Slight chin tilt upward, elegant elongated neckline.",
+  "Subtle downward gaze, contemplative editorial mood.",
+  "Profile view with shoulder slightly forward, dynamic composition.",
+  "Cropped editorial framing focused on the décolletage.",
+  "Close-up macro framing with shallow depth of field.",
+]
+
+const LIGHTING_VARIATIONS = [
+  "Soft morning light from a north-facing window, gentle diffused shadows.",
+  "Golden hour warm directional sunlight from the side.",
+  "High-key studio strobe with large softbox overhead.",
+  "Low-key dramatic side lighting with rich shadow contrast.",
+  "Beauty dish frontal lighting with subtle fill from below.",
+  "Backlit rim light separating subject from a darker background.",
+]
+
+const MOOD_VARIATIONS = [
+  "Editorial high-fashion magazine aesthetic.",
+  "Minimalist Scandinavian campaign mood.",
+  "Romantic engagement-photography softness.",
+  "Bold luxury brand campaign energy.",
+  "Quiet contemplative artistic portrait.",
+  "Clean commercial e-commerce catalog style.",
+]
+
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
 const PROMPTS: Record<string, string> = {
   "ring/woman/ivory": "Place the ring precisely on the ring finger of an elegant feminine hand with porcelain ivory skin, fingers gracefully relaxed and slightly curved. Capture in macro studio detail with soft diffused key light from the upper left and a gentle fill reflector eliminating harsh shadows. The skin shows fine natural texture, subtle translucency, and a delicate matte finish. Background is a seamless soft pearl-white gradient with creamy bokeh. Professional high-end jewelry photography, crisp focus on the band and stone, realistic metal reflections. The jewelry must be identical to reference. Hand rests on brushed marble surface with a faint dewy sheen catching the light.",
 
@@ -197,14 +230,14 @@ export async function POST(req: NextRequest) {
   }
 
   const promptKey = `${jewelryType}/${displayType}/${skinTone}`
-  const prompt = PROMPTS[promptKey] ?? `Professional jewelry photography, ${displayType === 'woman' ? 'elegant woman' : 'handsome man'} wearing this exact ${jewelryType}, ultra realistic, 8K, the jewelry must be identical to reference.`
+  const basePrompt = PROMPTS[promptKey] ?? `Professional jewelry photography, ${displayType === 'woman' ? 'elegant woman' : 'handsome man'} wearing this exact ${jewelryType}, ultra realistic, 8K, the jewelry must be identical to reference.`
 
   console.log('── try-on params ──')
   console.log('displayType:', displayType, '| jewelryType:', jewelryType)
   console.log('skinTone:', skinTone, '| nailStyle:', nailStyle, '| background:', background)
   console.log('modelImageUrl:', modelImageUrl)
   console.log('promptKey:', promptKey)
-  console.log('prompt:', prompt.slice(0, 80) + '...')
+  console.log('basePrompt:', basePrompt.slice(0, 80) + '...')
 
   const imageBuffer = Buffer.from(imageBase64, 'base64')
   const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
@@ -212,14 +245,20 @@ export async function POST(req: NextRequest) {
   console.log('Takı URL:', uploadedImageUrl)
 
   const results = await Promise.allSettled(
-    Array.from({ length: quantity }, () =>
-      fal.subscribe('fal-ai/nano-banana-pro/edit', {
+    Array.from({ length: quantity }, (_, i) => {
+      const composition = pickRandom(COMPOSITION_VARIATIONS)
+      const lighting = pickRandom(LIGHTING_VARIATIONS)
+      const mood = pickRandom(MOOD_VARIATIONS)
+      const seed = Math.floor(Math.random() * 999999)
+      const variantPrompt = `${basePrompt} ${composition} ${lighting} ${mood} Generation variant ${seed}.`
+      console.log(`Variant ${i + 1}:`, composition.slice(0, 40), '|', lighting.slice(0, 40), '|', 'seed:', seed)
+      return fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
           image_urls: [modelImageUrl, uploadedImageUrl],
-          prompt,
+          prompt: variantPrompt,
         },
       })
-    )
+    })
   )
 
   const outputUrls: string[] = []
