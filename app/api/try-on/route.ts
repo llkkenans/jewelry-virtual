@@ -142,6 +142,7 @@ async function saveToR2(imageUrl: string, userId: string): Promise<string> {
     const key = `outputs/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
     await uploadToR2(buffer, key, 'image/jpeg')
     const presignedUrl = await getPresignedUrl(key, 604800)
+    console.log('presigned URL generated:', presignedUrl.slice(0, 80))
     return presignedUrl
   } catch (err) {
     console.error('R2 upload failed, returning original:', err)

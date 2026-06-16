@@ -44,6 +44,7 @@ export async function getFromR2(key: string): Promise<Buffer> {
 }
 
 export async function getPresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  console.log('getPresignedUrl called with key:', key)
   const client = getR2Client()
   const command = new GetObjectCommand({
     Bucket: R2_BUCKET,
