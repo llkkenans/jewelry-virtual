@@ -7,7 +7,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['fal.run', 'storage.googleapis.com', 'v3.fal.media', 'fal.media'],
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.fal.media' },
+      { protocol: 'https', hostname: '**.fal.run' },
+      { protocol: 'https', hostname: 'storage.googleapis.com' },
+      { protocol: 'https', hostname: '**.r2.dev' },
+      { protocol: 'https', hostname: '**.cloudflarestorage.com' },
+    ],
   },
 };
 
