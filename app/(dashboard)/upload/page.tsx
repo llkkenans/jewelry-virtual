@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Image from "next/image"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ImagePlus, Download, X, Circle, Gem, Sparkles, Watch, Sun, ChevronRight } from "lucide-react"
+import { ImagePlus, Download, Heart, X, Circle, Gem, Sparkles, Watch, Sun, ChevronRight } from "lucide-react"
 
 type JewelryType = "ring" | "necklace" | "earring" | "watch"
 type Gender      = "woman" | "man"
@@ -41,20 +41,43 @@ const R2_URL =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-1c98cbbb496648eaa0b68f90cd1f1e97.r2.dev"
 
-function ResultImage({ url, index, onDownload, showIndex }: {
+function ResultImage({ url, index, generationId, onDownload, showIndex }: {
   url: string
   index: number
+  generationId: string | null
   onDownload: (url: string, index: number) => void
   showIndex: boolean
 }) {
   const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
-    if (imgRef.current?.complete) {
-      setLoaded(true)
-    }
+    if (imgRef.current?.complete) setLoaded(true)
   }, [url])
+
+  async function handleSave() {
+    if (!generationId || saving || saved) return
+    setSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch('/api/save-to-gallery', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ generationId, imageUrl: url }),
+      })
+      if (res.ok) setSaved(true)
+    } catch (err) {
+      console.error('Save failed:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -78,13 +101,27 @@ function ResultImage({ url, index, onDownload, showIndex }: {
           onLoad={() => setLoaded(true)}
         />
       </div>
-      <button
-        onClick={() => onDownload(url, index)}
-        className={`flex-shrink-0 flex items-center justify-center gap-2 w-full h-10 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${!loaded ? "opacity-30 pointer-events-none" : ""}`}
-      >
-        <Download size={13} />
-        {showIndex ? `İndir ${index + 1}` : "İndir"}
-      </button>
+      <div className="flex gap-1">
+        <button
+          onClick={() => onDownload(url, index)}
+          className={`flex-1 flex items-center justify-center gap-2 h-10 bg-[#111827] hover:bg-[#000000] text-white text-[10px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${!loaded ? "opacity-30 pointer-events-none" : ""}`}
+        >
+          <Download size={12} />
+          İndir
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving || saved || !loaded}
+          className={`flex-1 flex items-center justify-center gap-2 h-10 text-[10px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${
+            saved
+              ? "bg-[#C9A96E] text-white"
+              : "border border-[#E5E7EB] text-[#6B7280] hover:border-[#111827] hover:text-[#111827]"
+          } ${!loaded ? "opacity-30 pointer-events-none" : ""} disabled:opacity-40`}
+        >
+          <Heart size={12} className={saved ? "fill-white" : ""} />
+          {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
+        </button>
+      </div>
     </div>
   )
 }
@@ -101,7 +138,7 @@ export default function UploadPage() {
   const [dragging, setDragging]         = useState(false)
   const [generating, setGenerating]     = useState(false)
   const [progressStep, setProgressStep] = useState(0)
-  const [results, setResults]           = useState<string[]>([])
+  const [results, setResults]           = useState<{ url: string; id: string | null }[]>([])
   const [error, setError]               = useState("")
 
   function getPreviewUrl(): string | null {
@@ -205,7 +242,7 @@ export default function UploadPage() {
         ? [tryOnData.outputUrl]
         : []
 
-      setResults(urls)
+      setResults(urls.map(url => ({ url, id: null })))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
     } finally {
@@ -457,8 +494,8 @@ export default function UploadPage() {
           {/* Sonuç görseller */}
           {results.length > 0 && !generating && (
             <div className={`absolute inset-0 flex flex-col ${results.length > 1 ? "grid grid-cols-2" : ""}`}>
-              {results.map((url, i) => (
-                <ResultImage key={i} url={url} index={i} onDownload={handleDownload} showIndex={results.length > 1} />
+              {results.map((result, i) => (
+                <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} />
               ))}
             </div>
           )}
