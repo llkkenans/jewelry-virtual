@@ -225,8 +225,30 @@ export async function POST(req: NextRequest) {
     modelImageUrl = await fal.storage.upload(modelBlob)
     console.log('Model fal URL:', modelImageUrl)
   } catch (err) {
-    console.error('R2 model fetch failed:', err)
-    return NextResponse.json({ error: 'Referans görsel yüklenemedi' }, { status: 500 })
+    console.error('R2 model fetch failed for key:', r2Key, err)
+
+    // Fallback: cilt tonu bulunamazsa ivory dene
+    if (skinTone !== 'ivory') {
+      const fallbackKey = jewelryType === 'ring' && displayType === 'woman'
+        ? `references/ring/woman/ivory/1.png`
+        : `references/${jewelryType}/${displayType}/ivory/1.png`
+      try {
+        console.log('Trying fallback key:', fallbackKey)
+        const fallbackBuffer = await getFromR2(fallbackKey)
+        const fallbackBlob = new Blob([fallbackBuffer], { type: 'image/png' })
+        modelImageUrl = await fal.storage.upload(fallbackBlob)
+        console.log('Fallback model URL:', modelImageUrl)
+      } catch (fallbackErr) {
+        console.error('Fallback also failed:', fallbackKey, fallbackErr)
+        return NextResponse.json({
+          error: `Referans görsel bulunamadı: ${r2Key}. Lütfen bu görselin R2'ye yüklendiğinden emin olun.`
+        }, { status: 500 })
+      }
+    } else {
+      return NextResponse.json({
+        error: `Referans görsel bulunamadı: ${r2Key}. Lütfen bu görselin R2'ye yüklendiğinden emin olun.`
+      }, { status: 500 })
+    }
   }
 
   const promptKey = `${jewelryType}/${displayType}/${skinTone}`
