@@ -235,14 +235,9 @@ export default function UploadPage() {
         throw new Error((err as { error?: string })?.error ?? "Görsel üretimi başarısız oldu.")
       }
 
-      const tryOnData = await tryOnRes.json() as { outputUrls?: string[]; outputUrl?: string }
-      const urls: string[] = Array.isArray(tryOnData.outputUrls)
-        ? tryOnData.outputUrls
-        : tryOnData.outputUrl
-        ? [tryOnData.outputUrl]
-        : []
+      const tryOnData = await tryOnRes.json() as { outputUrls?: { url: string; id: string | null }[] }
 
-      setResults(urls.map(url => ({ url, id: null })))
+      setResults(tryOnData.outputUrls ?? [])
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
     } finally {
