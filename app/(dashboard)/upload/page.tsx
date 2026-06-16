@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Image from "next/image"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -48,22 +48,29 @@ function ResultImage({ url, index, onDownload, showIndex }: {
   showIndex: boolean
 }) {
   const [loaded, setLoaded] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setLoaded(true)
+    }
+  }, [url])
+
   return (
     <div className="flex flex-col h-full">
       <div className="relative flex-1 min-h-0 bg-white flex items-center justify-center overflow-hidden">
         {!loaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
             <div className="grid grid-cols-2 gap-3">
-              {[
-                <Gem key="gem" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />,
-                <Circle key="circle" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />,
-                <Sparkles key="sparkles" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />,
-                <Watch key="watch" size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />,
-              ]}
+              <Gem size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
+              <Circle size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
+              <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
+              <Watch size={22} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
             </div>
           </div>
         )}
         <img
+          ref={imgRef}
           src={url}
           alt={`Sonuç ${index + 1}`}
           className={`w-full h-full object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
@@ -71,15 +78,13 @@ function ResultImage({ url, index, onDownload, showIndex }: {
           onLoad={() => setLoaded(true)}
         />
       </div>
-      {loaded && (
-        <button
-          onClick={() => onDownload(url, index)}
-          className="flex-shrink-0 flex items-center justify-center gap-2 w-full h-10 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer"
-        >
-          <Download size={13} />
-          {showIndex ? `İndir ${index + 1}` : "İndir"}
-        </button>
-      )}
+      <button
+        onClick={() => onDownload(url, index)}
+        className={`flex-shrink-0 flex items-center justify-center gap-2 w-full h-10 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${!loaded ? "opacity-30 pointer-events-none" : ""}`}
+      >
+        <Download size={13} />
+        {showIndex ? `İndir ${index + 1}` : "İndir"}
+      </button>
     </div>
   )
 }
