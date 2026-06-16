@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
       const lighting = pickRandom(LIGHTING_VARIATIONS)
       const mood = pickRandom(MOOD_VARIATIONS)
       const seed = Math.floor(Math.random() * 999999)
-      const variantPrompt = `${basePrompt} ${composition} ${lighting} ${mood} Generation variant ${seed}.`
+      const variantPrompt = `${basePrompt} CRITICAL: The jewelry piece must be reproduced with 100% identical design, shape, and details to the reference — do not alter, simplify, or reinterpret it in any way. ${composition} ${lighting} ${mood} Generation variant ${seed}.`
       console.log(`Variant ${i + 1}:`, composition.slice(0, 40), '|', lighting.slice(0, 40), '|', 'seed:', seed)
       return fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
