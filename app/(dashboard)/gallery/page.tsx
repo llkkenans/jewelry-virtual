@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -55,6 +55,38 @@ async function handleDownload(url: string, index: number) {
   a.download = `lunia-studio-${index + 1}.jpg`
   a.click()
   URL.revokeObjectURL(a.href)
+}
+
+function GalleryImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false)
+  const imgRef = useRef<HTMLImageElement>(null)
+
+  useEffect(() => {
+    if (imgRef.current?.complete) setLoaded(true)
+  }, [src])
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#FAFAFA]">
+          <div className="grid grid-cols-2 gap-2">
+            <Gem size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
+            <Link2 size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '150ms' }} />
+            <Sparkles size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '300ms' }} />
+            <Watch size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '450ms' }} />
+          </div>
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        crossOrigin="anonymous"
+        onLoad={() => setLoaded(true)}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105 transition-transform duration-500`}
+      />
+    </>
+  )
 }
 
 export default function GalleryPage() {
@@ -562,12 +594,7 @@ export default function GalleryPage() {
                 className={`bg-white group transition-all ${selectMode ? "cursor-pointer" : ""} ${isSelected ? "ring-2 ring-inset ring-[#111827]" : ""}`}
               >
                 <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
-                  <img
-                    src={item.output_image_url}
-                    alt={type?.label ?? item.jewelry_type}
-                    crossOrigin="anonymous"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                  <GalleryImage src={item.output_image_url} alt={type?.label ?? item.jewelry_type} />
                   {selectMode ? (
                     <div className={`absolute inset-0 transition-colors ${isSelected ? "bg-[#111827]/10" : "bg-transparent"}`}>
                       <div className="absolute top-3 left-3 w-5 h-5 border bg-white flex items-center justify-center">
