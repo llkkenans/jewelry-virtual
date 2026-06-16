@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { uploadToR2, getFromR2 } from '@/lib/r2'
+import { uploadToR2, getFromR2, getPresignedUrl } from '@/lib/r2'
 
 type JewelryType = 'ring' | 'necklace' | 'earring' | 'watch'
 type SkinTone    = 'ivory' | 'sand' | 'honey' | 'caramel' | 'espresso'
@@ -140,8 +140,9 @@ async function saveToR2(imageUrl: string, userId: string): Promise<string> {
     if (!res.ok) return imageUrl
     const buffer = Buffer.from(await res.arrayBuffer())
     const key = `outputs/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-    const publicUrl = await uploadToR2(buffer, key, 'image/jpeg')
-    return publicUrl
+    await uploadToR2(buffer, key, 'image/jpeg')
+    const presignedUrl = await getPresignedUrl(key, 604800)
+    return presignedUrl
   } catch (err) {
     console.error('R2 upload failed, returning original:', err)
     return imageUrl
@@ -332,7 +333,7 @@ export async function POST(req: NextRequest) {
       if (result.status === 'fulfilled') {
         const rawUrl = (result.value.data as NanoBananaResult).images[0].url
         const upscaledUrl = await upscaleImage(rawUrl)
-        const outputUrl = upscaledUrl
+        const outputUrl = await saveToR2(upscaledUrl, user.id)
         console.log('Nano Banana output URL:', outputUrl)
 
         await supabaseAdmin
