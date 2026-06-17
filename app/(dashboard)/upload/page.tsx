@@ -238,6 +238,7 @@ export default function UploadPage() {
       const tryOnData = await tryOnRes.json() as { outputUrls?: { url: string; id: string | null }[] }
 
       setResults(tryOnData.outputUrls ?? [])
+      window.dispatchEvent(new Event('credits-updated'))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
     } finally {

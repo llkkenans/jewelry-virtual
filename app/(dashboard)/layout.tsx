@@ -19,6 +19,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [credits, setCredits] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
+  async function fetchCredits() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const res = await fetch('/api/profile', {
+      headers: { authorization: `Bearer ${session.access_token}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setCredits(data.credits ?? 0)
+    }
+  }
+
   useEffect(() => {
     async function loadUser() {
       const { data: { session } } = await supabase.auth.getSession()
@@ -30,6 +42,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     loadUser()
   }, [router])
+
+  useEffect(() => {
+    function refresh() { fetchCredits() }
+    window.addEventListener('credits-updated', refresh)
+    return () => window.removeEventListener('credits-updated', refresh)
+  }, [])
 
   async function handleSignOut() {
     await supabase.auth.signOut()
