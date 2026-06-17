@@ -57,8 +57,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── HEADER ── */}
-      <header className="bg-white border-b border-[#E5E7EB] sticky top-0 z-30">
+      {/* ── MOBİL HEADER ── */}
+      <div className="lg:hidden flex items-center justify-between h-14 px-4 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
+        <Link href="/upload" className="flex items-center gap-2">
+          <div className="w-4 h-4 rotate-45 border border-[#111827]" />
+          <span className="text-[#111827] text-[10px] font-light tracking-[0.25em] uppercase">Lunia Studio</span>
+        </Link>
+        <div className="flex items-center gap-4">
+          {credits !== null && (
+            <span className="text-xs text-[#6B7280]">{credits} Kredi</span>
+          )}
+        </div>
+      </div>
+
+      {/* ── MOBİL NAV ── */}
+      <nav className="lg:hidden flex items-center justify-around border-b border-[#E5E7EB] bg-white sticky top-14 z-20">
+        {navItems.map(({ href, label }) => {
+          const active = pathname === href
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`relative py-3 text-[10px] tracking-[0.15em] uppercase font-light transition-colors ${
+                active ? "text-[#111827]" : "text-[#9CA3AF]"
+              }`}
+            >
+              {label}
+              {active && <span className="absolute bottom-0 left-0 right-0 h-px bg-[#111827]" />}
+            </Link>
+          )
+        })}
+        <button
+          onClick={handleSignOut}
+          className="py-3 text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] cursor-pointer"
+        >
+          Çıkış
+        </button>
+      </nav>
+
+      {/* ── DESKTOP HEADER ── */}
+      <header className="hidden lg:block bg-white border-b border-[#E5E7EB] sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
 
           {/* Logo */}

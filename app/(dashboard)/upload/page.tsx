@@ -464,7 +464,7 @@ export default function UploadPage() {
           Önizleme &amp; Sonuç
         </p>
 
-        <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[520px] flex flex-col rounded-none">
+        <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[360px] lg:min-h-[520px] flex flex-col rounded-none">
 
           {/* Canlı önizleme — filtreler seçilince silik manken */}
           {previewUrl && !results.length && !generating && (
@@ -496,7 +496,7 @@ export default function UploadPage() {
 
           {/* Sonuç görseller */}
           {results.length > 0 && !generating && (
-            <div className={`absolute inset-0 flex flex-col ${results.length > 1 ? "grid grid-cols-2" : ""}`}>
+            <div className={`absolute inset-0 flex flex-col ${results.length > 1 ? "grid grid-cols-1 sm:grid-cols-2" : ""}`}>
               {results.map((result, i) => (
                 <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} />
               ))}
