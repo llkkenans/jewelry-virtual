@@ -332,7 +332,7 @@ export async function POST(req: NextRequest) {
       const mood = pickRandom(MOOD_VARIATIONS)
       const seed = Math.floor(Math.random() * 999999)
       const watchCritical = jewelryType === 'watch'
-        ? 'CRITICAL: The ENTIRE watch must be reproduced with 100% identical design — including the watch face/dial, case, crown, AND the complete band/strap/bracelet. The band must be fully visible wrapping around the wrist, showing all links, clasp, and material details exactly as in the reference. Do not crop, hide, or omit any part of the watch band.'
+        ? 'CRITICAL: Reproduce the watch with 100% photographic accuracy. The dial face must display IDENTICAL hour/minute hands, indices, sub-dials, and any text exactly as in the reference — do NOT invent or hallucinate any watch brand name, numeral, or dial text. The case shape, crown, bezel, and lug design must be identical. The complete band/strap/bracelet must wrap fully around the wrist with all links, clasp, and material details faithfully reproduced. Do not simplify, crop, or omit any element.'
         : 'CRITICAL: The jewelry piece must be reproduced with 100% identical design, shape, and details to the reference — do not alter, simplify, or reinterpret it in any way.'
       const variantPrompt = `${basePrompt} ${watchCritical} ${composition} ${lighting} ${mood} Generation variant ${seed}.`
       return fal.subscribe('fal-ai/nano-banana-pro/edit', {
