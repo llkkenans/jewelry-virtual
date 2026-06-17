@@ -3,6 +3,8 @@ import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { uploadToR2, getFromR2, getPresignedUrl } from '@/lib/r2'
 
+export const maxDuration = 60
+
 type JewelryType = 'ring' | 'necklace' | 'earring' | 'watch'
 type SkinTone    = 'ivory' | 'sand' | 'honey' | 'caramel' | 'espresso'
 type Background  = 'pure_white' | 'soft_grey' | 'golden_hour' | 'marble_luxe' | 'noir'
