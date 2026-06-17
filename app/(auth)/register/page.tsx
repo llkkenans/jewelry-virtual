@@ -339,9 +339,9 @@ export default function RegisterPage() {
           {/* Küçük not */}
           <p className="text-center text-[10px] text-[#D4CCC0] mt-5 font-light leading-relaxed tracking-wide">
             Devam ederek{" "}
-            <span className="underline underline-offset-2 cursor-pointer hover:text-[#B0A090] transition-colors">
+            <Link href="/terms" className="underline underline-offset-2 cursor-pointer hover:text-[#B0A090] transition-colors">
               Kullanım Koşulları
-            </span>
+            </Link>
             &apos;nı kabul etmiş olursunuz.
           </p>
 
