@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
+import { useToast } from "@/components/ui/toast"
 import Image from "next/image"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ImagePlus, Download, Heart, X, Circle, Gem, Sparkles, Watch, Sun, ChevronRight } from "lucide-react"
@@ -41,12 +42,13 @@ const R2_URL =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-1c98cbbb496648eaa0b68f90cd1f1e97.r2.dev"
 
-function ResultImage({ url, index, generationId, onDownload, showIndex }: {
+function ResultImage({ url, index, generationId, onDownload, showIndex, onToast }: {
   url: string
   index: number
   generationId: string | null
   onDownload: (url: string, index: number) => void
   showIndex: boolean
+  onToast: (message: string, type: "success" | "error" | "info") => void
 }) {
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -71,9 +73,14 @@ function ResultImage({ url, index, generationId, onDownload, showIndex }: {
         },
         body: JSON.stringify({ generationId, imageUrl: url }),
       })
-      if (res.ok) setSaved(true)
-    } catch (err) {
-      console.error('Save failed:', err)
+      if (res.ok) {
+        setSaved(true)
+        onToast("Galeriye kaydedildi!", "success")
+      } else {
+        onToast("Kaydetme başarısız", "error")
+      }
+    } catch {
+      onToast("Kaydetme başarısız", "error")
     } finally {
       setSaving(false)
     }
@@ -128,6 +135,7 @@ function ResultImage({ url, index, generationId, onDownload, showIndex }: {
 
 export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { showToast } = useToast()
 
   const [gender, setGender]             = useState<Gender | null>(null)
   const [skinTone, setSkinTone]         = useState<SkinTone | null>(null)
@@ -239,8 +247,15 @@ export default function UploadPage() {
 
       setResults(tryOnData.outputUrls ?? [])
       window.dispatchEvent(new Event('credits-updated'))
+      showToast("Görsel başarıyla üretildi!", "success")
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.")
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setError(msg)
+      if (msg.toLowerCase().includes("kredi") || msg.toLowerCase().includes("credit")) {
+        showToast("Yetersiz kredi", "error")
+      } else {
+        showToast(msg || "Üretim başarısız oldu", "error")
+      }
     } finally {
       setGenerating(false)
       clearInterval(progressInterval)
@@ -498,7 +513,7 @@ export default function UploadPage() {
           {results.length > 0 && !generating && (
             <div className={`absolute inset-0 flex flex-col ${results.length > 1 ? "grid grid-cols-1 sm:grid-cols-2" : ""}`}>
               {results.map((result, i) => (
-                <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} />
+                <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} onToast={showToast} />
               ))}
             </div>
           )}

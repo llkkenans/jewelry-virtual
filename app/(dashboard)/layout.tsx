@@ -6,6 +6,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LogOut } from "lucide-react"
+import { ToastProvider } from "@/components/ui/toast"
 
 const navItems = [
   { href: "/upload",  label: "Üret" },
@@ -161,7 +162,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* İçerik */}
       <main className="max-w-6xl mx-auto px-6 py-10">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </main>
     </div>
   )

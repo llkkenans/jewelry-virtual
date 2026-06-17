@@ -85,10 +85,10 @@ const steps = [
 
 
 const stats = [
-  { value: "12.000+", label: "Üretilen Görsel" },
-  { value: "60+",     label: "Aktif Kuyumcu" },
-  { value: "%97",     label: "Memnuniyet Oranı" },
-  { value: "30s",     label: "İşlem Süresi" },
+  { value: "4",    label: "Takı türü" },
+  { value: "~30s", label: "Üretim süresi" },
+  { value: "HD",   label: "Çıktı kalitesi" },
+  { value: "10",   label: "Ücretsiz kredi" },
 ]
 
 const collection = [
@@ -459,6 +459,8 @@ export default function LandingPage() {
                 { label: "Giriş Yap", href: "/login" },
                 { label: "Kayıt Ol", href: "/register" },
                 { label: "Fiyatlar", href: "/dashboard/billing" },
+                { label: "Kullanım Koşulları", href: "/terms" },
+                { label: "Gizlilik", href: "/privacy" },
               ].map(({ label, href }) => (
                 <Link
                   key={label}
