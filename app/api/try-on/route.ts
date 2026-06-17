@@ -359,7 +359,7 @@ export async function POST(req: NextRequest) {
             user_id: user.id,
             jewelry_type: jewelryType,
             status: 'failed',
-            credits_used: 1,
+            credits_used: 0,
           })
       }
     })
