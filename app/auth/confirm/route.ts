@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -8,8 +8,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/upload'
 
   if (token_hash && type) {
-    const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({
+    const { error } = await supabaseAdmin.auth.verifyOtp({
       type: type as any,
       token_hash,
     })
