@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { uploadToR2, getFromR2, getPresignedUrl } from '@/lib/r2'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 60
 
@@ -12,20 +13,6 @@ type NailStyle   = 'natural' | 'french' | 'red' | 'dark'
 type PromptKey   = `${JewelryType}/${string}/${SkinTone}`
 
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
-
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now()
-  const limit = rateLimitMap.get(userId)
-  if (!limit || now > limit.resetTime) {
-    rateLimitMap.set(userId, { count: 1, resetTime: now + 60000 })
-    return true
-  }
-  if (limit.count >= 5) return false
-  limit.count++
-  return true
-}
 
 const COMPOSITION_VARIATIONS = [
   "Head turned in a soft three-quarter profile to the left.",
@@ -237,8 +224,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
   }
 
-  if (!checkRateLimit(user.id)) {
-    return NextResponse.json({ error: 'Çok fazla istek. Lütfen 1 dakika bekleyin.' }, { status: 429 })
+  const { allowed, remaining, resetAt } = await checkRateLimit(user.id)
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Çok fazla istek. Lütfen daha sonra tekrar deneyin.' },
+      {
+        status: 429,
+        headers: {
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': resetAt.toISOString(),
+        },
+      }
+    )
   }
 
   const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!
