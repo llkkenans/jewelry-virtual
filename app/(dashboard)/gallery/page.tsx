@@ -121,13 +121,13 @@ export default function GalleryPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { setLoading(false); return }
       try {
-        const res = await fetch('/api/gallery?page=1', {
+        const res = await fetch('/api/gallery?page=1&limit=12', {
           headers: { authorization: `Bearer ${session.access_token}` }
         })
         const json = await res.json()
         const fetchedItems = json.items ?? []
         setItems(fetchedItems)
-        setHasMore(fetchedItems.length >= (json.limit ?? 20))
+        setHasMore(fetchedItems.length >= (json.limit ?? 12))
       } catch (err) {
         console.error('Gallery fetch error:', err)
         setItems([])
@@ -148,14 +148,14 @@ export default function GalleryPage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { setLoadingMore(false); return }
     try {
-      const res = await fetch(`/api/gallery?page=${nextPage}`, {
+      const res = await fetch(`/api/gallery?page=${nextPage}&limit=12`, {
         headers: { authorization: `Bearer ${session.access_token}` }
       })
       const json = await res.json()
       const newItems = json.items ?? []
       setItems(prev => [...prev, ...newItems])
       setPage(nextPage)
-      setHasMore(newItems.length >= (json.limit ?? 20))
+      setHasMore(newItems.length >= (json.limit ?? 12))
     } catch (err) {
       console.error('Load more error:', err)
     }
