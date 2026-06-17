@@ -92,6 +92,9 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
 export default function GalleryPage() {
   const [items, setItems]                   = useState<Generation[]>([])
   const [loading, setLoading]               = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [tab, setTab]                       = useState<"all" | "favorites" | "collections">("all")
   const [zipping, setZipping]               = useState(false)
   const [selectMode, setSelectMode]         = useState(false)
@@ -115,7 +118,9 @@ export default function GalleryPage() {
           headers: { authorization: `Bearer ${session.access_token}` }
         })
         const json = await res.json()
-        setItems(json.items ?? [])
+        const fetchedItems = json.items ?? []
+        setItems(fetchedItems)
+        setHasMore(fetchedItems.length >= (json.limit ?? 20))
       } catch (err) {
         console.error('Gallery fetch error:', err)
         setItems([])
@@ -128,6 +133,27 @@ export default function GalleryPage() {
   useEffect(() => {
     if (tab === "collections") loadCollections()
   }, [tab])
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return
+    setLoadingMore(true)
+    const nextPage = page + 1
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setLoadingMore(false); return }
+    try {
+      const res = await fetch(`/api/gallery?page=${nextPage}`, {
+        headers: { authorization: `Bearer ${session.access_token}` }
+      })
+      const json = await res.json()
+      const newItems = json.items ?? []
+      setItems(prev => [...prev, ...newItems])
+      setPage(nextPage)
+      setHasMore(newItems.length >= (json.limit ?? 20))
+    } catch (err) {
+      console.error('Load more error:', err)
+    }
+    setLoadingMore(false)
+  }
 
   async function toggleFavorite(id: string, current: boolean) {
     setItems((prev) => prev.map((item) => item.id === id ? { ...item, is_favorite: !current } : item))
@@ -675,9 +701,20 @@ export default function GalleryPage() {
       )}
 
       {!loading && tab !== "collections" && displayed.length > 0 && (
-        <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light pt-4">
-          {displayed.length} görsel · Lunia Studio
-        </p>
+        <div className="flex flex-col items-center gap-4 pt-6">
+          {hasMore && tab === "all" && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="h-10 px-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
+            >
+              {loadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
+            </button>
+          )}
+          <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light">
+            {displayed.length} görsel · Lunia Studio
+          </p>
+        </div>
       )}
     </div>
   )
