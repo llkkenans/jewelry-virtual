@@ -29,6 +29,7 @@ export default function RegisterPage() {
   const [error, setError]                   = useState("")
   const [loading, setLoading]               = useState(false)
   const [success, setSuccess]               = useState(false)
+  const [emailSent, setEmailSent]           = useState(false)
   const [zoomed, setZoomed]                 = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,55 +52,27 @@ export default function RegisterPage() {
       setLoading(false)
       return
     }
-    setSuccess(true)
+    setEmailSent(true)
     setLoading(false)
   }
 
-  /* ── Başarı ekranı ── */
-  if (success) {
+  /* ── Email doğrulama ekranı ── */
+  if (emailSent) {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-6"
         style={{ backgroundColor: "#F8F6F2" }}
       >
-        <div className="w-full max-w-xs text-center space-y-8">
-
-          {/* İkon */}
-          <div className="mx-auto w-14 h-14 rounded-full border border-amber-300/50 flex items-center justify-center">
-            <div className="w-5 h-5 rotate-45 border border-amber-400/70" />
-          </div>
-
-          {/* Başlık */}
-          <div className="space-y-3">
-            <h2
-              style={{ fontFamily: SERIF }}
-              className="text-3xl font-light text-[#1C1C1C] tracking-tight"
-            >
-              Hoş geldiniz
-            </h2>
-            <p className="text-sm text-[#B0A090] font-light leading-relaxed">
-              <span className="text-[#1C1C1C] font-medium">{email}</span> adresine
-              doğrulama bağlantısı gönderdik.
+        <div className="w-full max-w-xs text-center">
+          <div className="flex flex-col items-center justify-center space-y-6 py-8">
+            <p className="text-sm tracking-widest uppercase">Hesabınız Oluşturuldu</p>
+            <p className="text-sm text-gray-500 text-center max-w-xs">
+              {email} adresine doğrulama bağlantısı gönderdik. Lütfen e-postanızı kontrol edin.
             </p>
-            <p className="text-xs text-[#CEC8BE] font-light tracking-wide">
-              E-postanızı kontrol edin
-            </p>
+            <a href="/login" className="text-xs underline tracking-widest uppercase">
+              Giriş Sayfasına Dön
+            </a>
           </div>
-
-          {/* Altın ayraç */}
-          <div className="flex items-center gap-3 mx-auto max-w-[120px]">
-            <div className="h-px flex-1 bg-amber-300/30" />
-            <div className="w-1 h-1 rounded-full bg-amber-400/50" />
-            <div className="h-px flex-1 bg-amber-300/30" />
-          </div>
-
-          <button
-            onClick={() => router.push("/login")}
-            style={{ fontFamily: SERIF }}
-            className="text-base font-light text-[#C9A96E] hover:text-[#B8965A] transition-colors tracking-wide cursor-pointer"
-          >
-            Giriş sayfasına git →
-          </button>
         </div>
       </div>
     )
