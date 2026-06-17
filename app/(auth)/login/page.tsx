@@ -39,7 +39,10 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    router.push("/upload")
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirect') || '/upload'
+    router.push(redirect)
+    router.refresh()
   }
 
   return (
