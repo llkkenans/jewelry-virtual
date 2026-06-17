@@ -157,7 +157,7 @@ async function saveToR2(imageUrl: string, userId: string): Promise<string> {
     const buffer = Buffer.from(await res.arrayBuffer())
     const key = `outputs/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
     await uploadToR2(buffer, key, 'image/jpeg')
-    console.log('Saved to R2 key:', key)
+
     return key
   } catch (err) {
     console.error('R2 upload failed, returning original:', err)
@@ -292,12 +292,10 @@ export async function POST(req: NextRequest) {
   const totalRefs = REFERENCE_COUNTS[countKey] ?? 1
   const randomIndex = Math.floor(Math.random() * totalRefs) + 1
   const r2Key = `references/${jewelryType}/${displayType}/${skinTone}/${randomIndex}.png`
-  console.log('R2 key:', r2Key)
   try {
     const modelImageBuffer = await getFromR2(r2Key)
     const modelBlob = new Blob([modelImageBuffer], { type: 'image/png' })
     modelImageUrl = await fal.storage.upload(modelBlob)
-    console.log('Model fal URL:', modelImageUrl)
   } catch (err) {
     console.error('R2 model fetch failed for key:', r2Key, err)
 
@@ -307,11 +305,9 @@ export async function POST(req: NextRequest) {
         ? `references/ring/woman/ivory/1.png`
         : `references/${jewelryType}/${displayType}/ivory/1.png`
       try {
-        console.log('Trying fallback key:', fallbackKey)
         const fallbackBuffer = await getFromR2(fallbackKey)
         const fallbackBlob = new Blob([fallbackBuffer], { type: 'image/png' })
         modelImageUrl = await fal.storage.upload(fallbackBlob)
-        console.log('Fallback model URL:', modelImageUrl)
       } catch (fallbackErr) {
         console.error('Fallback also failed:', fallbackKey, fallbackErr)
         return NextResponse.json({
@@ -328,17 +324,9 @@ export async function POST(req: NextRequest) {
   const promptKey = `${jewelryType}/${displayType}/${skinTone}`
   const basePrompt = PROMPTS[promptKey] ?? `Professional jewelry photography, ${displayType === 'woman' ? 'elegant woman' : 'handsome man'} wearing this exact ${jewelryType}, ultra realistic, 8K, the jewelry must be identical to reference.`
 
-  console.log('── try-on params ──')
-  console.log('displayType:', displayType, '| jewelryType:', jewelryType)
-  console.log('skinTone:', skinTone, '| nailStyle:', nailStyle, '| background:', background)
-  console.log('modelImageUrl:', modelImageUrl)
-  console.log('promptKey:', promptKey)
-  console.log('basePrompt:', basePrompt.slice(0, 80) + '...')
-
   const imageBuffer = Buffer.from(imageBase64, 'base64')
   const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
   const uploadedImageUrl = await fal.storage.upload(imageBlob)
-  console.log('Takı URL:', uploadedImageUrl)
 
   const results = await Promise.allSettled(
     Array.from({ length: quantity }, (_, i) => {
@@ -347,7 +335,6 @@ export async function POST(req: NextRequest) {
       const mood = pickRandom(MOOD_VARIATIONS)
       const seed = Math.floor(Math.random() * 999999)
       const variantPrompt = `${basePrompt} CRITICAL: The jewelry piece must be reproduced with 100% identical design, shape, and details to the reference — do not alter, simplify, or reinterpret it in any way. ${composition} ${lighting} ${mood} Generation variant ${seed}.`
-      console.log(`Variant ${i + 1}:`, composition.slice(0, 40), '|', lighting.slice(0, 40), '|', 'seed:', seed)
       return fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
           image_urls: [modelImageUrl, uploadedImageUrl],
@@ -365,7 +352,6 @@ export async function POST(req: NextRequest) {
         const rawUrl = (result.value.data as NanoBananaResult).images[0].url
         const upscaledUrl = rawUrl
         const outputUrl = upscaledUrl
-        console.log('Nano Banana output URL:', outputUrl)
 
         const { data: genRecord } = await supabaseAdmin
           .from('generations')
