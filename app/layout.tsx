@@ -3,8 +3,26 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Lunia Studio",
-  description: "Takı fotoğraflarını saniyeler içinde gerçekçi model elinde göster.",
+  title: 'Lunia Studio — Yapay Zeka ile Takı Görselleştirme',
+  description: 'Pahalı stüdyo çekimi olmadan, takı fotoğraflarınızı saniyeler içinde profesyonel model görsellerine dönüştürün. Kolye, yüzük, küpe ve saat için AI destekli sanal deneme.',
+  keywords: 'takı görseli, yapay zeka, sanal deneme, jewelry virtual try-on, kolye, yüzük, küpe, saat',
+  openGraph: {
+    title: 'Lunia Studio — Yapay Zeka ile Takı Görselleştirme',
+    description: 'Takı fotoğraflarınızı profesyonel model görsellerine dönüştürün.',
+    url: 'https://jewelry-virtual.vercel.app',
+    siteName: 'Lunia Studio',
+    type: 'website',
+    locale: 'tr_TR',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Lunia Studio',
+    description: 'Takı fotoğraflarınızı profesyonel model görsellerine dönüştürün.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

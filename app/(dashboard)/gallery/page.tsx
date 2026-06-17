@@ -47,14 +47,21 @@ async function handleShare(url: string) {
   }
 }
 
-async function handleDownload(url: string, index: number) {
-  const response = await fetch(url)
-  const blob = await response.blob()
-  const a = document.createElement("a")
-  a.href = URL.createObjectURL(blob)
-  a.download = `lunia-studio-${index + 1}.jpg`
-  a.click()
-  URL.revokeObjectURL(a.href)
+async function handleDownload(url: string) {
+  try {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = `jewelry-virtual-${Date.now()}.jpg`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(blobUrl)
+  } catch {
+    window.open(url, '_blank')
+  }
 }
 
 function GalleryImage({ src, alt }: { src: string; alt: string }) {
@@ -663,7 +670,7 @@ export default function GalleryPage() {
                   <div className="w-6 h-px bg-[#111827] mb-3" />
                   <div className="flex gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url, items.indexOf(item)) }}
+                      onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url) }}
                       className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827]
                         text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280]
                         hover:text-[#111827] transition-all flex items-center justify-center
