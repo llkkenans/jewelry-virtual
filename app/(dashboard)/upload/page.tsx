@@ -249,13 +249,20 @@ export default function UploadPage() {
   }
 
   async function handleDownload(url: string, index: number) {
-    const response = await fetch(url)
-    const blob = await response.blob()
-    const a = document.createElement("a")
-    a.href = URL.createObjectURL(blob)
-    a.download = `jewelry-virtual-${index + 1}.jpg`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    try {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `jewelry-virtual-${Date.now()}-${index + 1}.jpg`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      window.open(url, '_blank')
+    }
   }
 
   const canGenerate = !!file && !!jewelryType && !!gender && !generating
