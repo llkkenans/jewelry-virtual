@@ -11,6 +11,20 @@ type PromptKey   = `${JewelryType}/${string}/${SkinTone}`
 
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
 
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now()
+  const limit = rateLimitMap.get(userId)
+  if (!limit || now > limit.resetTime) {
+    rateLimitMap.set(userId, { count: 1, resetTime: now + 60000 })
+    return true
+  }
+  if (limit.count >= 5) return false
+  limit.count++
+  return true
+}
+
 const COMPOSITION_VARIATIONS = [
   "Head turned in a soft three-quarter profile to the left.",
   "Head angled in a three-quarter profile to the right.",
@@ -181,6 +195,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
 
+  // Max 10MB base64 (yaklaşık 7.5MB görsel)
+  const MAX_BASE64_SIZE = 10 * 1024 * 1024
+  if (imageBase64 && imageBase64.length > MAX_BASE64_SIZE) {
+    return NextResponse.json({ error: 'Görsel çok büyük. Lütfen 7MB altında bir görsel yükleyin.' }, { status: 413 })
+  }
+
   if (!imageBase64 || !jewelryType) {
     return NextResponse.json(
       { error: 'Eksik parametre: imageBase64, jewelryType gerekli' },
@@ -213,6 +233,10 @@ export async function POST(req: NextRequest) {
 
   if (!profile || profile.credits < quantity) {
     return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
+  }
+
+  if (!checkRateLimit(user.id)) {
+    return NextResponse.json({ error: 'Çok fazla istek. Lütfen 1 dakika bekleyin.' }, { status: 429 })
   }
 
   const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!
@@ -284,7 +308,7 @@ export async function POST(req: NextRequest) {
       } catch (fallbackErr) {
         console.error('Fallback also failed:', fallbackKey, fallbackErr)
         return NextResponse.json({
-          error: `Referans görsel bulunamadı: ${r2Key}. Lütfen bu görselin R2'ye yüklendiğinden emin olun.`
+          error: 'Üretim sırasında bir sorun oluştu. Lütfen tekrar deneyin.'
         }, { status: 500 })
       }
     } else {
