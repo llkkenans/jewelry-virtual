@@ -91,11 +91,145 @@ const stats = [
   { value: "10",   label: "Ücretsiz kredi" },
 ]
 
-const collection = [
-  { src: "/landing/landing_images/collection/ring.jpg", cat: "Yüzük", title: "Kusursuz Takı Sadakati", desc: "Ürünün her detayı orijinaliyle birebir korunur." },
-  { src: "/landing/landing_images/collection/earrings.jpg", cat: "Küpe", title: "Sınırsız Model Seçeneği", desc: "Farklı cilt tonu ve cinsiyetlerde geniş kitleye hitap edin." },
-  { src: "/landing/landing_images/collection/necklace.jpg", cat: "Kolye", title: "Saniyeler İçinde Sonuç", desc: "E-ticarete hazır görsel anında elinizde." },
+const results = [
+  {
+    before: "/landing/landing_images/collection/ring.jpg",
+    after: "/landing/landing_images/collection/ring.jpg",
+    cat: "Yüzük",
+    label: "Ürün Fotoğrafı → Model Görseli",
+  },
+  {
+    before: "/landing/landing_images/collection/necklace.jpg",
+    after: "/landing/landing_images/collection/necklace.jpg",
+    cat: "Kolye",
+    label: "Ürün Fotoğrafı → Model Görseli",
+  },
+  {
+    before: "/landing/landing_images/collection/earrings.jpg",
+    after: "/landing/landing_images/collection/earrings.jpg",
+    cat: "Küpe",
+    label: "Ürün Fotoğrafı → Model Görseli",
+  },
 ]
+
+/* ─── Before/After Slider ────────────────────────────────────────────── */
+function BeforeAfterSlider({
+  before,
+  after,
+  cat,
+  label,
+}: {
+  before: string
+  after: string
+  cat: string
+  label: string
+}) {
+  const [pos, setPos] = useState(50)
+  const [dragging, setDragging] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const move = (clientX: number) => {
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width))
+    setPos((x / rect.width) * 100)
+  }
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragging) return
+    move(e.clientX)
+  }
+  const onTouchMove = (e: React.TouchEvent) => {
+    move(e.touches[0].clientX)
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Slider container */}
+      <div
+        ref={containerRef}
+        className="relative overflow-hidden rounded-2xl aspect-[3/4] cursor-col-resize select-none touch-none"
+        onMouseDown={() => setDragging(true)}
+        onMouseUp={() => setDragging(false)}
+        onMouseLeave={() => setDragging(false)}
+        onMouseMove={onMouseMove}
+        onTouchMove={onTouchMove}
+        onTouchStart={(e) => move(e.touches[0].clientX)}
+      >
+        {/* AFTER image — full width base */}
+        <img
+          src={after}
+          alt={`${cat} sonrası`}
+          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+        />
+
+        {/* BEFORE image — clipped to left portion */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+        >
+          <img
+            src={before}
+            alt={`${cat} öncesi`}
+            className="w-full h-full object-cover"
+            style={{ filter: "grayscale(0.15) brightness(0.92)" }}
+            draggable={false}
+          />
+          {/* Before label */}
+          <div className="absolute top-4 left-4">
+            <span
+              style={{ fontFamily: "var(--font-body, sans-serif)", fontSize: "10px", letterSpacing: "0.2em" }}
+              className="bg-white/90 text-[#0A0A0A] uppercase tracking-widest text-[10px] font-semibold px-3 py-1.5 rounded-full"
+            >
+              Önce
+            </span>
+          </div>
+        </div>
+
+        {/* After label */}
+        <div className="absolute top-4 right-4" style={{ opacity: pos < 85 ? 1 : 0, transition: "opacity 0.2s" }}>
+          <span
+            style={{ fontSize: "10px", letterSpacing: "0.2em" }}
+            className="bg-[#0A0A0A]/80 text-white uppercase tracking-widest text-[10px] font-semibold px-3 py-1.5 rounded-full"
+          >
+            Sonra
+          </span>
+        </div>
+
+        {/* Divider line */}
+        <div
+          className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
+          style={{ left: `${pos}%`, transition: dragging ? "none" : "left 0.05s" }}
+        >
+          {/* Handle */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center z-20">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M5 8L2 5m0 0l3-3M2 5h12m0 0l-3-3m3 3l-3 3" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Label below */}
+      <div className="flex items-center justify-between px-1">
+        <span
+          style={{ fontFamily: "var(--font-body, sans-serif)" }}
+          className="text-[10px] text-white/30 tracking-[0.22em] uppercase font-medium"
+        >
+          {cat}
+        </span>
+        <span
+          style={{ fontFamily: "var(--font-body, sans-serif)" }}
+          className="text-[10px] text-white/20 tracking-[0.15em] uppercase font-light"
+        >
+          {label}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 /* ─── Overline label ─────────────────────────────────────────────────── */
 function Overline({ children, light = false }: { children: string; light?: boolean }) {
@@ -155,7 +289,7 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-8">
             {[
               { label: "Nasıl Çalışır", href: "#nasil-calisir" },
-              { label: "Koleksiyon", href: "#koleksiyon" },
+              { label: "Sonuçlar", href: "#sonuclar" },
               { label: "Fiyatlar", href: "/dashboard/billing" },
             ].map(({ label, href }) => (
               <a
@@ -338,58 +472,42 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─────────────── COLLECTION — Dark ─────────────── */}
-        <section id="koleksiyon" className="bg-[#0A0A0A] py-28 sm:py-36">
+        {/* ─────────────── RESULTS — Before/After ─────────────── */}
+        <section id="sonuclar" className="bg-[#0A0A0A] py-28 sm:py-36">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
 
             <Reveal>
-              <Overline light>Koleksiyonunuz</Overline>
+              <Overline light>Sonuçlar</Overline>
               <h2
                 style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-20 max-w-xl"
+                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6 max-w-xl"
               >
-                Her takı türü
+                Ürün fotoğrafından
                 <br />
                 <em className="not-italic font-light text-white/28" style={{ fontFamily: DISPLAY }}>
-                  için stüdyo.
+                  model görseline.
                 </em>
               </h2>
+              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/35 font-light mb-20 max-w-sm leading-[1.75]">
+                Kaydırıcıyı hareket ettirerek farkı görün.
+              </p>
             </Reveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {collection.map(({ src, cat, title, desc }, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {results.map(({ before, after, cat, label }, i) => (
                 <Reveal key={cat} delay={i * 100}>
-                  <div className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer">
-                    <img
-                      src={src}
-                      alt={title}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
-                    <div className="absolute bottom-0 inset-x-0 p-6">
-                      <span
-                        style={{ fontFamily: BODY }}
-                        className="text-[10px] text-white/38 tracking-[0.3em] uppercase font-medium block mb-2"
-                      >
-                        {cat}
-                      </span>
-                      <p
-                        style={{ fontFamily: DISPLAY }}
-                        className="text-[1.15rem] font-bold text-white leading-[1.2] tracking-[-0.015em] mb-1.5"
-                      >
-                        {title}
-                      </p>
-                      <p
-                        style={{ fontFamily: BODY }}
-                        className="text-[13px] text-white/38 font-light"
-                      >
-                        {desc}
-                      </p>
-                    </div>
-                  </div>
+                  <BeforeAfterSlider before={before} after={after} cat={cat} label={label} />
                 </Reveal>
               ))}
             </div>
+
+            <Reveal delay={200} className="mt-16">
+              <Link href="/register">
+                <Button className="h-11 px-8 text-[13px] font-semibold rounded-full cursor-pointer bg-white text-[#0A0A0A] hover:bg-white/90 transition-all duration-300 tracking-wide">
+                  Ücretsiz Dene
+                </Button>
+              </Link>
+            </Reveal>
           </div>
         </section>
 
