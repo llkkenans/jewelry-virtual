@@ -91,142 +91,196 @@ const stats = [
   { value: "10",   label: "Ücretsiz kredi" },
 ]
 
-const results = [
-  {
-    before: "/landing/landing_images/collection/ring_before.png",
-    after: "/landing/landing_images/collection/ring_after.png",
-    cat: "Yüzük",
-    label: "Ürün Fotoğrafı → Model Görseli",
-  },
-  {
-    before: "/landing/landing_images/collection/necklace_before.png",
-    after: "/landing/landing_images/collection/necklace_after.png",
-    cat: "Kolye",
-    label: "Ürün Fotoğrafı → Model Görseli",
-  },
-  {
-    before: "/landing/landing_images/collection/earrings_before.png",
-    after: "/landing/landing_images/collection/earrings_after.png",
-    cat: "Küpe",
-    label: "Ürün Fotoğrafı → Model Görseli",
-  },
+/* ─── Demo Simulator ─────────────────────────────────────────────────── */
+const demoItems = [
+  { id: "ring",     cat: "Yüzük",  before: "/landing/landing_images/collection/ring_before.png",     after: "/landing/landing_images/collection/ring_after.png" },
+  { id: "necklace", cat: "Kolye",  before: "/landing/landing_images/collection/necklace_before.png", after: "/landing/landing_images/collection/necklace_after.png" },
+  { id: "earrings", cat: "Küpe",   before: "/landing/landing_images/collection/earrings_before.png", after: "/landing/landing_images/collection/earrings_after.png" },
 ]
 
-/* ─── Before/After Slider ────────────────────────────────────────────── */
-function BeforeAfterSlider({
-  before,
-  after,
-  cat,
-  label,
-}: {
-  before: string
-  after: string
-  cat: string
-  label: string
-}) {
-  const [pos, setPos] = useState(50)
-  const [dragging, setDragging] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+function DemoSimulator() {
+  const [selected, setSelected] = useState(0)
+  const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle")
 
-  const move = (clientX: number) => {
-    const el = containerRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width))
-    setPos((x / rect.width) * 100)
+  const item = demoItems[selected]
+
+  function handleGenerate() {
+    if (phase === "loading") return
+    setPhase("loading")
+    setTimeout(() => setPhase("done"), 2800)
   }
 
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragging) return
-    move(e.clientX)
-  }
-  const onTouchMove = (e: React.TouchEvent) => {
-    move(e.touches[0].clientX)
+  function handleSelect(i: number) {
+    setSelected(i)
+    setPhase("idle")
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Slider container */}
-      <div
-        ref={containerRef}
-        className="relative overflow-hidden rounded-2xl aspect-[3/4] cursor-col-resize select-none touch-none"
-        onMouseDown={() => setDragging(true)}
-        onMouseUp={() => setDragging(false)}
-        onMouseLeave={() => setDragging(false)}
-        onMouseMove={onMouseMove}
-        onTouchMove={onTouchMove}
-        onTouchStart={(e) => move(e.touches[0].clientX)}
-      >
-        {/* AFTER image — full width base */}
-        <img
-          src={after}
-          alt={`${cat} sonrası`}
-          className="absolute inset-0 w-full h-full object-cover"
-          draggable={false}
-        />
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
-        {/* BEFORE image — clipped to left portion */}
-        <div
-          className="absolute inset-0 overflow-hidden"
-          style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
-        >
-          <img
-            src={before}
-            alt={`${cat} öncesi`}
-            className="w-full h-full object-cover"
-            style={{ filter: "grayscale(0.15) brightness(0.92)" }}
-            draggable={false}
-          />
-          {/* Before label */}
-          <div className="absolute top-4 left-4">
-            <span
-              style={{ fontFamily: "var(--font-body, sans-serif)", fontSize: "10px", letterSpacing: "0.2em" }}
-              className="bg-white/90 text-[#0A0A0A] uppercase tracking-widest text-[10px] font-semibold px-3 py-1.5 rounded-full"
-            >
-              Önce
-            </span>
+        {/* ── Sol panel ── */}
+        <div className="flex flex-col gap-4">
+
+          {/* Ürün thumbnail'ları */}
+          <div className="flex gap-3">
+            {demoItems.map((d, i) => (
+              <button
+                key={d.id}
+                onClick={() => handleSelect(i)}
+                className={`relative flex-1 aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
+                  selected === i
+                    ? "border-white/70 scale-[1.02]"
+                    : "border-white/10 opacity-50 hover:opacity-75 hover:border-white/25"
+                }`}
+              >
+                <img src={d.before} alt={d.cat} className="w-full h-full object-cover" />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent py-1.5">
+                  <span
+                    style={{ fontFamily: "var(--font-inter, sans-serif)", fontSize: "9px", letterSpacing: "0.18em" }}
+                    className="block text-center text-white/70 uppercase font-medium"
+                  >
+                    {d.cat}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Seçili ürün büyük görsel */}
+          <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
+            <img
+              key={item.id}
+              src={item.before}
+              alt={item.cat}
+              className="w-full h-full object-cover"
+              style={{ animation: "fadeIn 0.35s ease" }}
+            />
+            {/* Orijinal Görsel badge */}
+            <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+              <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
+              <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-white/60 uppercase font-medium">
+                Ürün Görseli
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* After label */}
-        <div className="absolute top-4 right-4" style={{ opacity: pos < 85 ? 1 : 0, transition: "opacity 0.2s" }}>
-          <span
-            style={{ fontSize: "10px", letterSpacing: "0.2em" }}
-            className="bg-[#0A0A0A]/80 text-white uppercase tracking-widest text-[10px] font-semibold px-3 py-1.5 rounded-full"
+        {/* ── Sağ panel ── */}
+        <div className="flex flex-col gap-4">
+
+          {/* Ayarlar — dekoratif */}
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 flex flex-col gap-3">
+            <p style={{ fontSize: "10px", letterSpacing: "0.22em" }} className="text-white/25 uppercase font-medium mb-1">
+              Model Ayarları
+            </p>
+            {[
+              { label: "Cinsiyet", value: "Kadın" },
+              { label: "Cilt Tonu", value: "Açık" },
+              { label: "Stil",     value: "Stüdyo" },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between">
+                <span style={{ fontSize: "12px" }} className="text-white/35 font-light">{label}</span>
+                <span style={{ fontSize: "12px" }} className="text-white/60 font-medium">{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Çıktı alanı */}
+          <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
+
+            {/* IDLE */}
+            {phase === "idle" && (
+              <div className="flex flex-col items-center gap-3 px-6 text-center">
+                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center mb-1">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 4v12M4 10h12" stroke="white" strokeWidth="1.5" strokeOpacity="0.3" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <p style={{ fontSize: "12px" }} className="text-white/25 font-light leading-relaxed">
+                  Görseli oluşturmak için<br />aşağıdaki butona tıklayın
+                </p>
+              </div>
+            )}
+
+            {/* LOADING */}
+            {phase === "loading" && (
+              <div className="flex flex-col items-center gap-4 px-6 text-center">
+                {/* Spinner */}
+                <div className="relative w-12 h-12">
+                  <div
+                    className="absolute inset-0 rounded-full border-2 border-white/8"
+                    style={{ borderTopColor: "rgba(255,255,255,0.55)", animation: "spin 0.9s linear infinite" }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 items-center">
+                  <p style={{ fontSize: "12px" }} className="text-white/50 font-light">
+                    AI görsel oluşturuyor...
+                  </p>
+                  {/* Progress dots */}
+                  <div className="flex gap-1.5 mt-1">
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="w-1 h-1 rounded-full bg-white/30"
+                        style={{ animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* DONE */}
+            {phase === "done" && (
+              <>
+                <img
+                  src={item.after}
+                  alt={`${item.cat} model`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ animation: "fadeIn 0.6s ease" }}
+                />
+                {/* Model Görseli badge */}
+                <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                  <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-white/70 uppercase font-medium">
+                    Model Görseli
+                  </span>
+                </div>
+                {/* Tekrar dene */}
+                <button
+                  onClick={() => setPhase("idle")}
+                  className="absolute bottom-3.5 right-3.5 bg-black/60 backdrop-blur-sm border border-white/10 px-3 py-1.5 rounded-full cursor-pointer hover:bg-black/80 transition-all"
+                >
+                  <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-white/50 uppercase font-medium">
+                    Tekrar Dene
+                  </span>
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Generate butonu */}
+          <button
+            onClick={handleGenerate}
+            disabled={phase === "loading"}
+            className={`w-full h-12 rounded-full text-[13px] font-semibold tracking-wide transition-all duration-300 cursor-pointer ${
+              phase === "loading"
+                ? "bg-white/10 text-white/30 cursor-not-allowed"
+                : phase === "done"
+                ? "bg-white/10 text-white/50 hover:bg-white/15 border border-white/10"
+                : "bg-white text-[#0A0A0A] hover:bg-white/90"
+            }`}
           >
-            Sonra
-          </span>
-        </div>
-
-        {/* Divider line */}
-        <div
-          className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
-          style={{ left: `${pos}%`, transition: dragging ? "none" : "left 0.05s" }}
-        >
-          {/* Handle */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white shadow-lg flex items-center justify-center z-20">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M5 8L2 5m0 0l3-3M2 5h12m0 0l-3-3m3 3l-3 3" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+            {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Seç" : "Modele Giydir →"}
+          </button>
         </div>
       </div>
 
-      {/* Label below */}
-      <div className="flex items-center justify-between px-1">
-        <span
-          style={{ fontFamily: "var(--font-body, sans-serif)" }}
-          className="text-[10px] text-white/30 tracking-[0.22em] uppercase font-medium"
-        >
-          {cat}
-        </span>
-        <span
-          style={{ fontFamily: "var(--font-body, sans-serif)" }}
-          className="text-[10px] text-white/20 tracking-[0.15em] uppercase font-light"
-        >
-          {label}
-        </span>
-      </div>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   )
 }
@@ -488,18 +542,12 @@ export default function LandingPage() {
                   model görseline.
                 </em>
               </h2>
-              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/35 font-light mb-20 max-w-sm leading-[1.75]">
-                Kaydırıcıyı hareket ettirerek farkı görün.
+              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/35 font-light mb-16 max-w-sm leading-[1.75]">
+                Ürününüzü seçin, modele giydirin — saniyeler içinde stüdyo kalitesi.
               </p>
             </Reveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {results.map(({ before, after, cat, label }, i) => (
-                <Reveal key={cat} delay={i * 100}>
-                  <BeforeAfterSlider before={before} after={after} cat={cat} label={label} />
-                </Reveal>
-              ))}
-            </div>
+            <DemoSimulator />
 
             <Reveal delay={200} className="mt-16">
               <Link href="/register">
