@@ -130,8 +130,8 @@ function DemoSimulator() {
                 onClick={() => handleSelect(i)}
                 className={`relative flex-1 aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
                   selected === i
-                    ? "border-white/70 scale-[1.02]"
-                    : "border-white/10 opacity-50 hover:opacity-75 hover:border-white/25"
+                    ? "border-[#0A0A0A]/60 scale-[1.02]"
+                    : "border-black/10 opacity-50 hover:opacity-75 hover:border-black/25"
                 }`}
               >
                 <img src={d.before} alt={d.cat} className="w-full h-full object-cover" />
@@ -148,7 +148,7 @@ function DemoSimulator() {
           </div>
 
           {/* Seçili ürün büyük görsel */}
-          <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
+          <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white border border-black/[0.08]">
             <img
               key={item.id}
               src={item.before}
@@ -157,9 +157,9 @@ function DemoSimulator() {
               style={{ animation: "demoFadeIn 0.35s ease" }}
             />
             {/* Orijinal Görsel badge */}
-            <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
-              <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-white/60 uppercase font-medium">
+            <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-black/[0.08]">
+              <div className="w-1.5 h-1.5 rounded-full bg-black/30" />
+              <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-black/50 uppercase font-medium">
                 Ürün Görseli
               </span>
             </div>
@@ -170,8 +170,8 @@ function DemoSimulator() {
         <div className="flex flex-col gap-4">
 
           {/* Ayarlar — dekoratif */}
-          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-4 flex flex-col gap-3">
-            <p style={{ fontSize: "10px", letterSpacing: "0.22em" }} className="text-white/25 uppercase font-medium mb-1">
+          <div className="rounded-2xl border border-black/[0.07] bg-white p-4 flex flex-col gap-3">
+            <p style={{ fontSize: "10px", letterSpacing: "0.22em" }} className="text-black/30 uppercase font-medium mb-1">
               Model Ayarları
             </p>
             {[
@@ -180,14 +180,14 @@ function DemoSimulator() {
               { label: "Stil",     value: "Stüdyo" },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between">
-                <span style={{ fontSize: "12px" }} className="text-white/35 font-light">{label}</span>
-                <span style={{ fontSize: "12px" }} className="text-white/60 font-medium">{value}</span>
+                <span style={{ fontSize: "12px" }} className="text-black/40 font-light">{label}</span>
+                <span style={{ fontSize: "12px" }} className="text-black/70 font-medium">{value}</span>
               </div>
             ))}
           </div>
 
           {/* Çıktı alanı */}
-          <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
+          <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white border border-black/[0.08] flex items-center justify-center">
 
             {/* IDLE */}
             {phase === "idle" && (
@@ -197,7 +197,7 @@ function DemoSimulator() {
                     <path d="M10 4v12M4 10h12" stroke="white" strokeWidth="1.5" strokeOpacity="0.3" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <p style={{ fontSize: "12px" }} className="text-white/25 font-light leading-relaxed">
+                <p style={{ fontSize: "12px" }} className="text-black/30 font-light leading-relaxed">
                   Görseli oluşturmak için<br />aşağıdaki butona tıklayın
                 </p>
               </div>
@@ -214,7 +214,7 @@ function DemoSimulator() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 items-center">
-                  <p style={{ fontSize: "12px" }} className="text-white/50 font-light">
+                  <p style={{ fontSize: "12px" }} className="text-black/40 font-light">
                     AI görsel oluşturuyor...
                   </p>
                   {/* Progress dots */}
@@ -222,7 +222,7 @@ function DemoSimulator() {
                     {[0, 1, 2].map((i) => (
                       <div
                         key={i}
-                        className="w-1 h-1 rounded-full bg-white/30"
+                        className="w-1 h-1 rounded-full bg-black/20"
                         style={{ animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }}
                       />
                     ))}
@@ -241,18 +241,18 @@ function DemoSimulator() {
                   style={{ animation: "demoFadeIn 0.6s ease" }}
                 />
                 {/* Model Görseli badge */}
-                <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                  <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-white/70 uppercase font-medium">
+                <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-black/[0.08]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" style={{ animation: "pulse 2s ease-in-out infinite" }} />
+                  <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-black/60 uppercase font-medium">
                     Model Görseli
                   </span>
                 </div>
                 {/* Tekrar dene */}
                 <button
                   onClick={() => setPhase("idle")}
-                  className="absolute bottom-3.5 right-3.5 bg-black/60 backdrop-blur-sm border border-white/10 px-3 py-1.5 rounded-full cursor-pointer hover:bg-black/80 transition-all"
+                  className="absolute bottom-3.5 right-3.5 bg-white/90 backdrop-blur-sm border border-black/[0.08] px-3 py-1.5 rounded-full cursor-pointer hover:bg-white transition-all"
                 >
-                  <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-white/50 uppercase font-medium">
+                  <span style={{ fontSize: "10px", letterSpacing: "0.15em" }} className="text-black/40 uppercase font-medium">
                     Tekrar Dene
                   </span>
                 </button>
@@ -266,10 +266,10 @@ function DemoSimulator() {
             disabled={phase === "loading"}
             className={`w-full h-12 rounded-full text-[13px] font-semibold tracking-wide transition-all duration-300 cursor-pointer ${
               phase === "loading"
-                ? "bg-white/10 text-white/30 cursor-not-allowed"
+                ? "bg-black/5 text-black/25 cursor-not-allowed"
                 : phase === "done"
-                ? "bg-white/10 text-white/50 hover:bg-white/15 border border-white/10"
-                : "bg-white text-[#0A0A0A] hover:bg-white/90"
+                ? "bg-black/5 text-black/40 hover:bg-black/8 border border-black/[0.08]"
+                : "bg-[#0A0A0A] text-white hover:bg-[#1F1F1F]"
             }`}
           >
             {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Seç" : "Modele Giydir →"}
@@ -533,7 +533,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── RESULTS — Before/After ─────────────── */}
-        <section id="sonuclar" className="relative py-28 sm:py-36 overflow-hidden" style={{ backgroundColor: "#07050F" }}>
+        <section id="sonuclar" className="py-28 sm:py-36" style={{ backgroundColor: "#F8F6F2" }}>
 
           {/* Blob 1 — altın, sol üst */}
           <div className="absolute pointer-events-none" style={{ width:"700px", height:"700px", borderRadius:"50%", background:"radial-gradient(circle, rgba(201,169,110,0.11) 0%, transparent 65%)", top:"-200px", left:"-180px", filter:"blur(60px)", animation:"blobDrift1 20s ease-in-out infinite" }} />
@@ -560,18 +560,18 @@ export default function LandingPage() {
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
 
             <Reveal>
-              <Overline light>Sonuçlar</Overline>
+              <Overline>Sonuçlar</Overline>
               <h2
                 style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6 max-w-xl"
+                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#0A0A0A] leading-[1.0] mb-6 max-w-xl"
               >
                 Ürün fotoğrafından
                 <br />
-                <em className="not-italic font-light text-white/28" style={{ fontFamily: DISPLAY }}>
+                <em className="not-italic font-light text-black/30" style={{ fontFamily: DISPLAY }}>
                   model görseline.
                 </em>
               </h2>
-              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/35 font-light mb-16 max-w-sm leading-[1.75]">
+              <p style={{ fontFamily: BODY }} className="text-[14px] text-[#0A0A0A]/45 font-light mb-16 max-w-sm leading-[1.75]">
                 Ürününüzü seçin, modele giydirin — saniyeler içinde stüdyo kalitesi.
               </p>
             </Reveal>
