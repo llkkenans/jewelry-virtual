@@ -154,7 +154,7 @@ function DemoSimulator() {
               src={item.before}
               alt={item.cat}
               className="w-full h-full object-cover"
-              style={{ animation: "fadeIn 0.35s ease" }}
+              style={{ animation: "demoFadeIn 0.35s ease" }}
             />
             {/* Orijinal Görsel badge */}
             <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
@@ -210,7 +210,7 @@ function DemoSimulator() {
                 <div className="relative w-12 h-12">
                   <div
                     className="absolute inset-0 rounded-full border-2 border-white/8"
-                    style={{ borderTopColor: "rgba(255,255,255,0.55)", animation: "spin 0.9s linear infinite" }}
+                    style={{ borderTopColor: "rgba(255,255,255,0.55)", animation: "demoSpin 0.9s linear infinite" }}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 items-center">
@@ -238,7 +238,7 @@ function DemoSimulator() {
                   src={item.after}
                   alt={`${item.cat} model`}
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ animation: "fadeIn 0.6s ease" }}
+                  style={{ animation: "demoFadeIn 0.6s ease" }}
                 />
                 {/* Model Görseli badge */}
                 <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
@@ -278,8 +278,14 @@ function DemoSimulator() {
       </div>
 
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes demoFadeIn { from { opacity:0; transform:scale(1.02); } to { opacity:1; transform:scale(1); } }
+        @keyframes demoSpin { to { transform:rotate(360deg); } }
+        @keyframes demoPulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+        @keyframes blobDrift1 { 0%,100% { transform:translate(0px,0px) scale(1); } 33% { transform:translate(40px,-30px) scale(1.06); } 66% { transform:translate(-25px,20px) scale(0.96); } }
+        @keyframes blobDrift2 { 0%,100% { transform:translate(0px,0px) scale(1); } 40% { transform:translate(-50px,35px) scale(1.08); } 70% { transform:translate(30px,-20px) scale(0.94); } }
+        @keyframes blobDrift3 { 0%,100% { transform:translate(0px,0px) scale(1); } 50% { transform:translate(35px,-40px) scale(1.05); } }
+        @keyframes rayPulse1 { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
+        @keyframes rayPulse2 { 0%,100% { opacity:0.4; } 50% { opacity:0.85; } }
       `}</style>
     </div>
   )
@@ -527,7 +533,30 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── RESULTS — Before/After ─────────────── */}
-        <section id="sonuclar" className="bg-[#0A0A0A] py-28 sm:py-36">
+        <section id="sonuclar" className="relative py-28 sm:py-36 overflow-hidden" style={{ backgroundColor: "#07050F" }}>
+
+          {/* Blob 1 — altın, sol üst */}
+          <div className="absolute pointer-events-none" style={{ width:"700px", height:"700px", borderRadius:"50%", background:"radial-gradient(circle, rgba(201,169,110,0.11) 0%, transparent 65%)", top:"-200px", left:"-180px", filter:"blur(60px)", animation:"blobDrift1 20s ease-in-out infinite" }} />
+
+          {/* Blob 2 — mor, sağ orta */}
+          <div className="absolute pointer-events-none" style={{ width:"600px", height:"600px", borderRadius:"50%", background:"radial-gradient(circle, rgba(120,80,200,0.10) 0%, transparent 65%)", top:"10%", right:"-150px", filter:"blur(70px)", animation:"blobDrift2 25s ease-in-out infinite" }} />
+
+          {/* Blob 3 — mavi, sol alt */}
+          <div className="absolute pointer-events-none" style={{ width:"500px", height:"500px", borderRadius:"50%", background:"radial-gradient(circle, rgba(60,100,220,0.08) 0%, transparent 65%)", bottom:"-100px", left:"20%", filter:"blur(55px)", animation:"blobDrift3 22s ease-in-out infinite" }} />
+
+          {/* Blob 4 — altın, sağ alt */}
+          <div className="absolute pointer-events-none" style={{ width:"350px", height:"350px", borderRadius:"50%", background:"radial-gradient(circle, rgba(220,160,90,0.09) 0%, transparent 65%)", bottom:"5%", right:"10%", filter:"blur(45px)", animation:"blobDrift1 18s ease-in-out 4s infinite" }} />
+
+          {/* Işık huzmesi 1 */}
+          <div className="absolute pointer-events-none" style={{ width:"1px", height:"55%", background:"linear-gradient(to top, rgba(201,169,110,0.18), transparent)", left:"28%", bottom:0, filter:"blur(8px)", transform:"scaleX(18)", transformOrigin:"center bottom", animation:"rayPulse1 6s ease-in-out infinite" }} />
+
+          {/* Işık huzmesi 2 */}
+          <div className="absolute pointer-events-none" style={{ width:"1px", height:"45%", background:"linear-gradient(to top, rgba(120,80,200,0.14), transparent)", right:"25%", bottom:0, filter:"blur(10px)", transform:"scaleX(22)", transformOrigin:"center bottom", animation:"rayPulse2 8s ease-in-out infinite" }} />
+
+          {/* Işık huzmesi 3 */}
+          <div className="absolute pointer-events-none" style={{ width:"1px", height:"35%", background:"linear-gradient(to top, rgba(255,220,130,0.10), transparent)", left:"52%", bottom:0, filter:"blur(6px)", transform:"scaleX(10)", transformOrigin:"center bottom", animation:"rayPulse1 10s ease-in-out 2s infinite" }} />
+
+          <div className="relative z-10">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
 
             <Reveal>
@@ -556,6 +585,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </Reveal>
+          </div>
           </div>
         </section>
 
