@@ -93,20 +93,20 @@ const stats = [
 
 const results = [
   {
-    before: "/landing/landing_images/collection/ring.jpg",
-    after: "/landing/landing_images/collection/ring.jpg",
+    before: "/landing/landing_images/collection/ring_before.png",
+    after: "/landing/landing_images/collection/ring_after.png",
     cat: "Yüzük",
     label: "Ürün Fotoğrafı → Model Görseli",
   },
   {
-    before: "/landing/landing_images/collection/necklace.jpg",
-    after: "/landing/landing_images/collection/necklace.jpg",
+    before: "/landing/landing_images/collection/necklace_before.png",
+    after: "/landing/landing_images/collection/necklace_after.png",
     cat: "Kolye",
     label: "Ürün Fotoğrafı → Model Görseli",
   },
   {
-    before: "/landing/landing_images/collection/earrings.jpg",
-    after: "/landing/landing_images/collection/earrings.jpg",
+    before: "/landing/landing_images/collection/earrings_before.png",
+    after: "/landing/landing_images/collection/earrings_after.png",
     cat: "Küpe",
     label: "Ürün Fotoğrafı → Model Görseli",
   },
