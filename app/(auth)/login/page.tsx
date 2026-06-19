@@ -40,7 +40,7 @@ export default function LoginPage() {
       return
     }
     const params = new URLSearchParams(window.location.search)
-    const redirect = params.get('redirect') || '/upload'
+    const redirect = params.get('redirect') || '/studio'
     router.push(redirect)
     router.refresh()
   }
