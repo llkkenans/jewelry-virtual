@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
+import sharp from 'sharp'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { getFromR2 } from '@/lib/r2'
+import { getFromR2, uploadToR2 } from '@/lib/r2'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 export const maxDuration = 60
@@ -14,12 +15,30 @@ const VALID_CATEGORIES: Category[] = ['tops', 'bottoms', 'one-pieces']
 const VALID_GENDERS: Gender[] = ['woman', 'man']
 const VALID_SKIN_TONES: SkinTone[] = ['light', 'medium', 'dark']
 
-// Her gender/skinTone kombinasyonu için R2'de kaç poz görseli var (1.png, 2.png, 3.png...)
-// Jewelry REFERENCE_COUNTS pattern'iyle tutarlı.
 const POSE_COUNT = 3
 
 type FashnResult = {
   images: Array<{ url: string }>
+}
+
+// "bottoms" kategorisi için Trendyol standardına uygun crop: yüz/baş gösterilmez,
+// görselin bel-altı kısmı (alt %62) kullanılır. "tops" ve "one-pieces" tam boy kalır.
+// Trendyol örnek satıcı görselleri incelenerek belirlendi (2026-06-19).
+const BOTTOMS_CROP_RATIO = 0.62
+
+async function cropForCategory(imageBuffer: Buffer, category: Category): Promise<Buffer> {
+  if (category !== 'bottoms') {
+    return imageBuffer
+  }
+
+  const metadata = await sharp(imageBuffer).metadata()
+  const width = metadata.width ?? 576
+  const height = metadata.height ?? 864
+  const cropTop = Math.round(height * (1 - BOTTOMS_CROP_RATIO))
+
+  return sharp(imageBuffer)
+    .extract({ left: 0, top: cropTop, width, height: height - cropTop })
+    .toBuffer()
 }
 
 export async function POST(req: NextRequest) {
@@ -100,9 +119,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Tam vücut referans model seçimi — her gender/skinTone kombinasyonu için
-  // 3 poz görseli var (1.png, 2.png, 3.png), rastgele seçilir.
-  // Klasör yapısı: clothing-references/{gender}/{skinTone}/{index}.png
   const randomIndex = Math.floor(Math.random() * POSE_COUNT) + 1
   const r2Key = `clothing-references/${gender}/${skinTone}/${randomIndex}.png`
 
@@ -165,7 +181,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim başarısız oldu. Lütfen tekrar deneyin.' }, { status: 502 })
   }
 
-  const outputUrl = (result.data as FashnResult).images[0].url
+  const rawOutputUrl = (result.data as FashnResult).images[0].url
+
+  // "bottoms" kategorisi için crop uygula, sonucu R2'ye kalıcı olarak kaydet.
+  // "tops" ve "one-pieces" için fal.media URL'i olduğu gibi kullanılır.
+  let outputUrl = rawOutputUrl
+  if (category === 'bottoms') {
+    try {
+      const fashnImageRes = await fetch(rawOutputUrl)
+      const fashnImageBuffer = Buffer.from(await fashnImageRes.arrayBuffer())
+      const croppedBuffer = await cropForCategory(fashnImageBuffer, category)
+      const outputKey = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+      await uploadToR2(croppedBuffer, outputKey, 'image/jpeg')
+      outputUrl = await fal.storage.upload(new Blob([croppedBuffer], { type: 'image/jpeg' }))
+    } catch (cropErr) {
+      console.error('Crop failed, falling back to uncropped output:', cropErr)
+      outputUrl = rawOutputUrl
+    }
+  }
 
   const { data: genRecord } = await supabaseAdmin
     .from('clothing_generations')
