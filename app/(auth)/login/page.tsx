@@ -270,9 +270,6 @@ export default function LoginPage() {
             >
               {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
             </Button>
-            <Link href="/forgot-password" className="block text-center text-xs text-[#6B7280] hover:text-[#C9A96E] transition-colors">
-              Şifremi unuttum
-            </Link>
           </form>
 
           {/* Ayraç */}
