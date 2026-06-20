@@ -94,25 +94,57 @@ const stats = [
 
 /* ─── Demo Simulator ─────────────────────────────────────────────────── */
 const demoItems = [
-  { id: "ring",     cat: "Yüzük",  before: "/landing/landing_images/collection/ring_before.png",     after: "/landing/landing_images/collection/ring_after.png" },
-  { id: "necklace", cat: "Kolye",  before: "/landing/landing_images/collection/necklace_before.png", after: "/landing/landing_images/collection/necklace_after.png" },
-  { id: "earrings", cat: "Küpe",   before: "/landing/landing_images/collection/earrings_before.png", after: "/landing/landing_images/collection/earrings_after.png" },
+  {
+    id: "ring", cat: "Yüzük",
+    before: "/landing/landing_images/collection/ring_before.png",
+    afters: [
+      "/landing/landing_images/collection/ring_after.png",
+      "/landing/landing_images/collection/ring_after1.png",
+      "/landing/landing_images/collection/ring_after2.png",
+      "/landing/landing_images/collection/ring_after3.png",
+    ],
+  },
+  {
+    id: "necklace", cat: "Kolye",
+    before: "/landing/landing_images/collection/necklace_before.png",
+    afters: [
+      "/landing/landing_images/collection/necklace_after.png",
+      "/landing/landing_images/collection/necklace_after1.png",
+      "/landing/landing_images/collection/necklace_after2.png",
+      "/landing/landing_images/collection/necklace_after3.png",
+    ],
+  },
+  {
+    id: "earrings", cat: "Küpe",
+    before: "/landing/landing_images/collection/earrings_before.png",
+    afters: [
+      "/landing/landing_images/collection/earrings_after.png",
+      "/landing/landing_images/collection/earrings_after1.png",
+      "/landing/landing_images/collection/earrings_after2.png",
+      "/landing/landing_images/collection/earrings_after3.png",
+    ],
+  },
 ]
 
 function DemoSimulator() {
   const [selected, setSelected] = useState(0)
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle")
+  const [afterIndex, setAfterIndex] = useState(0)
 
   const item = demoItems[selected]
+  const currentAfter = item.afters[afterIndex]
 
   function handleGenerate() {
     if (phase === "loading") return
+    const nextIndex = Math.floor(Math.random() * item.afters.length)
+    setAfterIndex(nextIndex)
     setPhase("loading")
     setTimeout(() => setPhase("done"), 2800)
   }
 
   function handleSelect(i: number) {
     setSelected(i)
+    setAfterIndex(0)
     setPhase("idle")
   }
 
@@ -201,7 +233,7 @@ function DemoSimulator() {
             {phase === "done" && (
               <>
                 <img
-                  src={item.after}
+                  src={currentAfter}
                   alt={`${item.cat} model`}
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ animation: "demoFadeIn 0.6s ease" }}
