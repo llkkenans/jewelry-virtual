@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { Sparkles, Check, Circle, Gem } from "lucide-react"
+import { Camera, Coins, Wallet, Diamond } from "lucide-react"
 
 interface DailyEntry { date: string; count: number }
 interface StatsData {
@@ -101,28 +101,28 @@ export default function StatsPage() {
           <StatCard
             iconBg="bg-[#FDF6EC]"
             iconColor="text-[#C9A96E]"
-            Icon={Sparkles}
+            Icon={Camera}
             value={String(totalProduced)}
             label="TOPLAM ÜRETİM"
           />
           <StatCard
             iconBg="bg-[#F0F7ED]"
             iconColor="text-green-700"
-            Icon={Check}
+            Icon={Coins}
             value={String(totalProduced)}
             label="HARCANAN KREDİ"
           />
           <StatCard
             iconBg="bg-[#EEF4FB]"
             iconColor="text-blue-700"
-            Icon={Circle}
+            Icon={Wallet}
             value={String(data.credits)}
             label="KALAN KREDİ"
           />
           <StatCard
             iconBg="bg-[#FDF6EC]"
             iconColor="text-[#C9A96E]"
-            Icon={Gem}
+            Icon={Diamond}
             value={`${data.jewelry.total} / ${data.clothing.total}`}
             label="TAKI / KİYAFET"
           />
@@ -131,7 +131,7 @@ export default function StatsPage() {
         {/* Günlük Üretim Chart */}
         <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-medium text-[#111827]">Günlük üretim</h2>
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#111827]">Günlük üretim</h2>
             <div className="flex items-center gap-1">
               {([7, 30, "all"] as const).map(r => (
                 <button
@@ -198,7 +198,7 @@ export default function StatsPage() {
         {/* Kategori Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
-            <h2 className="text-sm font-medium text-[#111827] mb-4">Takı kategorileri</h2>
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#111827] mb-4">Takı kategorileri</h2>
             <div className="space-y-3">
               {jCategories.map(({ label, count }) => (
                 <div key={label} className="flex items-center gap-3">
@@ -216,7 +216,7 @@ export default function StatsPage() {
           </div>
 
           <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
-            <h2 className="text-sm font-medium text-[#111827] mb-4">Kıyafet kategorileri</h2>
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#111827] mb-4">Kıyafet kategorileri</h2>
             <div className="space-y-3">
               {cCategories.map(({ label, count }) => (
                 <div key={label} className="flex items-center gap-3">
@@ -235,7 +235,7 @@ export default function StatsPage() {
         </div>
 
         {/* ROI Banner */}
-        <div className="bg-[#111827] rounded-lg p-6 flex items-center justify-between">
+        <div className="bg-[#111827] rounded-lg p-6 flex items-center justify-between border-t-2 border-[#C9A96E]">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-[#9CA3AF]">Bu ay tasarrufunuz</p>
             <p className="text-white text-sm mt-1">
@@ -273,7 +273,7 @@ function StatCard({
         <Icon size={15} strokeWidth={1.5} />
       </div>
       <div>
-        <p className="text-xl font-semibold text-[#111827]">{value}</p>
+        <p className="font-cormorant text-3xl font-semibold text-[#111827]">{value}</p>
         <p className="text-[9px] uppercase tracking-widest text-[#9CA3AF] mt-0.5">{label}</p>
       </div>
     </div>

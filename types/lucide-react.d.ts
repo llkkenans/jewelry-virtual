@@ -35,4 +35,8 @@ declare module 'lucide-react' {
   export const OctagonXIcon: LucideIcon
   export const Loader2Icon: LucideIcon
   export const BookmarkPlus: LucideIcon
+  export const Camera: LucideIcon
+  export const Coins: LucideIcon
+  export const Wallet: LucideIcon
+  export const Diamond: LucideIcon
 }
