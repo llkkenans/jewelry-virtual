@@ -183,7 +183,8 @@ export async function POST(req: NextRequest) {
 
   const rawOutputUrl = (result.data as FashnResult).images[0].url
 
-  // "bottoms" kategorisi için crop uygula, sonucu R2'ye kalıcı olarak kaydet.
+  // "bottoms" kategorisi için: crop → clarity-upscaler (2x) → R2 + fal.storage.
+  // Crop veya upscale başarısız olursa sessizce bir önceki adımın çıktısını kullan.
   // "tops" ve "one-pieces" için fal.media URL'i olduğu gibi kullanılır.
   let outputUrl = rawOutputUrl
   if (category === 'bottoms') {
@@ -191,9 +192,34 @@ export async function POST(req: NextRequest) {
       const fashnImageRes = await fetch(rawOutputUrl)
       const fashnImageBuffer = Buffer.from(await fashnImageRes.arrayBuffer())
       const croppedBuffer = await cropForCategory(fashnImageBuffer, category)
+
+      // Kırpılmış görseli upscale için önce fal.storage'a yükle (URL gerekiyor)
+      const croppedBlob = new Blob([croppedBuffer], { type: 'image/jpeg' })
+      const croppedFalUrl = await fal.storage.upload(croppedBlob)
+
+      let finalBuffer = croppedBuffer
+      let finalFalUrl = croppedFalUrl
+      try {
+        const upscaleResult = await fal.subscribe('fal-ai/clarity-upscaler', {
+          input: {
+            image_url: croppedFalUrl,
+            upscale_factor: 2,
+            prompt: 'clothing, fashion, detailed fabric texture, sharp focus, high resolution',
+            creativity: 0.1,
+            resemblance: 1.0,
+          },
+        }) as { data: { image: { url: string } } }
+        const upscaledUrl = upscaleResult.data.image.url
+        const upscaledRes = await fetch(upscaledUrl)
+        finalBuffer = Buffer.from(await upscaledRes.arrayBuffer())
+        finalFalUrl = upscaledUrl
+      } catch (upscaleErr) {
+        console.error('Bottoms upscale failed, using cropped image without upscale:', upscaleErr)
+      }
+
       const outputKey = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-      await uploadToR2(croppedBuffer, outputKey, 'image/jpeg')
-      outputUrl = await fal.storage.upload(new Blob([croppedBuffer], { type: 'image/jpeg' }))
+      await uploadToR2(finalBuffer, outputKey, 'image/jpeg')
+      outputUrl = finalFalUrl
     } catch (cropErr) {
       console.error('Crop failed, falling back to uncropped output:', cropErr)
       outputUrl = rawOutputUrl
