@@ -68,7 +68,7 @@ const steps = [
     n: "01",
     img: "/landing/landing_images/how_does_it_work/step1.jpg",
     title: "Fotoğrafı Yükle",
-    desc: "Yüzük, kolye, küpe veya saat görselinizi sürükleyip bırakın.",
+    desc: "Takı veya kıyafet görselinizi sürükleyip bırakın.",
   },
   {
     n: "02",
@@ -86,7 +86,7 @@ const steps = [
 
 
 const stats = [
-  { value: "4",    label: "Takı türü" },
+  { value: "2",    label: "Stüdyo" },
   { value: "~30s", label: "Üretim süresi" },
   { value: "HD",   label: "Çıktı kalitesi" },
   { value: "10",   label: "Ücretsiz kredi" },
@@ -127,6 +127,8 @@ const demoItems = [
 ]
 
 function DemoSimulator() {
+  const [studioTab, setStudioTab] = useState<'jewelry' | 'clothing'>('jewelry')
+  const [clothingType, setClothingType] = useState<'tops' | 'bottoms' | 'onepiece'>('tops')
   const [selected, setSelected] = useState(0)
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle")
   const [afterIndex, setAfterIndex] = useState(0)
@@ -148,129 +150,217 @@ function DemoSimulator() {
     setPhase("idle")
   }
 
+  function handleTabChange(tab: 'jewelry' | 'clothing') {
+    setStudioTab(tab)
+    setPhase("idle")
+  }
+
+  const clothingButtons: { id: 'tops' | 'bottoms' | 'onepiece'; label: string }[] = [
+    { id: 'tops', label: 'Üst Giyim' },
+    { id: 'bottoms', label: 'Alt Giyim' },
+    { id: 'onepiece', label: 'Tek Parça' },
+  ]
+
   return (
     <div className="w-full max-w-4xl mx-auto">
+
+      {/* ── Üst-seviye Tab Switcher ── */}
+      <div className="flex justify-center mb-6">
+        <div className="flex gap-1 bg-[#F8F6F2] rounded-full p-1 border border-black/[0.06]">
+          {(['jewelry', 'clothing'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`px-5 py-2 rounded-full transition-all duration-200 cursor-pointer ${
+                studioTab === tab
+                  ? "bg-white shadow-sm text-[#111827]"
+                  : "text-[#9CA3AF] hover:text-[#6B7280]"
+              }`}
+              style={{ fontFamily: BODY, fontSize: "11px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase" }}
+            >
+              {tab === 'jewelry' ? 'Takı' : 'Kıyafet'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
         {/* ── Sol panel ── */}
         <div className="flex flex-col gap-4">
 
-          {/* Ürün thumbnail'ları */}
-          <div className="flex gap-3">
-            {demoItems.map((d, i) => (
-              <button
-                key={d.id}
-                onClick={() => handleSelect(i)}
-                className={`relative flex-1 aspect-square rounded-xl overflow-hidden transition-all duration-200 cursor-pointer ${
-                  selected === i
-                    ? "ring-2 ring-[#0A0A0A]/50 scale-[1.02]"
-                    : "opacity-45 hover:opacity-70"
-                }`}
-              >
-                <img src={d.before} alt={d.cat} className="w-full h-full object-cover" />
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent py-1.5">
-                  <span
-                    style={{ fontFamily: "var(--font-inter, sans-serif)", fontSize: "9px", letterSpacing: "0.18em" }}
-                    className="block text-center text-white/70 uppercase font-medium"
+          {studioTab === 'jewelry' ? (
+            <>
+              {/* Takı thumbnail'ları */}
+              <div className="flex gap-3">
+                {demoItems.map((d, i) => (
+                  <button
+                    key={d.id}
+                    onClick={() => handleSelect(i)}
+                    className={`relative flex-1 aspect-square rounded-xl overflow-hidden transition-all duration-200 cursor-pointer ${
+                      selected === i
+                        ? "ring-2 ring-[#0A0A0A]/50 scale-[1.02]"
+                        : "opacity-45 hover:opacity-70"
+                    }`}
                   >
-                    {d.cat}
+                    <img src={d.before} alt={d.cat} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent py-1.5">
+                      <span
+                        style={{ fontFamily: "var(--font-inter, sans-serif)", fontSize: "9px", letterSpacing: "0.18em" }}
+                        className="block text-center text-white/70 uppercase font-medium"
+                      >
+                        {d.cat}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Seçili takı büyük görsel */}
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white">
+                <img
+                  key={item.id}
+                  src={item.before}
+                  alt={item.cat}
+                  className="w-full h-full object-cover"
+                  style={{ animation: "demoFadeIn 0.35s ease" }}
+                />
+                <div className="absolute top-3.5 left-3.5">
+                  <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.2em" }} className="text-white/85 uppercase font-medium drop-shadow-sm">
+                    Ürün Görseli
                   </span>
                 </div>
-              </button>
-            ))}
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Kıyafet alt kategori butonları */}
+              <div className="flex gap-3">
+                {clothingButtons.map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => setClothingType(btn.id)}
+                    className={`flex-1 py-2 rounded-xl border transition-all duration-200 cursor-pointer ${
+                      clothingType === btn.id
+                        ? "border-[#0A0A0A]/40 bg-white text-[#0A0A0A]"
+                        : "border-black/[0.08] bg-white/50 text-[#9CA3AF] hover:text-[#6B7280]"
+                    }`}
+                    style={{ fontFamily: BODY, fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600 }}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
 
-          {/* Seçili ürün büyük görsel */}
-          <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white">
-            <img
-              key={item.id}
-              src={item.before}
-              alt={item.cat}
-              className="w-full h-full object-cover"
-              style={{ animation: "demoFadeIn 0.35s ease" }}
-            />
-            {/* Orijinal Görsel badge */}
-            <div className="absolute top-3.5 left-3.5">
-              <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.2em" }} className="text-white/85 uppercase font-medium drop-shadow-sm">
-                Ürün Görseli
-              </span>
-            </div>
-          </div>
+              {/* Kıyafet için placeholder */}
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center border border-dashed border-black/[0.1]">
+                <div className="flex flex-col items-center gap-3 px-6 text-center">
+                  <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/40" />
+                  <p style={{ fontFamily: BODY, fontSize: "12px", letterSpacing: "0.02em" }} className="text-black/25 font-light leading-relaxed">
+                    Kıyafet görseli<br />yükleyin
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Sağ panel ── */}
         <div className="flex flex-col gap-4">
 
-          {/* Çıktı alanı */}
-          <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+          {studioTab === 'jewelry' ? (
+            <>
+              {/* Çıktı alanı — takı */}
+              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
 
-            {/* IDLE */}
-            {phase === "idle" && (
-              <div className="flex flex-col items-center gap-4 px-6 text-center">
-                <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/70" />
-                <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-black/35 font-light leading-relaxed">
-                  Görseli oluşturmak için<br />aşağıdaki butona tıklayın
-                </p>
+                {/* IDLE */}
+                {phase === "idle" && (
+                  <div className="flex flex-col items-center gap-4 px-6 text-center">
+                    <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/70" />
+                    <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-black/35 font-light leading-relaxed">
+                      Görseli oluşturmak için<br />aşağıdaki butona tıklayın
+                    </p>
+                  </div>
+                )}
+
+                {/* LOADING */}
+                {phase === "loading" && (
+                  <div className="flex flex-col items-center gap-5 px-6 text-center">
+                    <div className="flex items-center gap-3">
+                      <Gem size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
+                      <Circle size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
+                      <Sparkles size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
+                      <Watch size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
+                    </div>
+                    <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-black/35 font-light">
+                      AI görsel oluşturuyor...
+                    </p>
+                  </div>
+                )}
+
+                {/* DONE */}
+                {phase === "done" && (
+                  <>
+                    <img
+                      src={currentAfter}
+                      alt={`${item.cat} model`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ animation: "demoFadeIn 0.6s ease" }}
+                    />
+                    <div className="absolute top-3.5 left-3.5">
+                      <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.2em" }} className="text-white/85 uppercase font-medium drop-shadow-sm">
+                        Model Görseli
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleGenerate}
+                      className="absolute bottom-3.5 right-3.5 bg-white/85 backdrop-blur-sm px-3 py-1.5 rounded-full cursor-pointer hover:bg-white transition-all"
+                    >
+                      <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.18em" }} className="text-black/45 uppercase font-medium">
+                        Tekrar Dene
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
-            )}
 
-            {/* LOADING */}
-            {phase === "loading" && (
-              <div className="flex flex-col items-center gap-5 px-6 text-center">
-                <div className="flex items-center gap-3">
-                  <Gem size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
-                  <Circle size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
-                  <Sparkles size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
-                  <Watch size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
+              {/* Generate butonu — takı */}
+              <button
+                onClick={phase === "done" ? () => setPhase("idle") : handleGenerate}
+                disabled={phase === "loading"}
+                className={`w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 cursor-pointer ${
+                  phase === "loading"
+                    ? "bg-black/5 text-black/25 cursor-not-allowed"
+                    : phase === "done"
+                    ? "bg-black/5 text-black/40 hover:bg-black/8 border border-black/[0.08]"
+                    : "bg-[#0A0A0A] text-white hover:bg-[#1F1F1F]"
+                }`}
+              >
+                {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Dene" : "Modele Giydir →"}
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Kıyafet — yakında mesajı */}
+              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 px-8 text-center">
+                  <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/40" />
+                  <p style={{ fontFamily: BODY, fontSize: "13px", letterSpacing: "0.01em" }} className="text-black/30 font-light leading-[1.7]">
+                    Yakında — Kıyafet stüdyosu<br />demo görselleri ekleniyor
+                  </p>
                 </div>
-                <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-black/35 font-light">
-                  AI görsel oluşturuyor...
-                </p>
               </div>
-            )}
 
-            {/* DONE */}
-            {phase === "done" && (
-              <>
-                <img
-                  src={currentAfter}
-                  alt={`${item.cat} model`}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ animation: "demoFadeIn 0.6s ease" }}
-                />
-                {/* Model Görseli badge */}
-                <div className="absolute top-3.5 left-3.5">
-                  <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.2em" }} className="text-white/85 uppercase font-medium drop-shadow-sm">
-                    Model Görseli
-                  </span>
-                </div>
-                {/* Tekrar dene */}
-                <button
-                  onClick={handleGenerate}
-                  className="absolute bottom-3.5 right-3.5 bg-white/85 backdrop-blur-sm px-3 py-1.5 rounded-full cursor-pointer hover:bg-white transition-all"
-                >
-                  <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.18em" }} className="text-black/45 uppercase font-medium">
-                    Tekrar Dene
-                  </span>
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Generate butonu */}
-          <button
-            onClick={phase === "done" ? () => setPhase("idle") : handleGenerate}
-            disabled={phase === "loading"}
-            className={`w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 cursor-pointer ${
-              phase === "loading"
-                ? "bg-black/5 text-black/25 cursor-not-allowed"
-                : phase === "done"
-                ? "bg-black/5 text-black/40 hover:bg-black/8 border border-black/[0.08]"
-                : "bg-[#0A0A0A] text-white hover:bg-[#1F1F1F]"
-            }`}
-          >
-            {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Dene" : "Modele Giydir →"}
-          </button>
+              {/* Disabled buton — kıyafet */}
+              <button
+                disabled
+                className="w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] bg-black/5 text-black/25 cursor-not-allowed opacity-50"
+                style={{ fontFamily: BODY }}
+              >
+                Modele Giydir →
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -407,12 +497,12 @@ export default function LandingPage() {
 
           {/* Hero content — bottom left */}
           <div className="absolute bottom-14 sm:bottom-20 left-0 right-0 z-10 px-6 sm:px-16 max-w-5xl">
-            <Overline light>TAKI STÜDYO</Overline>
+            <Overline light>AI STÜDYO</Overline>
             <h1
               style={{ fontFamily: DISPLAY }}
               className="text-[2.8rem] sm:text-[4.25rem] md:text-[5.25rem] font-extrabold leading-[0.95] tracking-[-0.035em] text-white mb-6 max-w-2xl"
             >
-              Takınız Modelin
+              Ürününüz Modelin
               <br />
               <em
                 className="not-italic font-light text-white/55"
@@ -569,7 +659,7 @@ export default function LandingPage() {
                 </em>
               </h2>
               <p style={{ fontFamily: BODY }} className="text-[14px] text-[#0A0A0A]/45 font-light mb-16 max-w-sm leading-[1.75]">
-                Ürününüzü seçin, modele giydirin — saniyeler içinde stüdyo kalitesi.
+                Takı veya kıyafet fotoğrafınızı yükleyin, modele giydirin — saniyeler içinde stüdyo kalitesi.
               </p>
             </Reveal>
 
@@ -613,7 +703,7 @@ export default function LandingPage() {
                 style={{ fontFamily: BODY }}
                 className="text-[15px] text-white/50 max-w-sm mb-10 font-light leading-[1.7]"
               >
-                Kredi kartı gerekmez. Birkaç dakikada kaydolun, ilk takınızı modele giydirin.
+                Kredi kartı gerekmez. Birkaç dakikada kaydolun, ilk ürününüzü modele giydirin.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/register">

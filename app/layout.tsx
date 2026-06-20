@@ -3,11 +3,11 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: 'Lunia Studio — Yapay Zeka ile Takı Görselleştirme',
-  description: 'Pahalı stüdyo çekimi olmadan, takı fotoğraflarınızı saniyeler içinde profesyonel model görsellerine dönüştürün. Kolye, yüzük, küpe ve saat için AI destekli sanal deneme.',
-  keywords: 'takı görseli, yapay zeka, sanal deneme, jewelry virtual try-on, kolye, yüzük, küpe, saat',
+  title: 'Lunia Studio — Yapay Zeka ile Profesyonel Ürün Görselleri',
+  description: 'Pahalı stüdyo çekimi olmadan, takı ve kıyafet fotoğraflarınızı saniyeler içinde profesyonel model görsellerine dönüştürün. AI destekli sanal deneme.',
+  keywords: 'takı görseli, kıyafet görseli, yapay zeka, sanal deneme, jewelry virtual try-on, kolye, yüzük, küpe, saat',
   openGraph: {
-    title: 'Lunia Studio — Yapay Zeka ile Takı Görselleştirme',
+    title: 'Lunia Studio — Yapay Zeka ile Profesyonel Ürün Görselleri',
     description: 'Takı fotoğraflarınızı profesyonel model görsellerine dönüştürün.',
     url: 'https://jewelry-virtual.vercel.app',
     siteName: 'Lunia Studio',
