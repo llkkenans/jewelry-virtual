@@ -58,8 +58,8 @@ function StudioCard({ href, badge, title, description, gradient, video }: Studio
         muted
         loop
         playsInline
-        preload="metadata"
-        className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+        preload="auto"
+        className="absolute inset-0 w-full h-full object-cover"
       />
 
       {/* Alt overlay */}
