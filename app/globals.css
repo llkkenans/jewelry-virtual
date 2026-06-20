@@ -116,7 +116,7 @@
     filter: hue-rotate(0deg);
     }
   50% {
-    filter: hue-rotate(30deg);
+    filter: hue-rotate(25deg);
     }
   }
   @keyframes zoom-in {
@@ -212,11 +212,17 @@
   filter: drop-shadow(0 0 30px rgba(0,0,0,0.5));
 }
 
-.anim3d-scene > .anim3d-wrapper {
+.anim3d-perspective {
   position: absolute;
   inset: 0;
   perspective: 500px;
   z-index: 2;
+}
+
+.anim3d-reflect .anim3d-perspective {
+  position: absolute;
+  inset: 0;
+  perspective: 500px;
 }
 
 .anim3d-cube {

@@ -49,7 +49,7 @@ export function PoemAnimation({ poemHTML, backgroundImageUrl, modelImageUrl }: P
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
             />
 
-            <div className="anim3d-wrapper">
+            <div className="anim3d-perspective">
               <div className="anim3d-cube">
                 <div className="anim3d-face top" />
                 <div className="anim3d-face bottom" />
@@ -61,13 +61,15 @@ export function PoemAnimation({ poemHTML, backgroundImageUrl, modelImageUrl }: P
             </div>
 
             <div className="anim3d-reflect">
-              <div className="anim3d-cube">
-                <div className="anim3d-face top" />
-                <div className="anim3d-face bottom" />
-                <div className="anim3d-face left text"><div>{poemHTML}</div></div>
-                <div className="anim3d-face right text"><div>{poemHTML}</div></div>
-                <div className="anim3d-face front" />
-                <div className="anim3d-face back text"><div>{poemHTML}</div></div>
+              <div className="anim3d-perspective">
+                <div className="anim3d-cube">
+                  <div className="anim3d-face top" />
+                  <div className="anim3d-face bottom" />
+                  <div className="anim3d-face left text"><div>{poemHTML}</div></div>
+                  <div className="anim3d-face right text"><div>{poemHTML}</div></div>
+                  <div className="anim3d-face front" />
+                  <div className="anim3d-face back text"><div>{poemHTML}</div></div>
+                </div>
               </div>
             </div>
           </div>
