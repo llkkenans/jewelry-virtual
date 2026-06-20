@@ -546,8 +546,8 @@ export default function LandingPage() {
               <span>Kıyafet stüdyosu</span> ile modele giydirin. E-ticaret görsellerinizi dönüştürün.
             </p>
           }
-          backgroundImageUrl="/landing/3d/background.png"
-          modelImageUrl="/landing/3d/model.png"
+          backgroundImageUrl="/landing/3d/background.jpg"
+          modelImageUrl="/landing/3d/model.jpg"
         />
 
         {/* ─────────────── STATS STRIP ─────────────── */}
