@@ -55,8 +55,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login")
   }
 
+  const isStudio = pathname === "/studio"
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen ${isStudio ? "bg-[#F8F6F2]" : "bg-white"}`}>
 
       {/* ── MOBİL HEADER ── */}
       <div className="lg:hidden flex items-center justify-between h-14 px-4 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
@@ -161,7 +163,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* İçerik */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
+      <main className={isStudio ? "" : "max-w-6xl mx-auto px-6 py-10"}>
         <ToastProvider>{children}</ToastProvider>
       </main>
     </div>

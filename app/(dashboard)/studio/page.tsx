@@ -106,10 +106,7 @@ function StudioCard({ href, badge, title, description, gradient, video }: Studio
 
 export default function StudioPage() {
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-6 sm:p-10"
-      style={{ backgroundColor: "#F8F6F2" }}
-    >
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 sm:p-10">
       <div className="w-full max-w-4xl">
 
         {/* Üst etiket */}
