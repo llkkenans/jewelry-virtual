@@ -246,7 +246,7 @@ function DemoSimulator() {
                 </div>
                 {/* Tekrar dene */}
                 <button
-                  onClick={() => setPhase("idle")}
+                  onClick={handleGenerate}
                   className="absolute bottom-3.5 right-3.5 bg-white/85 backdrop-blur-sm px-3 py-1.5 rounded-full cursor-pointer hover:bg-white transition-all"
                 >
                   <span style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.18em" }} className="text-black/45 uppercase font-medium">
@@ -259,7 +259,7 @@ function DemoSimulator() {
 
           {/* Generate butonu */}
           <button
-            onClick={handleGenerate}
+            onClick={phase === "done" ? () => setPhase("idle") : handleGenerate}
             disabled={phase === "loading"}
             className={`w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 cursor-pointer ${
               phase === "loading"
@@ -269,7 +269,7 @@ function DemoSimulator() {
                 : "bg-[#0A0A0A] text-white hover:bg-[#1F1F1F]"
             }`}
           >
-            {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Seç" : "Modele Giydir →"}
+            {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Dene" : "Modele Giydir →"}
           </button>
         </div>
       </div>
