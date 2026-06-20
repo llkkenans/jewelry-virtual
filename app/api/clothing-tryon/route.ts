@@ -15,7 +15,10 @@ const VALID_CATEGORIES: Category[] = ['tops', 'bottoms', 'one-pieces']
 const VALID_GENDERS: Gender[] = ['woman', 'man']
 const VALID_SKIN_TONES: SkinTone[] = ['light', 'medium', 'dark']
 
-const POSE_COUNT = 3
+const POSE_COUNTS: Record<Gender, number> = {
+  woman: 9,
+  man: 3,
+}
 
 type FashnResult = {
   images: Array<{ url: string }>
@@ -119,7 +122,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const randomIndex = Math.floor(Math.random() * POSE_COUNT) + 1
+  const randomIndex = Math.floor(Math.random() * POSE_COUNTS[gender]) + 1
   const r2Key = `clothing-references/${gender}/${skinTone}/${randomIndex}.png`
 
   let modelImageUrl: string
