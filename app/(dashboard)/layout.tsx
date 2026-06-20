@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/ui/toast"
 const navItems = [
   { href: "/upload",  label: "Üret" },
   { href: "/gallery", label: "Galeri" },
+  { href: "/stats",   label: "İstatistikler" },
   { href: "/billing", label: "Kredi" },
 ]
 
