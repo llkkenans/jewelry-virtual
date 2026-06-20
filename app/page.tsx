@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Gem, Circle, Sparkles, Watch } from "lucide-react"
+import { PoemAnimation } from "@/components/ui/3d-animation"
 
 /* ─── Hero Videos ───────────────────────────────────────────────────── */
 const heroVideos = [
@@ -532,6 +533,22 @@ export default function LandingPage() {
             <div className="w-px h-10 bg-white/60" style={{ animation: "pulse 2s ease-in-out infinite" }} />
           </div>
         </section>
+
+        {/* ─────────────── 3D SHOWROOM ─────────────── */}
+        <PoemAnimation
+          poemHTML={
+            <p>
+              <span>Lunia Studio</span> — Takınız modelin üzerinde. Profesyonel stüdyo kalitesi, saniyeler içinde. Pahalı çekimler tarihe karıştı.{" "}
+              <span>AI ile görselleştirin.</span> Yüzük, kolye, küpe, saat — hepsi tek platformda.{" "}
+              <span>Kıyafet stüdyosu</span> ile modele giydirin. E-ticaret görsellerinizi dönüştürün.{" "}
+              <span>Lunia Studio</span> — Takınız modelin üzerinde. Profesyonel stüdyo kalitesi, saniyeler içinde. Pahalı çekimler tarihe karıştı.{" "}
+              <span>AI ile görselleştirin.</span> Yüzük, kolye, küpe, saat — hepsi tek platformda.{" "}
+              <span>Kıyafet stüdyosu</span> ile modele giydirin. E-ticaret görsellerinizi dönüştürün.
+            </p>
+          }
+          backgroundImageUrl="/landing/3d/background.png"
+          modelImageUrl="/landing/3d/model.png"
+        />
 
         {/* ─────────────── STATS STRIP ─────────────── */}
         <section className="bg-white border-b border-black/[0.07]">
