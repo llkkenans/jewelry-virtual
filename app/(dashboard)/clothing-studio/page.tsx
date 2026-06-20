@@ -5,13 +5,38 @@ import { supabase } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/toast"
 import Image from "next/image"
 import Link from "next/link"
-import { ImagePlus, X, Circle, Gem, Sparkles, Watch } from "lucide-react"
+import { ImagePlus, X, Circle, Gem, Sparkles, Watch, InfoIcon, Download, BookmarkPlus, Check } from "lucide-react"
 
 type Category = "tops" | "bottoms" | "one-pieces"
 type Gender   = "woman" | "man"
 type SkinTone = "light" | "medium" | "dark"
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
+
+function InfoTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span
+      className="relative inline-flex items-center"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
+        className="flex items-center text-[#9CA3AF] hover:text-[#C9A96E] transition-colors focus:outline-none"
+        aria-label="Bilgi"
+      >
+        <InfoIcon size={14} strokeWidth={1.5} />
+      </button>
+      {open && (
+        <div className="absolute left-5 top-0 z-50 w-56 sm:w-64 bg-[#111827] text-[#F8F6F2] text-[11px] leading-relaxed tracking-wide p-3 shadow-lg pointer-events-none">
+          {text}
+        </div>
+      )}
+    </span>
+  )
+}
 
 const CATEGORIES: { id: Category; label: string }[] = [
   { id: "tops",       label: "Üst" },
@@ -63,6 +88,9 @@ export default function ClothingStudioPage() {
   const [progressStep, setProgressStep] = useState(0)
   const [resultUrl, setResultUrl] = useState<string | null>(null)
   const [error,     setError]     = useState("")
+  const [generationId, setGenerationId] = useState<string | null>(null)
+  const [saved,     setSaved]     = useState(false)
+  const [saving,    setSaving]    = useState(false)
 
   function handleFile(f: File) {
     if (!f.type.startsWith("image/")) {
@@ -94,6 +122,8 @@ export default function ClothingStudioPage() {
     setPreview(null)
     setResultUrl(null)
     setError("")
+    setGenerationId(null)
+    setSaved(false)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
@@ -133,6 +163,8 @@ export default function ClothingStudioPage() {
 
       const data = await res.json() as { outputUrl?: string; generationId?: string }
       setResultUrl(data.outputUrl ?? null)
+      setGenerationId(data.generationId ?? null)
+      setSaved(false)
       window.dispatchEvent(new Event("credits-updated"))
       showToast("Görsel başarıyla üretildi!", "success")
     } catch (err: unknown) {
@@ -147,6 +179,49 @@ export default function ClothingStudioPage() {
       setGenerating(false)
       clearInterval(progressInterval)
       setProgressStep(0)
+    }
+  }
+
+  async function handleSave() {
+    if (!resultUrl || !generationId || saved || saving) return
+    setSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) return
+      const res = await fetch("/api/save-to-gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ generationId, imageUrl: resultUrl, type: "clothing" }),
+      })
+      if (res.ok) {
+        setSaved(true)
+        showToast("Galeriye kaydedildi!", "success")
+      } else {
+        showToast("Kaydetme başarısız oldu.", "error")
+      }
+    } catch {
+      showToast("Bir hata oluştu.", "error")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDownloadResult() {
+    if (!resultUrl) return
+    try {
+      const res = await fetch(resultUrl)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = blobUrl
+      a.download = `clothing-studio-${Date.now()}.jpg`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      window.open(resultUrl, "_blank")
     }
   }
 
@@ -181,8 +256,9 @@ export default function ClothingStudioPage() {
 
           {/* Adım 1 — Kıyafet Fotoğrafı */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3 flex items-center gap-1.5">
               Kıyafet Fotoğrafı
+              <InfoTooltip text="Net ve aydınlık fotoğraflar en iyi sonucu verir. Kıyafetin tamamı görünsün, gölge ve kırışıklık olmasın." />
             </p>
             {!preview ? (
               <div
@@ -231,8 +307,9 @@ export default function ClothingStudioPage() {
 
           {/* Adım 2 — Kategori */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3 flex items-center gap-1.5">
               Kategori
+              <InfoTooltip text="Doğru kategori, doğru sonuç demektir. Etek ve pantolon → Alt, gömlek ve kazak → Üst, elbise ve tulum → Tek Parça. Yanlış seçim kredinizi boşa harcayabilir." />
             </p>
             <div className="flex gap-2">
               {CATEGORIES.map(({ id, label }) => (
@@ -380,6 +457,30 @@ export default function ClothingStudioPage() {
               </div>
             )}
           </div>
+
+          {resultUrl && !generating && (
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleDownloadResult}
+                className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Download size={11} strokeWidth={1.5} />
+                İndir
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saved || saving}
+                className={`flex-1 h-8 border text-[10px] tracking-[0.1em] uppercase font-light transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 ${
+                  saved
+                    ? "border-[#C9A96E] text-[#C9A96E]"
+                    : "border-[#E5E7EB] hover:border-[#111827] text-[#6B7280] hover:text-[#111827]"
+                }`}
+              >
+                {saved ? <Check size={11} strokeWidth={1.5} /> : <BookmarkPlus size={11} strokeWidth={1.5} />}
+                {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

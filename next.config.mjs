@@ -6,6 +6,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    serverComponentsExternalPackages: ['sharp'],
+  },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(Array.isArray(config.externals) ? config.externals : [config.externals]), 'sharp']
+    }
+    return config
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.fal.media' },

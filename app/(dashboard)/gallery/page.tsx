@@ -23,6 +23,22 @@ type Collection = {
   collection_items: { count: number }[]
 }
 
+type ClothingItem = {
+  id: string
+  category: string
+  gender: string
+  skin_tone: string
+  output_image_url: string
+  is_saved: boolean
+  created_at: string
+}
+
+const CLOTHING_CATEGORY_LABELS: Record<string, string> = {
+  tops: "Üst",
+  bottoms: "Alt",
+  "one-pieces": "Tek Parça",
+}
+
 const JEWELRY_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
   ring:     { label: "Yüzük",  icon: Gem      },
   necklace: { label: "Kolye",  icon: Link2    },
@@ -115,6 +131,14 @@ export default function GalleryPage() {
   const [showNewCollection, setShowNewCollection]   = useState(false)
   const [newCollectionName, setNewCollectionName]   = useState("")
   const [creatingCollection, setCreatingCollection] = useState(false)
+
+  const [galleryType, setGalleryType]                 = useState<"jewelry" | "clothing">("jewelry")
+  const [clothingItems, setClothingItems]             = useState<ClothingItem[]>([])
+  const [clothingLoading, setClothingLoading]         = useState(false)
+  const [clothingPage, setClothingPage]               = useState(1)
+  const [clothingHasMore, setClothingHasMore]         = useState(true)
+  const [clothingLoadingMore, setClothingLoadingMore] = useState(false)
+  const clothingLoadedRef = useRef(false)
 
   useEffect(() => {
     async function load() {
@@ -247,6 +271,48 @@ export default function GalleryPage() {
     setCollectionsLoading(false)
   }
 
+  async function loadClothing() {
+    if (clothingLoadedRef.current) return
+    clothingLoadedRef.current = true
+    setClothingLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setClothingLoading(false); return }
+    try {
+      const res = await fetch('/api/gallery?type=clothing&page=1&limit=12', {
+        headers: { authorization: `Bearer ${session.access_token}` }
+      })
+      const json = await res.json()
+      const fetchedItems = json.items ?? []
+      setClothingItems(fetchedItems)
+      setClothingHasMore(fetchedItems.length >= (json.limit ?? 12))
+    } catch (err) {
+      console.error('Clothing gallery fetch error:', err)
+      setClothingItems([])
+    }
+    setClothingLoading(false)
+  }
+
+  async function loadMoreClothing() {
+    if (clothingLoadingMore || !clothingHasMore) return
+    setClothingLoadingMore(true)
+    const nextPage = clothingPage + 1
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setClothingLoadingMore(false); return }
+    try {
+      const res = await fetch(`/api/gallery?type=clothing&page=${nextPage}&limit=12`, {
+        headers: { authorization: `Bearer ${session.access_token}` }
+      })
+      const json = await res.json()
+      const newItems = json.items ?? []
+      setClothingItems(prev => [...prev, ...newItems])
+      setClothingPage(nextPage)
+      setClothingHasMore(newItems.length >= (json.limit ?? 12))
+    } catch (err) {
+      console.error('Load more clothing error:', err)
+    }
+    setClothingLoadingMore(false)
+  }
+
   async function createCollection() {
     if (!newCollectionName.trim()) return
     setCreatingCollection(true)
@@ -321,67 +387,88 @@ export default function GalleryPage() {
           <div className="w-8 h-px bg-[#111827] mt-3" />
         </div>
 
-        {!loading && items.length > 0 && (
-          <div className="flex items-center gap-3">
-            {!selectMode ? (
-              <>
-                <div className="flex items-center border border-[#E5E7EB]">
-                  <button
-                    onClick={() => setTab("all")}
-                    className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
-                      tab === "all" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-                    }`}
-                  >
-                    Tümü <span className="ml-1 opacity-60">({items.length})</span>
-                  </button>
-                  <button
-                    onClick={() => setTab("favorites")}
-                    className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer flex items-center gap-1.5 ${
-                      tab === "favorites" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-                    }`}
-                  >
-                    <Heart size={10} className={tab === "favorites" ? "fill-white" : ""} />
-                    Favoriler <span className="opacity-60">({items.filter(i => i.is_favorite).length})</span>
-                  </button>
-                </div>
-                <button
-                  onClick={() => setTab("collections")}
-                  className={`pb-3 text-[11px] tracking-[0.15em] uppercase font-light transition-colors relative cursor-pointer ${
-                    tab === "collections" ? "text-[#111827]" : "text-[#9CA3AF] hover:text-[#111827]"
-                  }`}
-                >
-                  Koleksiyonlar
-                  {tab === "collections" && (
-                    <span className="absolute bottom-0 left-0 right-0 h-px bg-[#111827]" />
-                  )}
-                </button>
-                <div className="w-px h-5 bg-[#E5E7EB]" />
-                <button onClick={() => setSelectMode(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
-                  <CheckSquare size={12} strokeWidth={1.5} />Seç
-                </button>
-                <button onClick={handleDownloadAll} disabled={zipping} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-40">
-                  <Download size={12} strokeWidth={1.5} />{zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
-                </button>
-              </>
-            ) : (
-              <>
-                <button onClick={toggleSelectAll} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
-                  {selected.size === displayed.length ? <CheckSquare size={12} strokeWidth={1.5} className="text-[#111827]" /> : <Square size={12} strokeWidth={1.5} />}
-                  {selected.size === displayed.length ? "Seçimi Kaldır" : "Tümünü Seç"}
-                </button>
-                {selected.size > 0 && (
-                  <button onClick={() => setBulkConfirm(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-red-500 hover:text-red-700 transition-colors cursor-pointer flex items-center gap-1.5">
-                    <Trash2 size={12} strokeWidth={1.5} />Sil ({selected.size})
-                  </button>
-                )}
-                <div className="w-px h-5 bg-[#E5E7EB]" />
-                <button onClick={exitSelectMode} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
-                  <X size={12} strokeWidth={1.5} />İptal
-                </button>
-              </>
-            )}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center border border-[#E5E7EB]">
+            <button
+              onClick={() => setGalleryType("jewelry")}
+              className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
+                galleryType === "jewelry" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+              }`}
+            >
+              Takı
+            </button>
+            <button
+              onClick={() => { setGalleryType("clothing"); if (!clothingLoadedRef.current) loadClothing() }}
+              className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
+                galleryType === "clothing" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+              }`}
+            >
+              Kıyafet
+            </button>
           </div>
-        )}
+
+          {galleryType === "jewelry" && !loading && items.length > 0 && (
+            <div className="flex items-center gap-3">
+              {!selectMode ? (
+                <>
+                  <div className="flex items-center border border-[#E5E7EB]">
+                    <button
+                      onClick={() => setTab("all")}
+                      className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
+                        tab === "all" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+                      }`}
+                    >
+                      Tümü <span className="ml-1 opacity-60">({items.length})</span>
+                    </button>
+                    <button
+                      onClick={() => setTab("favorites")}
+                      className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        tab === "favorites" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+                      }`}
+                    >
+                      <Heart size={10} className={tab === "favorites" ? "fill-white" : ""} />
+                      Favoriler <span className="opacity-60">({items.filter(i => i.is_favorite).length})</span>
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setTab("collections")}
+                    className={`pb-3 text-[11px] tracking-[0.15em] uppercase font-light transition-colors relative cursor-pointer ${
+                      tab === "collections" ? "text-[#111827]" : "text-[#9CA3AF] hover:text-[#111827]"
+                    }`}
+                  >
+                    Koleksiyonlar
+                    {tab === "collections" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-px bg-[#111827]" />
+                    )}
+                  </button>
+                  <div className="w-px h-5 bg-[#E5E7EB]" />
+                  <button onClick={() => setSelectMode(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
+                    <CheckSquare size={12} strokeWidth={1.5} />Seç
+                  </button>
+                  <button onClick={handleDownloadAll} disabled={zipping} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-40">
+                    <Download size={12} strokeWidth={1.5} />{zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={toggleSelectAll} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
+                    {selected.size === displayed.length ? <CheckSquare size={12} strokeWidth={1.5} className="text-[#111827]" /> : <Square size={12} strokeWidth={1.5} />}
+                    {selected.size === displayed.length ? "Seçimi Kaldır" : "Tümünü Seç"}
+                  </button>
+                  {selected.size > 0 && (
+                    <button onClick={() => setBulkConfirm(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-red-500 hover:text-red-700 transition-colors cursor-pointer flex items-center gap-1.5">
+                      <Trash2 size={12} strokeWidth={1.5} />Sil ({selected.size})
+                    </button>
+                  )}
+                  <div className="w-px h-5 bg-[#E5E7EB]" />
+                  <button onClick={exitSelectMode} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
+                    <X size={12} strokeWidth={1.5} />İptal
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {deleteConfirm && (
@@ -500,7 +587,75 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {loading ? (
+      {galleryType === "clothing" ? (
+        clothingLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white p-4 space-y-3">
+                <Skeleton className="w-full aspect-square rounded-none" />
+                <Skeleton className="h-3 w-1/2 rounded-none" />
+              </div>
+            ))}
+          </div>
+        ) : clothingItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 border border-dashed border-[#E5E7EB]">
+            <div className="w-px h-16 bg-[#E5E7EB]" />
+            <div className="text-center space-y-2">
+              <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz Üretim Yok</p>
+              <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk kıyafetinizi yükleyin, saniyeler içinde modelin üzerinde görün.</p>
+            </div>
+            <Link href="/clothing-studio" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
+              <Sparkles size={11} strokeWidth={1.5} />Üretime Başla
+            </Link>
+            <div className="w-px h-16 bg-[#E5E7EB]" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {clothingItems.map((item) => (
+                <div key={item.id} className="bg-white group">
+                  <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
+                    <GalleryImage src={item.output_image_url} alt={CLOTHING_CATEGORY_LABELS[item.category] ?? item.category} />
+                  </div>
+                  <div className="pt-3 pb-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] tracking-[0.15em] uppercase font-light text-[#111827]">
+                        {CLOTHING_CATEGORY_LABELS[item.category] ?? item.category}
+                      </span>
+                      <span className="text-[10px] text-[#9CA3AF] font-light">
+                        {formatDate(item.created_at)}
+                      </span>
+                    </div>
+                    <div className="w-6 h-px bg-[#111827] mb-3" />
+                    <button
+                      onClick={() => handleDownload(item.output_image_url)}
+                      className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Download size={11} strokeWidth={1.5} />
+                      İndir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {clothingHasMore && (
+              <div className="flex flex-col items-center gap-4 pt-6">
+                <button
+                  onClick={loadMoreClothing}
+                  disabled={clothingLoadingMore}
+                  className="h-10 px-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
+                >
+                  {clothingLoadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
+                </button>
+                <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light">
+                  {clothingItems.length} görsel · Lunia Studio
+                </p>
+              </div>
+            )}
+          </>
+        )
+      ) : loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-white p-4 space-y-3">
@@ -707,7 +862,7 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {!loading && tab !== "collections" && displayed.length > 0 && (
+      {galleryType === "jewelry" && !loading && tab !== "collections" && displayed.length > 0 && (
         <div className="flex flex-col items-center gap-4 pt-6">
           {hasMore && tab === "all" && (
             <button

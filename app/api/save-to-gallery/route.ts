@@ -9,12 +9,47 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
   if (error || !user) return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
 
-  const { generationId, imageUrl } = await req.json()
+  const { generationId, imageUrl, type = 'jewelry' } = await req.json() as {
+    generationId: string
+    imageUrl: string
+    type?: 'jewelry' | 'clothing'
+  }
   if (!generationId || !imageUrl) {
     return NextResponse.json({ error: 'generationId ve imageUrl gerekli' }, { status: 400 })
   }
 
-  // Verify ownership
+  if (type === 'clothing') {
+    const { data: gen } = await supabaseAdmin
+      .from('clothing_generations')
+      .select('id, user_id, is_saved')
+      .eq('id', generationId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (!gen) return NextResponse.json({ error: 'Görsel bulunamadı' }, { status: 404 })
+    if (gen.is_saved) return NextResponse.json({ error: 'Zaten kaydedildi' }, { status: 400 })
+
+    try {
+      const res = await fetch(imageUrl)
+      if (!res.ok) throw new Error('Image fetch failed')
+      const buffer = Buffer.from(await res.arrayBuffer())
+      const key = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+      await uploadToR2(buffer, key, 'image/jpeg')
+
+      await supabaseAdmin
+        .from('clothing_generations')
+        .update({ output_image_url: key, is_saved: true })
+        .eq('id', generationId)
+
+      const presignedUrl = await getPresignedUrl(key, 3600)
+      return NextResponse.json({ saved: true, url: presignedUrl })
+    } catch (err) {
+      console.error('Save clothing to gallery failed:', err)
+      return NextResponse.json({ error: 'Kaydetme başarısız' }, { status: 500 })
+    }
+  }
+
+  // type === 'jewelry' (default) — mevcut davranış değişmedi
   const { data: gen } = await supabaseAdmin
     .from('generations')
     .select('id, user_id, is_saved')
