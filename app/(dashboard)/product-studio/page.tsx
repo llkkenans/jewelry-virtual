@@ -176,7 +176,7 @@ export default function ProductStudioPage() {
       }
 
       const data = await res.json() as { outputUrl?: string; generationId?: string }
-      console.log("GENERATE result:", { outputUrl: data.outputUrl, generationId: data.generationId })
+      console.log("GENERATE result:", { outputUrl: data.outputUrl, generationId: data.generationId, dbError: (data as any).dbError })
       setResultUrl(data.outputUrl ?? null)
       setGenerationId(data.generationId ?? null)
       setSaved(false)

@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       outputUrl: outcome.presignedUrl,
       generationId: null,
-      warning: `DB insert failed: ${insertError.message}`,
+      dbError: insertError.message || "unknown insert error",
     })
   }
 
