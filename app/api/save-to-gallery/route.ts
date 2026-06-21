@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { generationId, imageUrl } = body
+  console.log('SAVE RECEIVED:', { type, generationId, hasImageUrl: !!imageUrl })
   if (!generationId || !imageUrl) {
     return NextResponse.json({ error: 'generationId ve imageUrl gerekli' }, { status: 400 })
   }

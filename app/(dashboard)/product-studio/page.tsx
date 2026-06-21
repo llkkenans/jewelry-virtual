@@ -176,6 +176,7 @@ export default function ProductStudioPage() {
       }
 
       const data = await res.json() as { outputUrl?: string; generationId?: string }
+      console.log("GENERATE result:", { outputUrl: data.outputUrl, generationId: data.generationId })
       setResultUrl(data.outputUrl ?? null)
       setGenerationId(data.generationId ?? null)
       setSaved(false)
@@ -254,19 +255,25 @@ export default function ProductStudioPage() {
   }
 
   async function handleSave() {
-    if (!resultUrl || !generationId || saved || saving) return
+    console.log("SAVE REQUEST:", { type: "product", generationId, resultUrl })
+    if (!resultUrl) { showToast("Görsel URL eksik.", "error"); return }
+    if (!generationId) { showToast("Generation ID eksik — görsel DB'ye kaydedilemedi.", "error"); console.error("SAVE BLOCKED: generationId is null"); return }
+    if (saved || saving) return
     setSaving(true)
     try {
       const token = await getToken()
-      if (!token) return
+      if (!token) { showToast("Oturum bulunamadı.", "error"); return }
       const res = await fetch("/api/save-to-gallery", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ generationId, imageUrl: resultUrl, type: "product" }),
       })
+      const data = await res.json().catch(() => ({})) as { saved?: boolean; error?: string }
+      console.log("SAVE RESPONSE:", res.status, data)
       if (res.ok) { setSaved(true); showToast("Galeriye kaydedildi!", "success") }
-      else showToast("Kaydetme başarısız oldu.", "error")
-    } catch {
+      else showToast(data.error ?? "Kaydetme başarısız oldu.", "error")
+    } catch (err) {
+      console.error("handleSave error:", err)
       showToast("Bir hata oluştu.", "error")
     } finally {
       setSaving(false)
