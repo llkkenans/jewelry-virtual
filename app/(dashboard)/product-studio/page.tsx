@@ -280,17 +280,32 @@ export default function ProductStudioPage() {
     try {
       const token = await getToken()
       if (!token) return
-      await Promise.all(
+      console.log("SAVE batch: ids=", selected.map((r) => r.generationId))
+      const settled = await Promise.allSettled(
         selected.map((r) =>
           fetch("/api/save-to-gallery", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ generationId: r.generationId, imageUrl: r.url, type: "product" }),
+          }).then(async (res) => {
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok) throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`)
+            console.log(`SAVE: scene ${r.scene} →`, data)
+            return data
           })
         )
       )
-      showToast(`${selected.length} görsel galeriye kaydedildi!`, "success")
-    } catch {
+      const savedCount = settled.filter((r) => r.status === "fulfilled").length
+      const failedCount = settled.length - savedCount
+      if (failedCount > 0) {
+        const errors = settled.filter((r) => r.status === "rejected").map((r) => (r as PromiseRejectedResult).reason?.message).join(", ")
+        console.error("SAVE batch errors:", errors)
+        showToast(`${savedCount} kaydedildi, ${failedCount} başarısız: ${errors}`, "error")
+      } else {
+        showToast(`${savedCount} görsel galeriye kaydedildi!`, "success")
+      }
+    } catch (err) {
+      console.error("handleBatchSave unexpected error:", err)
       showToast("Kaydetme sırasında hata oluştu.", "error")
     } finally {
       setBatchSaving(false)

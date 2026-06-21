@@ -13,32 +13,26 @@ export async function POST(req: NextRequest) {
     generationId?: string
     generationIds?: string[]
     imageUrl?: string
-    imageUrls?: string[]
     type?: 'jewelry' | 'clothing' | 'product'
   }
   const { type = 'jewelry' } = body
 
-  // Batch shortcut: generationIds[] + imageUrls[] for product type
-  if (type === 'product' && body.generationIds && body.imageUrls) {
-    const { generationIds, imageUrls } = body
-    if (generationIds.length !== imageUrls.length) {
-      return NextResponse.json({ error: 'generationIds ve imageUrls uzunlukları eşit olmalı' }, { status: 400 })
-    }
+  // Batch shortcut: generationIds[] for product type — images already in R2
+  if (type === 'product' && body.generationIds) {
+    const { generationIds } = body
+    console.log(`SAVE: type=product batch, ids=${generationIds.join(',')}`)
     const results = await Promise.allSettled(
-      generationIds.map(async (gid, i) => {
+      generationIds.map(async (gid) => {
         const { data: gen } = await supabaseAdmin
           .from('product_generations')
           .select('id, user_id, is_saved')
           .eq('id', gid)
           .eq('user_id', user.id)
           .single()
-        if (!gen || gen.is_saved) return
-        const res = await fetch(imageUrls[i])
-        if (!res.ok) throw new Error('Image fetch failed')
-        const buffer = Buffer.from(await res.arrayBuffer())
-        const key = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.png`
-        await uploadToR2(buffer, key, 'image/png')
-        await supabaseAdmin.from('product_generations').update({ output_image_url: key, is_saved: true }).eq('id', gid)
+        if (!gen) throw new Error(`gen not found: ${gid}`)
+        if (gen.is_saved) return // already saved, skip silently
+        await supabaseAdmin.from('product_generations').update({ is_saved: true }).eq('id', gid)
+        console.log(`SAVE: product batch item saved, id=${gid}`)
       })
     )
     const saved = results.filter(r => r.status === 'fulfilled').length
@@ -82,29 +76,38 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === 'product') {
-    const { data: gen } = await supabaseAdmin
+    console.log(`SAVE: type=product, id=${generationId}`)
+
+    const { data: gen, error: genError } = await supabaseAdmin
       .from('product_generations')
-      .select('id, user_id, is_saved')
+      .select('id, user_id, is_saved, output_image_url')
       .eq('id', generationId)
       .eq('user_id', user.id)
       .single()
 
+    console.log(`SAVE: product gen lookup →`, genError?.message ?? 'OK', 'is_saved:', gen?.is_saved, 'r2key:', gen?.output_image_url)
+
     if (!gen) return NextResponse.json({ error: 'Görsel bulunamadı' }, { status: 404 })
-    if (gen.is_saved) return NextResponse.json({ error: 'Zaten kaydedildi' }, { status: 400 })
+    // Idempotent: already saved → return OK instead of 400
+    if (gen.is_saved) {
+      const existingUrl = gen.output_image_url
+        ? await getPresignedUrl(gen.output_image_url, 3600).catch(() => imageUrl)
+        : imageUrl
+      return NextResponse.json({ saved: true, url: existingUrl })
+    }
 
     try {
-      const res = await fetch(imageUrl)
-      if (!res.ok) throw new Error('Image fetch failed')
-      const buffer = Buffer.from(await res.arrayBuffer())
-      const key = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-      await uploadToR2(buffer, key, 'image/jpeg')
-
+      // Image is already in R2 from generation — just flip is_saved, no re-upload needed
       await supabaseAdmin
         .from('product_generations')
-        .update({ output_image_url: key, is_saved: true })
+        .update({ is_saved: true })
         .eq('id', generationId)
 
-      const presignedUrl = await getPresignedUrl(key, 3600)
+      const presignedUrl = gen.output_image_url
+        ? await getPresignedUrl(gen.output_image_url, 3600).catch(() => imageUrl)
+        : imageUrl
+
+      console.log(`SAVE: product saved OK, id=${generationId}`)
       return NextResponse.json({ saved: true, url: presignedUrl })
     } catch (err) {
       console.error('Save product to gallery failed:', err)
