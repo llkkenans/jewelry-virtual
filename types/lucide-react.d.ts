@@ -21,6 +21,7 @@ declare module 'lucide-react' {
   export const Heart: LucideIcon
   export const Share2: LucideIcon
   export const Trash2: LucideIcon
+  export const Star: LucideIcon
   export const CheckSquare: LucideIcon
   export const Square: LucideIcon
   export const X: LucideIcon
