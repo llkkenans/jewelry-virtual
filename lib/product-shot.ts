@@ -69,22 +69,36 @@ export async function uploadProductImage(imageBase64: string): Promise<string> {
   return fal.storage.upload(blob)
 }
 
+export async function uploadImageFromUrl(url: string): Promise<string> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Failed to fetch reference image: ${res.status}`)
+  const buffer = Buffer.from(await res.arrayBuffer())
+  const contentType = res.headers.get('content-type') ?? 'image/jpeg'
+  const blob = new Blob([buffer], { type: contentType })
+  return fal.storage.upload(blob)
+}
+
+const BRAND_SCENE_PROMPT =
+  'Reproduce the exact same scene style, lighting, surface, and atmosphere from reference image (#2) but place this new product (#1) naturally into that scene. Keep identical color temperature, shadow direction, and background elements.'
+
 export async function generateProductShot(
   falImageUrl: string,
   scene_type: string,
   shadow_intensity: string = 'medium',
-  customPrompt?: string
+  customPrompt?: string,
+  referenceImageFalUrl?: string
 ): Promise<SceneOutcome> {
   const shadowModifier = SHADOW_MODIFIERS[shadow_intensity] ?? SHADOW_MODIFIERS['medium']
-  const basePrompt = customPrompt ?? SCENE_PROMPTS[scene_type]
+  const basePrompt = referenceImageFalUrl ? BRAND_SCENE_PROMPT : (customPrompt ?? SCENE_PROMPTS[scene_type])
   const prompt = `${basePrompt} ${shadowModifier}`
+  const imageUrls = referenceImageFalUrl ? [falImageUrl, referenceImageFalUrl] : [falImageUrl]
 
   let rawOutputUrl: string
   try {
     const result = await fal.subscribe('openai/gpt-image-2/edit', {
       input: {
         prompt,
-        image_urls: [falImageUrl],
+        image_urls: imageUrls,
         image_size: 'auto',
         quality: 'low',
         num_images: 1,
