@@ -33,6 +33,23 @@ type ClothingItem = {
   created_at: string
 }
 
+type ProductItem = {
+  id: string
+  scene_type: string
+  output_image_url: string
+  is_saved: boolean
+  created_at: string
+}
+
+const PRODUCT_SCENE_LABELS: Record<string, string> = {
+  ecommerce:   "E-Ticaret",
+  marble:      "Mermer",
+  lifestyle:   "Lifestyle",
+  nature:      "Doğa",
+  minimal:     "Minimal",
+  dark_luxury: "Lüks",
+}
+
 const CLOTHING_CATEGORY_LABELS: Record<string, string> = {
   tops: "Üst",
   bottoms: "Alt",
@@ -132,13 +149,20 @@ export default function GalleryPage() {
   const [newCollectionName, setNewCollectionName]   = useState("")
   const [creatingCollection, setCreatingCollection] = useState(false)
 
-  const [galleryType, setGalleryType]                 = useState<"jewelry" | "clothing">("jewelry")
+  const [galleryType, setGalleryType]                 = useState<"jewelry" | "clothing" | "product">("jewelry")
   const [clothingItems, setClothingItems]             = useState<ClothingItem[]>([])
   const [clothingLoading, setClothingLoading]         = useState(false)
   const [clothingPage, setClothingPage]               = useState(1)
   const [clothingHasMore, setClothingHasMore]         = useState(true)
   const [clothingLoadingMore, setClothingLoadingMore] = useState(false)
   const clothingLoadedRef = useRef(false)
+
+  const [productItems, setProductItems]             = useState<ProductItem[]>([])
+  const [productLoading, setProductLoading]         = useState(false)
+  const [productPage, setProductPage]               = useState(1)
+  const [productHasMore, setProductHasMore]         = useState(true)
+  const [productLoadingMore, setProductLoadingMore] = useState(false)
+  const productLoadedRef = useRef(false)
 
   useEffect(() => {
     async function load() {
@@ -292,6 +316,48 @@ export default function GalleryPage() {
     setClothingLoading(false)
   }
 
+  async function loadProduct() {
+    if (productLoadedRef.current) return
+    productLoadedRef.current = true
+    setProductLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setProductLoading(false); return }
+    try {
+      const res = await fetch('/api/gallery?type=product&page=1&limit=12', {
+        headers: { authorization: `Bearer ${session.access_token}` }
+      })
+      const json = await res.json()
+      const fetchedItems = json.items ?? []
+      setProductItems(fetchedItems)
+      setProductHasMore(fetchedItems.length >= (json.limit ?? 12))
+    } catch (err) {
+      console.error('Product gallery fetch error:', err)
+      setProductItems([])
+    }
+    setProductLoading(false)
+  }
+
+  async function loadMoreProduct() {
+    if (productLoadingMore || !productHasMore) return
+    setProductLoadingMore(true)
+    const nextPage = productPage + 1
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setProductLoadingMore(false); return }
+    try {
+      const res = await fetch(`/api/gallery?type=product&page=${nextPage}&limit=12`, {
+        headers: { authorization: `Bearer ${session.access_token}` }
+      })
+      const json = await res.json()
+      const newItems = json.items ?? []
+      setProductItems(prev => [...prev, ...newItems])
+      setProductPage(nextPage)
+      setProductHasMore(newItems.length >= (json.limit ?? 12))
+    } catch (err) {
+      console.error('Load more product error:', err)
+    }
+    setProductLoadingMore(false)
+  }
+
   async function loadMoreClothing() {
     if (clothingLoadingMore || !clothingHasMore) return
     setClothingLoadingMore(true)
@@ -404,6 +470,14 @@ export default function GalleryPage() {
               }`}
             >
               Kıyafet
+            </button>
+            <button
+              onClick={() => { setGalleryType("product"); if (!productLoadedRef.current) loadProduct() }}
+              className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
+                galleryType === "product" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
+              }`}
+            >
+              Ürün
             </button>
           </div>
 
@@ -587,7 +661,75 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {galleryType === "clothing" ? (
+      {galleryType === "product" ? (
+        productLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white p-4 space-y-3">
+                <Skeleton className="w-full aspect-square rounded-none" />
+                <Skeleton className="h-3 w-1/2 rounded-none" />
+              </div>
+            ))}
+          </div>
+        ) : productItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 border border-dashed border-[#E5E7EB]">
+            <div className="w-px h-16 bg-[#E5E7EB]" />
+            <div className="text-center space-y-2">
+              <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz Üretim Yok</p>
+              <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk ürününüzü yükleyin, saniyeler içinde profesyonel stüdyo görünümü elde edin.</p>
+            </div>
+            <Link href="/studio" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
+              <Sparkles size={11} strokeWidth={1.5} />Üretime Başla
+            </Link>
+            <div className="w-px h-16 bg-[#E5E7EB]" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {productItems.map((item) => (
+                <div key={item.id} className="bg-white group">
+                  <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
+                    <GalleryImage src={item.output_image_url} alt={PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type} />
+                  </div>
+                  <div className="pt-3 pb-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] tracking-[0.15em] uppercase font-light text-[#111827]">
+                        {PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type}
+                      </span>
+                      <span className="text-[10px] text-[#9CA3AF] font-light">
+                        {formatDate(item.created_at)}
+                      </span>
+                    </div>
+                    <div className="w-6 h-px bg-[#111827] mb-3" />
+                    <button
+                      onClick={() => handleDownload(item.output_image_url)}
+                      className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Download size={11} strokeWidth={1.5} />
+                      İndir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {productHasMore && (
+              <div className="flex flex-col items-center gap-4 pt-6">
+                <button
+                  onClick={loadMoreProduct}
+                  disabled={productLoadingMore}
+                  className="h-10 px-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
+                >
+                  {productLoadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
+                </button>
+                <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light">
+                  {productItems.length} görsel · Lunia Studio
+                </p>
+              </div>
+            )}
+          </>
+        )
+      ) : galleryType === "clothing" ? (
         clothingLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (

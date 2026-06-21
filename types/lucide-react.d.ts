@@ -39,4 +39,9 @@ declare module 'lucide-react' {
   export const Coins: LucideIcon
   export const Wallet: LucideIcon
   export const Diamond: LucideIcon
+  export const ShoppingBag: LucideIcon
+  export const Layers: LucideIcon
+  export const Coffee: LucideIcon
+  export const Leaf: LucideIcon
+  export const Package: LucideIcon
 }

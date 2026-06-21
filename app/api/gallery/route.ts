@@ -50,6 +50,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items, total: count ?? 0, page, limit })
   }
 
+  if (type === 'product') {
+    const { data: rows, count } = await supabaseAdmin
+      .from('product_generations')
+      .select('id, scene_type, output_image_url, is_saved, created_at', { count: 'exact' })
+      .eq('user_id', user.id)
+      .eq('is_saved', true)
+      .not('output_image_url', 'is', null)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (!rows) return NextResponse.json({ items: [], total: 0 })
+
+    const items = await Promise.all(
+      rows.map(async (row) => ({
+        ...row,
+        output_image_url: await resolvePresignedUrl(row.output_image_url),
+      }))
+    )
+
+    return NextResponse.json({ items, total: count ?? 0, page, limit })
+  }
+
   // type === 'jewelry' (default) — mevcut davranış değişmedi
   const { data: generations, count } = await supabaseAdmin
     .from('generations')
