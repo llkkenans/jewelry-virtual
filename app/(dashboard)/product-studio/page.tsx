@@ -11,7 +11,7 @@ import {
   ShoppingBag, Layers, Coffee, Leaf, Square,
 } from "lucide-react"
 
-type Scene = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark-luxury"
+type Scene = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
 
@@ -21,7 +21,7 @@ const SCENES: { id: Scene; label: string; description: string; icon: React.React
   { id: "lifestyle",    label: "Lifestyle",    description: "Kahve & günlük yaşam", icon: <Coffee      size={18} strokeWidth={1.5} /> },
   { id: "nature",       label: "Doğa",         description: "Doğal ortam, yaprak",  icon: <Leaf        size={18} strokeWidth={1.5} /> },
   { id: "minimal",      label: "Minimal",      description: "Sade, geometrik",      icon: <Square      size={18} strokeWidth={1.5} /> },
-  { id: "dark-luxury",  label: "Dark Luxury",  description: "Karanlık lüks atmosfer", icon: <Gem       size={18} strokeWidth={1.5} /> },
+  { id: "dark_luxury",  label: "Dark Luxury",  description: "Karanlık lüks atmosfer", icon: <Gem       size={18} strokeWidth={1.5} /> },
 ]
 
 const PROGRESS_STEPS = [
@@ -106,14 +106,16 @@ export default function ProductStudioPage() {
       const token = session?.access_token
       if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
 
-      const formData = new FormData()
-      formData.append("image", file)
-      formData.append("scene", scene)
+      const arrayBuffer = await file.arrayBuffer()
+      const imageBase64 = Buffer.from(arrayBuffer).toString("base64")
 
       const res = await fetch("/api/product-shot", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${token}` },
-        body: formData,
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageBase64, scene_type: scene }),
       })
 
       if (!res.ok) {
