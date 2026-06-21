@@ -44,11 +44,20 @@ type BrandScene = {
   created_at?: string
 }
 
+type ExportFormat = "square" | "portrait" | "landscape" | "amazon"
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const MAX_FILE_BYTES   = 7 * 1024 * 1024
 const MAX_MULTI_FILES  = 20
 const MAX_BRAND_SCENES = 10
+
+const EXPORT_FORMATS: { id: ExportFormat; label: string; symbol: string; aspect: string }[] = [
+  { id: "square",    label: "Kare",   symbol: "◻", aspect: "1:1"  },
+  { id: "portrait",  label: "Dikey",  symbol: "▯", aspect: "2:3"  },
+  { id: "landscape", label: "Yatay",  symbol: "▬", aspect: "16:9" },
+  { id: "amazon",    label: "Amazon", symbol: "A",  aspect: ""     },
+]
 
 const SCENES: { id: Scene; label: string; description: string; icon: React.ReactNode }[] = [
   { id: "ecommerce",   label: "E-ticaret",   description: "Beyaz arka plan",        icon: <ShoppingBag size={18} strokeWidth={1.5} /> },
@@ -365,6 +374,16 @@ export default function ProductStudioPage() {
   const [brandModalName,   setBrandModalName]   = useState("")
   const [savingBrandScene, setSavingBrandScene] = useState(false)
 
+  // Smart Export state
+  const [exportingFormat,    setExportingFormat]    = useState<ExportFormat | null>(null)
+  const [activeExportFormat, setActiveExportFormat] = useState<ExportFormat | null>(null)
+  const [batchExportFormat,  setBatchExportFormat]  = useState<ExportFormat | null>(null)
+  const [batchExporting,     setBatchExporting]     = useState(false)
+  const [batchExportDone,    setBatchExportDone]    = useState(0)
+  const [multiExportFormat,  setMultiExportFormat]  = useState<ExportFormat | null>(null)
+  const [multiExporting,     setMultiExporting]     = useState(false)
+  const [multiExportDone,    setMultiExportDone]    = useState(0)
+
   // ── File handling ────────────────────────────────────────────────────────
 
   function handleFile(f: File) {
@@ -428,6 +447,8 @@ export default function ProductStudioPage() {
     setMultiFiles([]); setMultiPreviews([]); setMultiResults([])
     setMultiProcessing(false); setCurrentIdx(-1)
     if (fileInputRef.current) fileInputRef.current.value = ""
+    setActiveExportFormat(null); setExportingFormat(null)
+    setBatchExportFormat(null); setMultiExportFormat(null)
   }
 
   // ── Mode / industry change ────────────────────────────────────────────────
@@ -510,7 +531,7 @@ export default function ProductStudioPage() {
       }
       const data = await res.json() as { outputUrl?: string; generationId?: string }
       setResultUrl(data.outputUrl ?? null); setGenerationId(data.generationId ?? null)
-      setSaved(false)
+      setSaved(false); setActiveExportFormat(null)
       window.dispatchEvent(new Event("credits-updated"))
       showToast("Görsel başarıyla üretildi!", "success")
     } catch (err: unknown) {
@@ -736,6 +757,86 @@ export default function ProductStudioPage() {
         showToast("Silme başarısız.", "error")
       }
     } catch { showToast("Bir hata oluştu.", "error") }
+  }
+
+  // ── Smart Export ─────────────────────────────────────────────────────────
+
+  async function handleExportFormat(format: ExportFormat) {
+    if (!resultUrl || exportingFormat) return
+    setExportingFormat(format)
+    try {
+      const token = await getToken(); if (!token) return
+      const res = await fetch("/api/smart-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ imageUrl: resultUrl, format }),
+      })
+      if (!res.ok) throw new Error("Export başarısız")
+      const data = await res.json() as { outputUrl?: string }
+      if (data.outputUrl) {
+        setResultUrl(data.outputUrl)
+        setActiveExportFormat(format)
+        showToast(`Görsel ${EXPORT_FORMATS.find(f => f.id === format)?.label ?? format} formatına dönüştürüldü`, "success")
+      }
+    } catch { showToast("Format dönüşümü başarısız.", "error") }
+    finally { setExportingFormat(null) }
+  }
+
+  async function handleBatchExport(format: ExportFormat) {
+    const toExport = batchResults.filter(r => r.selected && r.url)
+    if (!toExport.length || batchExporting) return
+    setBatchExporting(true); setBatchExportDone(0)
+    const token = await getToken()
+    if (!token) { setBatchExporting(false); return }
+    let done = 0
+    for (const r of toExport) {
+      try {
+        const res = await fetch("/api/smart-export", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ imageUrl: r.url, format }),
+        })
+        if (res.ok) {
+          const data = await res.json() as { outputUrl?: string }
+          if (data.outputUrl) {
+            const sceneId = r.scene
+            setBatchResults(prev => prev.map(br => br.scene === sceneId ? { ...br, url: data.outputUrl! } : br))
+          }
+        }
+      } catch { /* continue */ }
+      done++; setBatchExportDone(done)
+    }
+    setBatchExporting(false)
+    showToast(`${done}/${toExport.length} görsel dönüştürüldü`, "success")
+  }
+
+  async function handleMultiExport(format: ExportFormat) {
+    const indices = multiResults.map((r, i) => r.selected && r.outputUrl ? i : -1).filter(i => i !== -1)
+    if (!indices.length || multiExporting) return
+    setMultiExporting(true); setMultiExportDone(0)
+    const token = await getToken()
+    if (!token) { setMultiExporting(false); return }
+    let done = 0
+    for (const idx of indices) {
+      const url = multiResults[idx]?.outputUrl
+      if (!url) continue
+      try {
+        const res = await fetch("/api/smart-export", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ imageUrl: url, format }),
+        })
+        if (res.ok) {
+          const data = await res.json() as { outputUrl?: string }
+          if (data.outputUrl) {
+            setMultiResults(prev => prev.map((mr, i) => i === idx ? { ...mr, outputUrl: data.outputUrl! } : mr))
+          }
+        }
+      } catch { /* continue */ }
+      done++; setMultiExportDone(done)
+    }
+    setMultiExporting(false)
+    showToast(`${done}/${indices.length} görsel dönüştürüldü`, "success")
   }
 
   // ── Save / download ───────────────────────────────────────────────────────
@@ -1218,6 +1319,31 @@ export default function ProductStudioPage() {
                 </div>
               </div>
 
+              {!multiProcessing && multiResults.length > 0 && (
+                <div className="flex items-center gap-2 mb-3">
+                  <select
+                    value={multiExportFormat ?? ""}
+                    onChange={(e) => setMultiExportFormat((e.target.value as ExportFormat) || null)}
+                    disabled={multiExporting}
+                    className="flex-1 h-7 border border-[#E5E7EB] text-[10px] text-[#6B7280] tracking-wide px-2 bg-white focus:border-[#C9A96E] focus:outline-none cursor-pointer disabled:opacity-50"
+                  >
+                    <option value="">Tümüne format uygula</option>
+                    {EXPORT_FORMATS.map(f => (
+                      <option key={f.id} value={f.id}>{f.label}{f.aspect ? ` (${f.aspect})` : ""}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => multiExportFormat && handleMultiExport(multiExportFormat)}
+                    disabled={!multiExportFormat || multiExporting || multiSelCount === 0}
+                    className="h-7 px-3 bg-[#111827] text-white text-[9px] tracking-[0.1em] uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    {multiExporting ? (
+                      <><span className="w-2.5 h-2.5 border border-white/30 border-t-white rounded-full animate-spin" />{multiExportDone}/{multiSelCount} dönüştürülüyor...</>
+                    ) : "Uygula"}
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {multiResults.map((r, idx) => (
                   <MultiResultCard
@@ -1253,7 +1379,35 @@ export default function ProductStudioPage() {
           /* Priority 2: Scene-batch results */
           ) : isBatchMode ? (
             <div>
-              <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">Tüm Sahneler</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">Tüm Sahneler</p>
+              </div>
+
+              {!batchLoading && batchResults.length > 0 && (
+                <div className="flex items-center gap-2 mb-3">
+                  <select
+                    value={batchExportFormat ?? ""}
+                    onChange={(e) => setBatchExportFormat((e.target.value as ExportFormat) || null)}
+                    disabled={batchExporting}
+                    className="flex-1 h-7 border border-[#E5E7EB] text-[10px] text-[#6B7280] tracking-wide px-2 bg-white focus:border-[#C9A96E] focus:outline-none cursor-pointer disabled:opacity-50"
+                  >
+                    <option value="">Tümüne format uygula</option>
+                    {EXPORT_FORMATS.map(f => (
+                      <option key={f.id} value={f.id}>{f.label}{f.aspect ? ` (${f.aspect})` : ""}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => batchExportFormat && handleBatchExport(batchExportFormat)}
+                    disabled={!batchExportFormat || batchExporting || selectedCount === 0}
+                    className="h-7 px-3 bg-[#111827] text-white text-[9px] tracking-[0.1em] uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    {batchExporting ? (
+                      <><span className="w-2.5 h-2.5 border border-white/30 border-t-white rounded-full animate-spin" />{batchExportDone}/{selectedCount} dönüştürülüyor...</>
+                    ) : "Uygula"}
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {batchLoading
                   ? currentScenes.map((s) => <BatchSkeletonCard key={s.id} label={s.label} />)
@@ -1385,6 +1539,33 @@ export default function ProductStudioPage() {
                     <Star size={11} strokeWidth={1.5} />
                     Marka Sahnesi Olarak Kaydet
                   </button>
+
+                  {/* Row 3: Format */}
+                  <div className="pt-1">
+                    <p className="text-[9px] tracking-[0.15em] uppercase text-[#9CA3AF] mb-2">Format Değiştir</p>
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                      {EXPORT_FORMATS.map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => handleExportFormat(f.id)}
+                          disabled={!!exportingFormat}
+                          className={`h-7 flex items-center justify-center gap-1 px-2 text-[9px] tracking-[0.08em] uppercase border transition-all rounded-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                            activeExportFormat === f.id
+                              ? "bg-[#C9A96E] border-[#C9A96E] text-white"
+                              : "bg-white border-[#E5E7EB] text-[#6B7280] hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                          }`}
+                        >
+                          {exportingFormat === f.id ? (
+                            <span className="w-2.5 h-2.5 border border-current/30 border-t-current rounded-full animate-spin flex-shrink-0" />
+                          ) : (
+                            <span className="text-[10px] leading-none flex-shrink-0">{f.symbol}</span>
+                          )}
+                          <span>{f.label}</span>
+                          {f.aspect && <span className="opacity-60 text-[8px]">{f.aspect}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
