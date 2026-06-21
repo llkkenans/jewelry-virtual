@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/toast"
+import { SCENE_PROMPTS, INDUSTRY_SCENE_PROMPTS } from "@/lib/product-shot-prompts"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -38,9 +39,9 @@ type MultiResult = {
 type BrandScene = {
   id: string
   name: string
-  referenceImageUrl: string
-  sceneContext?: string
-  createdAt?: string
+  reference_image_url: string
+  scene_prompt?: string
+  created_at?: string
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -359,8 +360,8 @@ export default function ProductStudioPage() {
   const [brandScenesLoading, setBrandScenesLoading] = useState(false)
   const [selectedBrandScene, setSelectedBrandScene] = useState<string | null>(null)
   const [brandModal, setBrandModal] = useState<{
-    open: boolean; imageUrl: string; sceneContext: string
-  }>({ open: false, imageUrl: "", sceneContext: "" })
+    open: boolean; imageUrl: string; scenePrompt: string
+  }>({ open: false, imageUrl: "", scenePrompt: "" })
   const [brandModalName,   setBrandModalName]   = useState("")
   const [savingBrandScene, setSavingBrandScene] = useState(false)
 
@@ -474,6 +475,13 @@ export default function ProductStudioPage() {
     if (mode === "sektorel") return `${INDUSTRIES.find(i => i.id === industry)?.label ?? industry} – ${sceneLabel(industryScene)}`
     const bs = brandScenes.find(s => s.id === selectedBrandScene)
     return bs?.name ?? "Marka Sahne"
+  }
+
+  function currentScenePrompt() {
+    if (mode === "genel") return SCENE_PROMPTS[scene] ?? sceneLabel(scene)
+    if (mode === "sektorel") return INDUSTRY_SCENE_PROMPTS[industry]?.[industryScene] ?? sceneLabel(industryScene)
+    const bs = brandScenes.find(s => s.id === selectedBrandScene)
+    return bs?.scene_prompt ?? bs?.name ?? "Marka Sahne"
   }
 
   // ── Single-product generate ───────────────────────────────────────────────
@@ -679,8 +687,8 @@ export default function ProductStudioPage() {
     finally { setBrandScenesLoading(false) }
   }
 
-  function openBrandModal(imageUrl: string, sceneContext: string) {
-    setBrandModal({ open: true, imageUrl, sceneContext })
+  function openBrandModal(imageUrl: string, scenePrompt: string) {
+    setBrandModal({ open: true, imageUrl, scenePrompt })
     setBrandModalName("")
   }
 
@@ -689,20 +697,21 @@ export default function ProductStudioPage() {
     setSavingBrandScene(true)
     try {
       const token = await getToken(); if (!token) return
+      console.log("BRAND SAVE:", { name, referenceImageUrl: brandModal.imageUrl, scenePrompt: brandModal.scenePrompt })
       const res = await fetch("/api/brand-scenes", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
           name: name.trim(),
           referenceImageUrl: brandModal.imageUrl,
-          sceneContext: brandModal.sceneContext,
+          scenePrompt: brandModal.scenePrompt,
         }),
       })
       if (res.ok) {
         const data = await res.json() as { scene?: BrandScene }
         if (data.scene) setBrandScenes(prev => [...prev, data.scene!])
-        setBrandModal({ open: false, imageUrl: "", sceneContext: "" })
-        showToast("Marka sahnesi kaydedildi!", "success")
+        setBrandModal({ open: false, imageUrl: "", scenePrompt: "" })
+        showToast("Marka sahnesi kaydedildi ★", "success")
       } else {
         const data = await res.json().catch(() => ({})) as { error?: string }
         showToast(data.error ?? "Kaydetme başarısız.", "error")
@@ -1053,7 +1062,7 @@ export default function ProductStudioPage() {
                             : "border-[#E5E7EB] hover:border-[#C9A96E]/40"
                         }`}
                       >
-                        <img src={bs.referenceImageUrl} alt={bs.name} className="w-full h-full object-cover" />
+                        <img src={bs.reference_image_url} alt={bs.name} className="w-full h-full object-cover" />
                         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
                           <p className="text-[9px] tracking-[0.1em] uppercase text-white truncate font-light">{bs.name}</p>
                         </div>
@@ -1214,7 +1223,7 @@ export default function ProductStudioPage() {
                   <MultiResultCard
                     key={idx} result={r} idx={idx} isCurrent={currentIdx === idx}
                     onToggle={toggleMultiSelect} onRetry={handleRetryMulti}
-                    onSaveBrandScene={(url) => openBrandModal(url, currentSceneContext())}
+                    onSaveBrandScene={(url) => openBrandModal(url, currentScenePrompt())}
                     disabled={multiProcessing} atBrandLimit={atBrandLimit}
                   />
                 ))}
@@ -1273,7 +1282,7 @@ export default function ProductStudioPage() {
                               {r.selected && <Check size={11} strokeWidth={2.5} className="text-white" />}
                             </div>
                             <button
-                              onClick={(e) => { e.stopPropagation(); openBrandModal(r.url!, sceneLabel(r.scene)) }}
+                              onClick={(e) => { e.stopPropagation(); openBrandModal(r.url!, SCENE_PROMPTS[r.scene] ?? INDUSTRY_SCENE_PROMPTS[industry]?.[r.scene] ?? sceneLabel(r.scene)) }}
                               disabled={atBrandLimit}
                               title={atBrandLimit ? "Maksimum 10 marka sahnesi kaydedebilirsiniz" : "Marka sahnesi olarak kaydet"}
                               className="absolute bottom-2 right-2 w-5 h-5 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1368,7 +1377,7 @@ export default function ProductStudioPage() {
 
                   {/* Row 2: ★ Marka Sahnesi Olarak Kaydet */}
                   <button
-                    onClick={() => openBrandModal(resultUrl, currentSceneContext())}
+                    onClick={() => openBrandModal(resultUrl, currentScenePrompt())}
                     disabled={atBrandLimit}
                     title={atBrandLimit ? "Maksimum 10 marka sahnesi kaydedebilirsiniz" : undefined}
                     className="w-full h-8 border border-[#C9A96E]/40 hover:border-[#C9A96E] text-[10px] tracking-[0.1em] uppercase font-light text-[#C9A96E] hover:bg-[#C9A96E]/5 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1386,7 +1395,7 @@ export default function ProductStudioPage() {
       {/* ── Brand Scene Save Modal ── */}
       {brandModal.open && (
         <SaveBrandSceneModal
-          onClose={() => setBrandModal({ open: false, imageUrl: "", sceneContext: "" })}
+          onClose={() => setBrandModal({ open: false, imageUrl: "", scenePrompt: "" })}
           onSave={handleSaveBrandScene}
           saving={savingBrandScene}
         />
