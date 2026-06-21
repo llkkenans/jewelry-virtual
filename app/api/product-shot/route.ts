@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { uploadToR2, getPresignedUrl } from '@/lib/r2'
 import { checkRateLimit } from '@/lib/rate-limit'
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 const SCENE_PROMPTS: Record<string, string> = {
   ecommerce:   "Clean white studio background, soft professional lighting, subtle shadows, e-commerce product photography",
@@ -18,8 +18,15 @@ const SCENE_PROMPTS: Record<string, string> = {
 const VALID_SCENE_TYPES = Object.keys(SCENE_PROMPTS)
 const CREDITS_REQUIRED = 1
 
-type BriaProductShotResult = {
-  images: Array<{ url: string }>
+type BriaRemoveResult = {
+  data?: { image?: { url?: string }; images?: Array<{ url?: string }> }
+  image?: { url?: string }
+  images?: Array<{ url?: string }>
+}
+
+type BriaReplaceResult = {
+  data?: { images?: Array<{ url?: string }> }
+  images?: Array<{ url?: string }>
 }
 
 export async function POST(req: NextRequest) {
@@ -91,33 +98,53 @@ export async function POST(req: NextRequest) {
 
   const prompt = SCENE_PROMPTS[scene_type]
 
-  let result
+  // Adım 1 — arka planı kaldır
+  let cleanProductUrl: string
   try {
-    result = await fal.subscribe('fal-ai/bria/product-shot', {
-      input: {
-        image_url: productImageUrl,
-        scene_description: prompt,
-        optimize_description: true,
-      },
-    })
+    const removeResult = await fal.subscribe('fal-ai/bria/background/remove', {
+      input: { image_url: productImageUrl },
+    }) as BriaRemoveResult
+    const url = removeResult.data?.image?.url ?? removeResult.image?.url
+    if (!url) throw new Error('background/remove: output URL bulunamadı')
+    cleanProductUrl = url
   } catch (err) {
-    console.error('bria/product-shot error:', JSON.stringify(err, null, 2))
-
-    await supabaseAdmin
-      .from('product_generations')
-      .insert({
-        user_id: user.id,
-        original_image_url: productImageUrl,
-        scene_type,
-        status: 'failed',
-        credits_used: 0,
-      })
-
-    return NextResponse.json({ error: 'Üretim başarısız oldu. Lütfen tekrar deneyin.' }, { status: 502 })
+    console.error('bria/background/remove error:', JSON.stringify(err, null, 2))
+    await supabaseAdmin.from('product_generations').insert({
+      user_id: user.id,
+      original_image_url: productImageUrl,
+      scene_type,
+      status: 'failed',
+      credits_used: 0,
+    })
+    return NextResponse.json({ error: 'Arka plan kaldırma başarısız oldu. Lütfen tekrar deneyin.' }, { status: 502 })
   }
 
-  const briaData = result.data as BriaProductShotResult | undefined
-  const rawOutputUrl = (briaData ?? (result as unknown as BriaProductShotResult)).images[0].url
+  // Adım 2 — yeni sahneye yerleştir
+  let rawOutputUrl: string
+  try {
+    const replaceResult = await fal.subscribe('fal-ai/bria/background/replace', {
+      input: {
+        image_url: cleanProductUrl,
+        prompt,
+        refine_prompt: true,
+        fast: false,
+        num_images: 1,
+      },
+    }) as BriaReplaceResult
+    const url = replaceResult.data?.images?.[0]?.url ?? replaceResult.images?.[0]?.url
+    if (!url) throw new Error('background/replace: output URL bulunamadı')
+    rawOutputUrl = url
+  } catch (err) {
+    console.error('bria/background/replace error:', JSON.stringify(err, null, 2))
+    await supabaseAdmin.from('product_generations').insert({
+      user_id: user.id,
+      original_image_url: productImageUrl,
+      scene_type,
+      status: 'failed',
+      credits_used: 0,
+    })
+    return NextResponse.json({ error: 'Sahne oluşturma başarısız oldu. Lütfen tekrar deneyin.' }, { status: 502 })
+  }
 
   // Fetch from fal.ai and save to R2 (R2 public URLs return 403 — use presigned URLs)
   const outputKey = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
