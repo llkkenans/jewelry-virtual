@@ -18,6 +18,39 @@ export const SHADOW_MODIFIERS: Record<string, string> = {
   dramatic: "Deep, elongated dramatic shadow with strong directional lighting. High contrast, editorial feel.",
 }
 
+export const INDUSTRY_SCENES: Record<string, Record<string, string>> = {
+  kitchen: {
+    wooden_counter: "Place this product on a warm oak kitchen countertop next to a cutting board and fresh herbs. Morning sunlight streams through a window, casting soft shadows. A copper kettle sits slightly out of focus in the background. Professional food & lifestyle product photography, 50mm lens, f/2.8, shallow depth of field.",
+    modern_kitchen: "Place this product on a sleek white quartz kitchen island in a modern minimalist kitchen. Stainless steel appliances and pendant lights softly blurred in the background. Clean, bright, editorial kitchen photography, 35mm lens, f/4, natural daylight.",
+    rustic_shelf: "Place this product on a rustic wooden floating shelf against a white shiplap wall. A small potted succulent and a ceramic mug nearby, slightly out of focus. Warm farmhouse aesthetic, lifestyle product photography, 85mm lens, f/2.0.",
+    breakfast_table: "Place this product on a marble breakfast table with a croissant on a plate and a latte in a ceramic cup nearby, all slightly out of focus. Soft golden morning light from the left. Cozy lifestyle editorial photography, 50mm lens, f/2.8.",
+  },
+  cosmetics: {
+    spa_bathroom: "Place this product on a polished white marble bathroom vanity surrounded by soft white towels and eucalyptus sprigs. Warm diffused lighting from above. Luxury spa aesthetic, beauty product photography, 90mm macro lens, f/4.",
+    water_droplets: "Place this product on a wet glass surface with fresh water droplets scattered around it. Cool blue-white studio lighting with subtle reflections. Clean, hydrating beauty aesthetic. Skincare campaign photography, 100mm macro lens, f/5.6.",
+    rose_petals: "Place this product on a soft pink satin fabric surface with scattered dried rose petals. Romantic soft-focus background in blush tones. Feminine luxury beauty photography, 85mm lens, f/2.0, warm highlights.",
+    vanity_mirror: "Place this product on a glamorous vanity table next to a round mirror with soft warm bulb lighting. Gold and cream color palette. Editorial beauty photography, Hollywood vanity aesthetic, 50mm lens, f/2.8.",
+  },
+  tech: {
+    modern_desk: "Place this product on a clean modern desk setup with a mechanical keyboard and monitor slightly out of focus in the background. Cool neutral lighting, minimal clutter. Tech product photography, 35mm lens, f/4, sharp and precise.",
+    dark_gaming: "Place this product on a dark desk surface with subtle RGB neon glow (purple and blue) reflecting off the surface. Dark, moody gamer aesthetic with bokeh LED lights in background. Tech lifestyle photography, 50mm lens, f/2.0.",
+    concrete_minimal: "Place this product on a raw concrete surface with a single green plant in a white pot nearby. Brutalist minimalist aesthetic, neutral tones, soft overhead studio lighting. Modern tech product photography, 90mm lens, f/5.6.",
+    workspace_flat: "Place this product in a top-down flat-lay arrangement on a light gray desk with a notebook, pen, and wireless earbuds artfully arranged nearby. Clean overhead soft-box lighting. Professional workspace flat-lay photography.",
+  },
+  fashion: {
+    velvet_display: "Place this product on a deep burgundy velvet fabric surface with soft directional lighting creating rich shadows. Luxury fashion accessory photography, jewelry and watch campaign aesthetic, 100mm macro lens, f/4.",
+    boutique_shelf: "Place this product on a white lacquered boutique display shelf with soft fashion store ambient lighting. Blurred mannequin or clothing rack in the far background. High-end retail product photography, 50mm lens, f/2.8.",
+    marble_vanity: "Place this product on a Carrara marble vanity surface next to a small perfume bottle and gold tray, slightly out of focus. Bright natural window light. Luxury fashion editorial photography, 85mm lens, f/2.0.",
+    linen_flatlay: "Place this product on a crumpled natural linen fabric in a styled flat-lay composition with dried lavender and a gold ring nearby. Soft diffused overhead light. Fashion lifestyle flat-lay photography, top-down shot.",
+  },
+  food: {
+    restaurant_table: "Place this product on a dark wood restaurant table with warm ambient candlelight and blurred wine glasses in the background. Moody food & beverage photography, 50mm lens, f/1.8, warm color temperature 3200K.",
+    kitchen_prep: "Place this product on a professional kitchen prep station with fresh ingredients (lemons, herbs) scattered artfully nearby. Bright overhead kitchen lighting. Food brand campaign photography, 35mm lens, f/4.",
+    picnic_outdoor: "Place this product on a checkered picnic blanket in a sun-dappled garden setting with soft natural light filtering through trees. Fresh and organic lifestyle photography, 50mm lens, f/2.8, golden hour warmth.",
+    cafe_counter: "Place this product on a polished coffee shop counter with an espresso machine softly blurred in the background. Warm, inviting cafe atmosphere with ambient string lights. Artisan food & beverage photography, 35mm lens, f/2.0.",
+  },
+}
+
 export const VALID_SCENE_TYPES = Object.keys(SCENE_PROMPTS)
 export const VALID_SHADOW_INTENSITIES = Object.keys(SHADOW_MODIFIERS)
 
@@ -39,10 +72,12 @@ export async function uploadProductImage(imageBase64: string): Promise<string> {
 export async function generateProductShot(
   falImageUrl: string,
   scene_type: string,
-  shadow_intensity: string = 'medium'
+  shadow_intensity: string = 'medium',
+  customPrompt?: string
 ): Promise<SceneOutcome> {
   const shadowModifier = SHADOW_MODIFIERS[shadow_intensity] ?? SHADOW_MODIFIERS['medium']
-  const prompt = `${SCENE_PROMPTS[scene_type]} ${shadowModifier}`
+  const basePrompt = customPrompt ?? SCENE_PROMPTS[scene_type]
+  const prompt = `${basePrompt} ${shadowModifier}`
 
   let rawOutputUrl: string
   try {

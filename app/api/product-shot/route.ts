@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { generateProductShot, uploadProductImage, VALID_SCENE_TYPES, CREDITS_PER_SCENE } from '@/lib/product-shot'
+import { generateProductShot, uploadProductImage, VALID_SCENE_TYPES, INDUSTRY_SCENES, CREDITS_PER_SCENE } from '@/lib/product-shot'
 
 export const maxDuration = 120
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, scene_type: string, shadow_intensity: string
+  let imageBase64: string, scene_type: string, shadow_intensity: string, industry: string | undefined, industry_scene: string | undefined
 
   try {
     const body = await req.json()
-    ;({ imageBase64, scene_type } = body as { imageBase64: string; scene_type: string })
+    ;({ imageBase64, scene_type, industry, industry_scene } = body as {
+      imageBase64: string
+      scene_type: string
+      industry?: string
+      industry_scene?: string
+    })
     shadow_intensity = (body.shadow_intensity as string) ?? 'medium'
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
@@ -21,18 +26,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Görsel çok büyük. Lütfen 7MB altında bir görsel yükleyin.' }, { status: 413 })
   }
 
-  if (!imageBase64 || !scene_type) {
-    return NextResponse.json(
-      { error: 'Eksik parametre: imageBase64, scene_type gerekli' },
-      { status: 400 }
-    )
+  const useIndustryScene = !!(industry && industry_scene)
+
+  if (!imageBase64) {
+    return NextResponse.json({ error: 'Eksik parametre: imageBase64 gerekli' }, { status: 400 })
   }
 
-  if (!VALID_SCENE_TYPES.includes(scene_type)) {
-    return NextResponse.json(
-      { error: `Geçersiz scene_type. Geçerli değerler: ${VALID_SCENE_TYPES.join(', ')}` },
-      { status: 400 }
-    )
+  let resolvedPrompt: string | undefined
+  let effectiveSceneType: string
+
+  if (useIndustryScene) {
+    const industryGroup = INDUSTRY_SCENES[industry!]
+    if (!industryGroup) {
+      return NextResponse.json(
+        { error: `Geçersiz industry. Geçerli değerler: ${Object.keys(INDUSTRY_SCENES).join(', ')}` },
+        { status: 400 }
+      )
+    }
+    const prompt = industryGroup[industry_scene!]
+    if (!prompt) {
+      return NextResponse.json(
+        { error: `Geçersiz industry_scene '${industry_scene}' için '${industry}'. Geçerli değerler: ${Object.keys(industryGroup).join(', ')}` },
+        { status: 400 }
+      )
+    }
+    resolvedPrompt = prompt
+    effectiveSceneType = `${industry}/${industry_scene}`
+  } else {
+    if (!scene_type) {
+      return NextResponse.json(
+        { error: 'Eksik parametre: scene_type gerekli (veya industry + industry_scene kullanın)' },
+        { status: 400 }
+      )
+    }
+    if (!VALID_SCENE_TYPES.includes(scene_type)) {
+      return NextResponse.json(
+        { error: `Geçersiz scene_type. Geçerli değerler: ${VALID_SCENE_TYPES.join(', ')}` },
+        { status: 400 }
+      )
+    }
+    effectiveSceneType = scene_type
   }
 
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -71,13 +104,13 @@ export async function POST(req: NextRequest) {
 
   const falImageUrl = await uploadProductImage(imageBase64)
 
-  const outcome = await generateProductShot(falImageUrl, scene_type, shadow_intensity)
+  const outcome = await generateProductShot(falImageUrl, effectiveSceneType, shadow_intensity, resolvedPrompt)
 
   if (outcome.status === 'failed') {
     await supabaseAdmin.from('product_generations').insert({
       user_id: user.id,
       original_image_url: falImageUrl,
-      scene_type,
+      scene_type: effectiveSceneType,
       status: 'failed',
       credits_used: 0,
     })
@@ -87,13 +120,13 @@ export async function POST(req: NextRequest) {
   const insertPayload = {
     user_id: user.id,
     original_image_url: falImageUrl,
-    scene_type,
+    scene_type: effectiveSceneType,
     status: 'done',
     credits_used: CREDITS_PER_SCENE,
     output_image_url: outcome.r2Key,
     is_saved: false,
   }
-  console.log('DB INSERT attempt:', { userId: user.id, scene_type, r2Key: outcome.r2Key })
+  console.log('DB INSERT attempt:', { userId: user.id, scene_type: effectiveSceneType, r2Key: outcome.r2Key })
 
   const { data: genRecord, error: insertError } = await supabaseAdmin
     .from('product_generations')
