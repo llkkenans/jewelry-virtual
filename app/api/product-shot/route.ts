@@ -84,22 +84,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Görsel üretimi başarısız oldu. Lütfen tekrar deneyin.' }, { status: 502 })
   }
 
-  const { data: genRecord } = await supabaseAdmin
+  const insertPayload = {
+    user_id: user.id,
+    original_image_url: falImageUrl,
+    scene_type,
+    status: 'done',
+    credits_used: CREDITS_PER_SCENE,
+    output_image_url: outcome.r2Key,
+    is_saved: false,
+  }
+  console.log('DB INSERT attempt:', { userId: user.id, scene_type, r2Key: outcome.r2Key })
+
+  const { data: genRecord, error: insertError } = await supabaseAdmin
     .from('product_generations')
-    .insert({
-      user_id: user.id,
-      original_image_url: falImageUrl,
-      scene_type,
-      status: 'done',
-      credits_used: CREDITS_PER_SCENE,
-      output_image_url: outcome.r2Key,
-      is_saved: false,
-    })
+    .insert(insertPayload)
     .select('id')
     .single()
 
+  console.log('DB INSERT result:', { id: genRecord?.id ?? null, error: insertError?.message ?? null })
+
+  if (insertError) {
+    console.error('product_generations INSERT failed:', insertError)
+    // Still return the image — just without a saveable generationId
+    return NextResponse.json({
+      outputUrl: outcome.presignedUrl,
+      generationId: null,
+      warning: `DB insert failed: ${insertError.message}`,
+    })
+  }
+
   return NextResponse.json({
     outputUrl: outcome.presignedUrl,
-    generationId: genRecord?.id ?? null,
+    generationId: genRecord!.id,
   })
 }
