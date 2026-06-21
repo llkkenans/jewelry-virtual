@@ -7,18 +7,18 @@ import { checkRateLimit } from '@/lib/rate-limit'
 export const maxDuration = 60
 
 const SCENE_PROMPTS: Record<string, string> = {
-  ecommerce:   "Place this product on a clean white studio background with soft professional lighting and subtle shadows, e-commerce product photography style",
-  marble:      "Place this product on an elegant marble surface with soft natural light, luxury product photography, high-end brand aesthetic",
-  lifestyle:   "Place this product on a warm wooden table in a cozy cafe setting, lifestyle product photography with natural warm tones",
-  nature:      "Place this product in a natural outdoor setting with soft green foliage and natural sunlight, organic lifestyle photography",
-  minimal:     "Place this product on a beige/sand-toned studio background with minimalist styling, soft diffused light, Scandinavian aesthetic",
-  dark_luxury: "Place this product on a dark matte black surface with dramatic studio lighting, luxury brand photography with gold accent lighting",
+  ecommerce:   "Clean white studio background, soft professional lighting, subtle shadows, e-commerce product photography",
+  marble:      "Elegant marble surface, soft natural light, luxury product photography",
+  lifestyle:   "Warm wooden table in a cozy cafe, lifestyle product photography with warm tones",
+  nature:      "Natural outdoor setting with soft green foliage and natural sunlight",
+  minimal:     "Beige sand-toned studio background, minimalist styling, soft diffused light",
+  dark_luxury: "Dark matte black surface, dramatic studio lighting, luxury brand photography",
 }
 
 const VALID_SCENE_TYPES = Object.keys(SCENE_PROMPTS)
-const CREDITS_REQUIRED = 2
+const CREDITS_REQUIRED = 1
 
-type NanoBananaResult = {
+type BriaProductShotResult = {
   images: Array<{ url: string }>
 }
 
@@ -93,19 +93,21 @@ export async function POST(req: NextRequest) {
 
   let result
   try {
-    result = await fal.subscribe('fal-ai/nano-banana-pro/edit', {
+    result = await fal.subscribe('fal-ai/bria/product-shot', {
       input: {
-        image_urls: [productImageUrl],
-        prompt,
+        image_url: productImageUrl,
+        scene_description: prompt,
+        optimize_description: true,
       },
     })
   } catch (err) {
-    console.error('nano-banana-pro/edit error:', JSON.stringify(err, null, 2))
+    console.error('bria/product-shot error:', JSON.stringify(err, null, 2))
 
     await supabaseAdmin
       .from('product_generations')
       .insert({
         user_id: user.id,
+        original_image_url: productImageUrl,
         scene_type,
         status: 'failed',
         credits_used: 0,
@@ -114,7 +116,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Üretim başarısız oldu. Lütfen tekrar deneyin.' }, { status: 502 })
   }
 
-  const rawOutputUrl = (result.data as NanoBananaResult).images[0].url
+  const briaData = result.data as BriaProductShotResult | undefined
+  const rawOutputUrl = (briaData ?? (result as unknown as BriaProductShotResult)).images[0].url
 
   // Fetch from fal.ai and save to R2 (R2 public URLs return 403 — use presigned URLs)
   const outputKey = `outputs/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
@@ -135,6 +138,7 @@ export async function POST(req: NextRequest) {
     .from('product_generations')
     .insert({
       user_id: user.id,
+      original_image_url: productImageUrl,
       scene_type,
       status: 'done',
       credits_used: CREDITS_REQUIRED,

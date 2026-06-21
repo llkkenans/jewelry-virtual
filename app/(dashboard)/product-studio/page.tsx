@@ -314,13 +314,13 @@ export default function ProductStudioPage() {
             ) : (
               <>
                 <Sparkles size={13} strokeWidth={1.5} />
-                Ürün Görseli Oluştur · 2 Kredi
+                Ürün Görseli Oluştur · 1 Kredi
               </>
             )}
           </button>
 
           <p className="text-[10px] text-[#9C9588] tracking-wide text-center -mt-2">
-            2 kredi kullanılacak
+            1 kredi kullanılacak
           </p>
         </div>
 

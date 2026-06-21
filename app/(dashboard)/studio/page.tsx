@@ -33,7 +33,7 @@ const studios = [
     description: "Ürün fotoğraflarınızı profesyonel e-ticaret çekimlerine dönüştürün",
     gradient:    "from-[#1e2a2c] to-[#0d1517]",
     video:       null as string | null,
-    credit:      "2 kredi / üretim",
+    credit:      "1 kredi / üretim",
   },
 ]
 
