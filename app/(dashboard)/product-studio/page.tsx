@@ -76,10 +76,18 @@ function InfoTooltip({ text }: { text: string }) {
   )
 }
 
-function BatchSkeletonCard() {
+function BatchSkeletonCard({ label }: { label: string }) {
   return (
     <div className="rounded-lg border border-[#E5E7EB] overflow-hidden animate-pulse">
-      <div className="aspect-square bg-[#F3F4F6]" />
+      <div className="aspect-square bg-[#F3F4F6] relative flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <span className="w-3 h-3 border-2 border-[#9CA3AF]/40 border-t-[#9CA3AF] rounded-full animate-spin" />
+          <span className="text-[9px] tracking-[0.12em] uppercase text-[#9CA3AF]">Üretiliyor...</span>
+        </div>
+        <span className="absolute top-2 left-2 bg-black/30 text-white text-[9px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-sm">
+          {label}
+        </span>
+      </div>
       <div className="p-2 flex items-center justify-between">
         <div className="h-3 w-16 bg-[#E5E7EB] rounded" />
         <div className="w-4 h-4 bg-[#E5E7EB] rounded" />
@@ -187,36 +195,55 @@ export default function ProductStudioPage() {
   async function handleBatchGenerate() {
     if (!file) return
     setBatchLoading(true)
+    setBatchResults([])
     setResultUrl(null)
     setGenerationId(null)
     setSaved(false)
     setError("")
 
+    const BATCH_SCENE_IDS = SCENES.map((s) => s.id)
+
     try {
       const token = await getToken()
       if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
-      const imageBase64 = await getImageBase64()
-      const batch_id = crypto.randomUUID()
 
-      const res = await fetch("/api/product-shot/batch", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, shadow_intensity: SHADOW_INTENSITY[shadow], batch_id }),
-      })
+      const imageBase64   = await getImageBase64()
+      const shadow_intensity = SHADOW_INTENSITY[shadow]
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error((err as { error?: string })?.error ?? "Batch üretim başarısız oldu.")
-      }
-
-      const data = await res.json() as {
-        results: { scene_type: Scene; status: 'success' | 'failed'; outputUrl?: string; generationId?: string | null }[]
-      }
-      setBatchResults(
-        data.results.map((r) => ({ scene: r.scene_type, url: r.outputUrl ?? null, generationId: r.generationId ?? null, selected: r.status === 'success' }))
+      // 6 paralel POST — her biri kendi 60s timeout'unda çalışır
+      const settled = await Promise.allSettled(
+        BATCH_SCENE_IDS.map(async (sceneId) => {
+          const res = await fetch("/api/product-shot", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64, scene_type: sceneId, shadow_intensity }),
+          })
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}))
+            throw new Error((errData as { error?: string })?.error ?? `${sceneId} başarısız`)
+          }
+          const data = await res.json() as { outputUrl?: string; generationId?: string }
+          return { sceneId, outputUrl: data.outputUrl ?? null, generationId: data.generationId ?? null }
+        })
       )
+
+      setBatchResults(
+        BATCH_SCENE_IDS.map((sceneId, i) => {
+          const result = settled[i]
+          if (result.status === "fulfilled") {
+            return { scene: sceneId, url: result.value.outputUrl, generationId: result.value.generationId, selected: true }
+          }
+          return { scene: sceneId, url: null, generationId: null, selected: false }
+        })
+      )
+
       window.dispatchEvent(new Event("credits-updated"))
-      showToast("Tüm sahneler üretildi!", "success")
+      const successCount = settled.filter((r) => r.status === "fulfilled").length
+      if (successCount === BATCH_SCENE_IDS.length) {
+        showToast("Tüm sahneler üretildi!", "success")
+      } else {
+        showToast(`${successCount}/${BATCH_SCENE_IDS.length} sahne üretildi.`, "success")
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
       setError(msg)
@@ -510,7 +537,7 @@ export default function ProductStudioPage() {
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {batchLoading
-                  ? Array.from({ length: 6 }).map((_, i) => <BatchSkeletonCard key={i} />)
+                  ? SCENES.map((s) => <BatchSkeletonCard key={s.id} label={s.label} />)
                   : batchResults.map((r, idx) => (
                     <div
                       key={r.scene}
