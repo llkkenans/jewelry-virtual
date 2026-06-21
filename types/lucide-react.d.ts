@@ -44,4 +44,12 @@ declare module 'lucide-react' {
   export const Coffee: LucideIcon
   export const Leaf: LucideIcon
   export const Package: LucideIcon
+  export const Monitor: LucideIcon
+  export const Briefcase: LucideIcon
+  export const ChefHat: LucideIcon
+  export const Utensils: LucideIcon
+  export const Flower2: LucideIcon
+  export const Droplets: LucideIcon
+  export const Eye: LucideIcon
+  export const Zap: LucideIcon
 }
