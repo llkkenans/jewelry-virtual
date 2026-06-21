@@ -10,12 +10,15 @@ import {
   InfoIcon, Download, BookmarkPlus, Check,
   ShoppingBag, Layers, Coffee, Leaf, Square,
   Monitor, Briefcase, ChefHat, Utensils, Flower2, Droplets, Eye, Zap,
+  Star, Trash2,
 } from "lucide-react"
 
-type Scene    = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
-type Shadow   = "hafif" | "normal" | "dramatik"
-type Mode     = "genel" | "sektorel"
-type Industry = "kitchen" | "cosmetics" | "tech" | "fashion" | "food"
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type Scene      = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
+type Shadow     = "hafif" | "normal" | "dramatik"
+type Mode       = "genel" | "sektorel" | "marka"
+type Industry   = "kitchen" | "cosmetics" | "tech" | "fashion" | "food"
 
 type BatchResult = {
   scene: string
@@ -32,8 +35,19 @@ type MultiResult = {
   selected: boolean
 }
 
-const MAX_FILE_BYTES = 7 * 1024 * 1024
-const MAX_MULTI_FILES = 20
+type BrandScene = {
+  id: string
+  name: string
+  referenceImageUrl: string
+  sceneContext?: string
+  createdAt?: string
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const MAX_FILE_BYTES   = 7 * 1024 * 1024
+const MAX_MULTI_FILES  = 20
+const MAX_BRAND_SCENES = 10
 
 const SCENES: { id: Scene; label: string; description: string; icon: React.ReactNode }[] = [
   { id: "ecommerce",   label: "E-ticaret",   description: "Beyaz arka plan",        icon: <ShoppingBag size={18} strokeWidth={1.5} /> },
@@ -104,7 +118,7 @@ const PROGRESS_STEPS = [
   "Son rötuşlar yapılıyor...",
 ]
 
-// ─── Helper components ─────────────────────────────────────────────────────
+// ─── Helper components ───────────────────────────────────────────────────────
 
 function InfoTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
@@ -147,15 +161,79 @@ function BatchSkeletonCard({ label }: { label: string }) {
   )
 }
 
+function BrandSceneSkeletonCard() {
+  return <div className="aspect-square border border-[#E5E7EB] bg-[#F3F4F6] animate-pulse rounded-none" />
+}
+
+function SaveBrandSceneModal({
+  onClose,
+  onSave,
+  saving,
+}: {
+  onClose: () => void
+  onSave: (name: string) => void
+  saving: boolean
+}) {
+  const [name, setName] = useState("")
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-white w-full max-w-sm shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-6 pt-6 pb-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Star size={14} strokeWidth={1.5} className="text-[#C9A96E]" />
+            <h3 className="text-sm font-medium tracking-wide text-[#111827]">Marka Sahnesi Kaydet</h3>
+          </div>
+          <p className="text-[11px] text-[#9CA3AF] tracking-wide mb-5 ml-5">
+            Bu üretim stilini tekrar kullanmak üzere kaydedin.
+          </p>
+          <input
+            type="text"
+            placeholder="Sahne adı (örn. Mermer Lüks)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={50}
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && name.trim() && !saving && onSave(name.trim())}
+            className="w-full border border-[#E5E7EB] focus:border-[#C9A96E] px-3 py-2 text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none transition-colors mb-4"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 h-9 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
+            >
+              İptal
+            </button>
+            <button
+              onClick={() => name.trim() && !saving && onSave(name.trim())}
+              disabled={!name.trim() || saving}
+              className="flex-1 h-9 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.1em] uppercase font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              {saving ? (
+                <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Kaydediliyor...</>
+              ) : "Kaydet"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function MultiResultCard({
-  result, idx, isCurrent, onToggle, onRetry, disabled,
+  result, idx, isCurrent, onToggle, onRetry, onSaveBrandScene, disabled, atBrandLimit,
 }: {
   result: MultiResult
   idx: number
   isCurrent: boolean
   onToggle: (idx: number) => void
   onRetry: (idx: number) => void
+  onSaveBrandScene: (imageUrl: string) => void
   disabled: boolean
+  atBrandLimit: boolean
 }) {
   return (
     <div
@@ -169,7 +247,6 @@ function MultiResultCard({
       } ${result.status === "success" && !disabled ? "cursor-pointer hover:shadow-md" : "cursor-default"}`}
     >
       <div className="aspect-square bg-[#F9FAFB] relative overflow-hidden">
-        {/* Main image */}
         {result.status === "success" && result.outputUrl ? (
           <img src={result.outputUrl} alt={`Ürün ${idx + 1}`} className="w-full h-full object-cover" />
         ) : (
@@ -180,31 +257,23 @@ function MultiResultCard({
           />
         )}
 
-        {/* Original thumbnail (top-left, on success) */}
         {result.status === "success" && result.outputUrl && (
           <div className="absolute top-1.5 left-1.5 w-9 h-9 bg-white border border-white/80 shadow overflow-hidden">
             <img src={result.previewUrl} className="w-full h-full object-contain" />
           </div>
         )}
 
-        {/* Pending overlay */}
         {result.status === "pending" && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/15">
-            <span className="text-[9px] tracking-[0.12em] uppercase text-white/80 bg-black/30 px-2 py-1">
-              Sırada...
-            </span>
+            <span className="text-[9px] tracking-[0.12em] uppercase text-white/80 bg-black/30 px-2 py-1">Sırada...</span>
           </div>
         )}
-
-        {/* Processing overlay */}
         {result.status === "processing" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20">
             <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             <span className="text-[9px] tracking-[0.12em] uppercase text-white/90">Üretiliyor...</span>
           </div>
         )}
-
-        {/* Failed overlay */}
         {result.status === "failed" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-red-900/15">
             <span className="text-[9px] tracking-[0.12em] uppercase text-red-400">Başarısız</span>
@@ -219,7 +288,6 @@ function MultiResultCard({
           </div>
         )}
 
-        {/* Checkbox (top-right, success only) */}
         {result.status === "success" && (
           <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
             result.selected ? "bg-[#C9A96E] border-[#C9A96E]" : "bg-white/80 border-white/80"
@@ -228,7 +296,17 @@ function MultiResultCard({
           </div>
         )}
 
-        {/* Sequence number (bottom-left) */}
+        {result.status === "success" && result.outputUrl && !disabled && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onSaveBrandScene(result.outputUrl!) }}
+            disabled={atBrandLimit}
+            title={atBrandLimit ? "Maksimum 10 marka sahnesi kaydedebilirsiniz" : "Marka sahnesi olarak kaydet"}
+            className="absolute bottom-1.5 right-1.5 w-5 h-5 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Star size={9} strokeWidth={1.5} className="text-[#C9A96E]" />
+          </button>
+        )}
+
         <span className="absolute bottom-1.5 left-1.5 bg-black/50 backdrop-blur-sm text-white text-[9px] px-1.5 py-0.5 rounded-sm">
           {idx + 1}
         </span>
@@ -237,7 +315,7 @@ function MultiResultCard({
   )
 }
 
-// ─── Main component ─────────────────────────────────────────────────────────
+// ─── Main component ──────────────────────────────────────────────────────────
 
 export default function ProductStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -263,7 +341,7 @@ export default function ProductStudioPage() {
   const [saved,        setSaved]        = useState(false)
   const [saving,       setSaving]       = useState(false)
 
-  // Scene-batch state (multi-scene, single product)
+  // Scene-batch state
   const [batchLoading, setBatchLoading] = useState(false)
   const [batchResults, setBatchResults] = useState<BatchResult[]>([])
   const [batchSaving,  setBatchSaving]  = useState(false)
@@ -276,16 +354,23 @@ export default function ProductStudioPage() {
   const [currentIdx,      setCurrentIdx]      = useState(-1)
   const [multiSaving,     setMultiSaving]     = useState(false)
 
-  // ── File handling ──
+  // Brand Kit state
+  const [brandScenes,        setBrandScenes]        = useState<BrandScene[]>([])
+  const [brandScenesLoading, setBrandScenesLoading] = useState(false)
+  const [selectedBrandScene, setSelectedBrandScene] = useState<string | null>(null)
+  const [brandModal, setBrandModal] = useState<{
+    open: boolean; imageUrl: string; sceneContext: string
+  }>({ open: false, imageUrl: "", sceneContext: "" })
+  const [brandModalName,   setBrandModalName]   = useState("")
+  const [savingBrandScene, setSavingBrandScene] = useState(false)
+
+  // ── File handling ────────────────────────────────────────────────────────
 
   function handleFile(f: File) {
     if (!f.type.startsWith("image/")) { setError("Lütfen bir görsel dosyası seçin."); return }
     if (f.size > MAX_FILE_BYTES)      { setError("Dosya boyutu 7 MB'ı geçemez.");    return }
-    setFile(f)
-    setPreview(URL.createObjectURL(f))
-    setResultUrl(null)
-    setBatchResults([])
-    setError("")
+    setFile(f); setPreview(URL.createObjectURL(f))
+    setResultUrl(null); setBatchResults([]); setError("")
   }
 
   function handleFiles(fileList: File[]) {
@@ -297,19 +382,12 @@ export default function ProductStudioPage() {
     const capped = valid.slice(0, MAX_MULTI_FILES)
     if (valid.length > MAX_MULTI_FILES) showToast(`En fazla ${MAX_MULTI_FILES} ürün. İlk ${MAX_MULTI_FILES} alındı.`, "error")
 
-    setError("")
-    setBatchResults([])
-    setResultUrl(null)
-    setGenerationId(null)
-    setSaved(false)
-    setMultiResults([])
-    cancelRef.current = true
-    setMultiProcessing(false)
-    setCurrentIdx(-1)
+    setError(""); setBatchResults([]); setResultUrl(null)
+    setGenerationId(null); setSaved(false); setMultiResults([])
+    cancelRef.current = true; setMultiProcessing(false); setCurrentIdx(-1)
 
     if (capped.length === 1) {
-      setMultiFiles([])
-      setMultiPreviews([])
+      setMultiFiles([]); setMultiPreviews([])
       setFile(null); setPreview(null)
       handleFile(capped[0])
     } else {
@@ -325,14 +403,12 @@ export default function ProductStudioPage() {
     const newFiles    = multiFiles.filter((_, i) => i !== idx)
     const newPreviews = multiPreviews.filter((_, i) => i !== idx)
     setMultiResults([])
-
     if (newFiles.length <= 1) {
       newPreviews.forEach(u => URL.revokeObjectURL(u))
       setMultiFiles([]); setMultiPreviews([])
       if (newFiles.length === 1) handleFile(newFiles[0])
     } else {
-      setMultiFiles(newFiles)
-      setMultiPreviews(newPreviews)
+      setMultiFiles(newFiles); setMultiPreviews(newPreviews)
     }
   }
 
@@ -346,28 +422,29 @@ export default function ProductStudioPage() {
 
   function clearFile() {
     setFile(null); setPreview(null); setResultUrl(null)
-    setError(""); setGenerationId(null); setSaved(false)
-    setBatchResults([])
+    setError(""); setGenerationId(null); setSaved(false); setBatchResults([])
     cancelRef.current = true
     setMultiFiles([]); setMultiPreviews([]); setMultiResults([])
     setMultiProcessing(false); setCurrentIdx(-1)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  // ── Mode / industry change ────────────────────────────────────────────────
+
   function handleModeChange(m: Mode) {
     setMode(m)
-    setResultUrl(null); setBatchResults([]); setGenerationId(null); setSaved(false); setError("")
-    setMultiResults([])
+    setResultUrl(null); setBatchResults([]); setGenerationId(null)
+    setSaved(false); setError(""); setMultiResults([])
+    if (m === "marka" && brandScenes.length === 0 && !brandScenesLoading) loadBrandScenes()
   }
 
   function handleIndustryChange(ind: Industry) {
-    setIndustry(ind)
-    setIndustryScene(INDUSTRY_SCENES[ind][0].id)
-    setBatchResults([]); setResultUrl(null); setGenerationId(null); setSaved(false); setError("")
-    setMultiResults([])
+    setIndustry(ind); setIndustryScene(INDUSTRY_SCENES[ind][0].id)
+    setBatchResults([]); setResultUrl(null); setGenerationId(null)
+    setSaved(false); setError(""); setMultiResults([])
   }
 
-  // ── Auth / base64 helpers ──
+  // ── Auth / base64 helpers ─────────────────────────────────────────────────
 
   async function getToken() {
     const { data: { session } } = await supabase.auth.getSession()
@@ -379,18 +456,27 @@ export default function ProductStudioPage() {
     return Buffer.from(buf).toString("base64")
   }
 
-  async function getImageBase64(): Promise<string> {
-    return fileToBase64(file!)
-  }
+  async function getImageBase64(): Promise<string> { return fileToBase64(file!) }
 
   function buildBody(imageBase64: string, sceneId?: string) {
-    if (mode === "genel") {
-      return { imageBase64, scene_type: sceneId ?? scene, shadow_intensity: SHADOW_INTENSITY[shadow] }
+    const shadow_intensity = SHADOW_INTENSITY[shadow]
+    if (mode === "marka" && selectedBrandScene) {
+      return { imageBase64, brand_scene_id: selectedBrandScene, shadow_intensity }
     }
-    return { imageBase64, industry, industry_scene: sceneId ?? industryScene, shadow_intensity: SHADOW_INTENSITY[shadow] }
+    if (mode === "genel") {
+      return { imageBase64, scene_type: sceneId ?? scene, shadow_intensity }
+    }
+    return { imageBase64, industry, industry_scene: sceneId ?? industryScene, shadow_intensity }
   }
 
-  // ── Single-product generate ──
+  function currentSceneContext() {
+    if (mode === "genel")   return sceneLabel(scene)
+    if (mode === "sektorel") return `${INDUSTRIES.find(i => i.id === industry)?.label ?? industry} – ${sceneLabel(industryScene)}`
+    const bs = brandScenes.find(s => s.id === selectedBrandScene)
+    return bs?.name ?? "Marka Sahne"
+  }
+
+  // ── Single-product generate ───────────────────────────────────────────────
 
   async function handleGenerate() {
     if (!file) return
@@ -402,7 +488,7 @@ export default function ProductStudioPage() {
 
     try {
       const token = await getToken()
-      if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
+      if (!token) { setError("Oturum bulunamadı."); return }
       const imageBase64 = await getImageBase64()
 
       const res = await fetch("/api/product-shot", {
@@ -410,15 +496,12 @@ export default function ProductStudioPage() {
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify(buildBody(imageBase64)),
       })
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error((err as { error?: string })?.error ?? "Görsel üretimi başarısız oldu.")
       }
-
       const data = await res.json() as { outputUrl?: string; generationId?: string }
-      setResultUrl(data.outputUrl ?? null)
-      setGenerationId(data.generationId ?? null)
+      setResultUrl(data.outputUrl ?? null); setGenerationId(data.generationId ?? null)
       setSaved(false)
       window.dispatchEvent(new Event("credits-updated"))
       showToast("Görsel başarıyla üretildi!", "success")
@@ -431,7 +514,7 @@ export default function ProductStudioPage() {
     }
   }
 
-  // ── Scene-batch generate (multi-scene, single product) ──
+  // ── Scene-batch generate ──────────────────────────────────────────────────
 
   async function handleBatchGenerate() {
     if (!file) return
@@ -444,8 +527,8 @@ export default function ProductStudioPage() {
 
     try {
       const token = await getToken()
-      if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
-      const imageBase64      = await getImageBase64()
+      if (!token) { setError("Oturum bulunamadı."); return }
+      const imageBase64 = await getImageBase64()
       const shadow_intensity = SHADOW_INTENSITY[shadow]
 
       const settled = await Promise.allSettled(
@@ -469,20 +552,17 @@ export default function ProductStudioPage() {
 
       setBatchResults(
         batchScenes.map((sceneId, i) => {
-          const result = settled[i]
-          if (result.status === "fulfilled") {
-            return { scene: sceneId, url: result.value.outputUrl, generationId: result.value.generationId, selected: true }
+          const r = settled[i]
+          if (r.status === "fulfilled") {
+            return { scene: sceneId, url: r.value.outputUrl, generationId: r.value.generationId, selected: true }
           }
           return { scene: sceneId, url: null, generationId: null, selected: false }
         })
       )
 
       window.dispatchEvent(new Event("credits-updated"))
-      const successCount = settled.filter((r) => r.status === "fulfilled").length
-      showToast(
-        successCount === batchScenes.length ? "Tüm sahneler üretildi!" : `${successCount}/${batchScenes.length} sahne üretildi.`,
-        "success"
-      )
+      const ok = settled.filter((r) => r.status === "fulfilled").length
+      showToast(ok === batchScenes.length ? "Tüm sahneler üretildi!" : `${ok}/${batchScenes.length} sahne üretildi.`, "success")
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
       setError(msg); showToast(msg || "Üretim başarısız oldu", "error")
@@ -491,7 +571,7 @@ export default function ProductStudioPage() {
     }
   }
 
-  // ── Multi-product sequential generate ──
+  // ── Multi-product sequential generate ────────────────────────────────────
 
   async function handleMultiGenerate() {
     if (multiFiles.length < 2 || multiProcessing) return
@@ -499,41 +579,32 @@ export default function ProductStudioPage() {
     const token = await getToken()
     if (!token) { setError("Oturum bulunamadı."); return }
 
-    // Credit pre-check
+    if (mode === "marka" && !selectedBrandScene) {
+      showToast("Lütfen bir marka sahnesi seçin.", "error"); return
+    }
+
     try {
       const profileRes = await fetch("/api/profile", { headers: { "Authorization": `Bearer ${token}` } })
       if (profileRes.ok) {
         const profile = await profileRes.json() as { credits?: number }
         const needed = multiFiles.length
         if (typeof profile.credits === "number" && profile.credits < needed) {
-          showToast(`Yetersiz kredi. ${needed} kredi gerekli, ${profile.credits} krediniz var.`, "error")
-          return
+          showToast(`Yetersiz kredi. ${needed} kredi gerekli, ${profile.credits} krediniz var.`, "error"); return
         }
       }
-    } catch { /* proceed, server will block if needed */ }
+    } catch { /* proceed */ }
 
-    cancelRef.current = false
-    setMultiProcessing(true)
-    setCurrentIdx(-1)
-    setBatchResults([])
-    setResultUrl(null)
-    setGenerationId(null)
-    setSaved(false)
-    setError("")
+    cancelRef.current = false; setMultiProcessing(true); setCurrentIdx(-1)
+    setBatchResults([]); setResultUrl(null); setGenerationId(null); setSaved(false); setError("")
 
     setMultiResults(multiPreviews.map((previewUrl) => ({
-      previewUrl,
-      status: "pending" as const,
-      outputUrl: null,
-      generationId: null,
-      selected: false,
+      previewUrl, status: "pending" as const, outputUrl: null, generationId: null, selected: false,
     })))
 
     let successCount = 0
 
     for (let i = 0; i < multiFiles.length; i++) {
       if (cancelRef.current) break
-
       setCurrentIdx(i)
       setMultiResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: "processing" as const } : r))
 
@@ -544,16 +615,13 @@ export default function ProductStudioPage() {
           headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify(buildBody(imageBase64)),
         })
-
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}))
           throw new Error((errData as { error?: string })?.error ?? "Üretim başarısız")
         }
-
         const data = await res.json() as { outputUrl?: string; generationId?: string }
         setMultiResults(prev => prev.map((r, idx) => idx === i ? {
-          ...r,
-          status: "success" as const,
+          ...r, status: "success" as const,
           outputUrl: data.outputUrl ?? null,
           generationId: data.generationId ?? null,
           selected: true,
@@ -565,21 +633,14 @@ export default function ProductStudioPage() {
     }
 
     window.dispatchEvent(new Event("credits-updated"))
-    setMultiProcessing(false)
-    setCurrentIdx(-1)
-    showToast(
-      `${successCount}/${multiFiles.length} ürün başarıyla üretildi.`,
-      successCount > 0 ? "success" : "error"
-    )
+    setMultiProcessing(false); setCurrentIdx(-1)
+    showToast(`${successCount}/${multiFiles.length} ürün başarıyla üretildi.`, successCount > 0 ? "success" : "error")
   }
 
   async function handleRetryMulti(idx: number) {
     if (multiProcessing) return
-    const token = await getToken()
-    if (!token) return
-
+    const token = await getToken(); if (!token) return
     setMultiResults(prev => prev.map((r, i) => i === idx ? { ...r, status: "processing" as const } : r))
-
     try {
       const imageBase64 = await fileToBase64(multiFiles[idx])
       const res = await fetch("/api/product-shot", {
@@ -587,7 +648,6 @@ export default function ProductStudioPage() {
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify(buildBody(imageBase64)),
       })
-
       if (!res.ok) throw new Error("Üretim başarısız")
       const data = await res.json() as { outputUrl?: string; generationId?: string }
       setMultiResults(prev => prev.map((r, i) => i === idx ? {
@@ -604,7 +664,72 @@ export default function ProductStudioPage() {
     }
   }
 
-  // ── Save / download handlers ──
+  // ── Brand Kit ────────────────────────────────────────────────────────────
+
+  async function loadBrandScenes() {
+    const token = await getToken(); if (!token) return
+    setBrandScenesLoading(true)
+    try {
+      const res = await fetch("/api/brand-scenes", { headers: { "Authorization": `Bearer ${token}` } })
+      if (res.ok) {
+        const data = await res.json() as { scenes?: BrandScene[] }
+        setBrandScenes(data.scenes ?? [])
+      }
+    } catch { /* silent */ }
+    finally { setBrandScenesLoading(false) }
+  }
+
+  function openBrandModal(imageUrl: string, sceneContext: string) {
+    setBrandModal({ open: true, imageUrl, sceneContext })
+    setBrandModalName("")
+  }
+
+  async function handleSaveBrandScene(name: string) {
+    if (!brandModal.imageUrl || !name.trim()) return
+    setSavingBrandScene(true)
+    try {
+      const token = await getToken(); if (!token) return
+      const res = await fetch("/api/brand-scenes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({
+          name: name.trim(),
+          referenceImageUrl: brandModal.imageUrl,
+          sceneContext: brandModal.sceneContext,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { scene?: BrandScene }
+        if (data.scene) setBrandScenes(prev => [...prev, data.scene!])
+        setBrandModal({ open: false, imageUrl: "", sceneContext: "" })
+        showToast("Marka sahnesi kaydedildi!", "success")
+      } else {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        showToast(data.error ?? "Kaydetme başarısız.", "error")
+      }
+    } catch { showToast("Bir hata oluştu.", "error") }
+    finally { setSavingBrandScene(false) }
+  }
+
+  async function handleDeleteBrandScene(id: string) {
+    if (!window.confirm("Bu marka sahnesini silmek istediğinize emin misiniz?")) return
+    const token = await getToken(); if (!token) return
+    try {
+      const res = await fetch(`/api/brand-scenes/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setBrandScenes(prev => prev.filter(s => s.id !== id))
+        if (selectedBrandScene === id) setSelectedBrandScene(null)
+        showToast("Marka sahnesi silindi.", "success")
+      } else {
+        showToast("Silme başarısız.", "error")
+      }
+    } catch { showToast("Bir hata oluştu.", "error") }
+  }
+
+  // ── Save / download ───────────────────────────────────────────────────────
 
   async function handleSave() {
     if (!resultUrl)    { showToast("Görsel URL eksik.", "error"); return }
@@ -612,8 +737,7 @@ export default function ProductStudioPage() {
     if (saved || saving) return
     setSaving(true)
     try {
-      const token = await getToken()
-      if (!token) { showToast("Oturum bulunamadı.", "error"); return }
+      const token = await getToken(); if (!token) { showToast("Oturum bulunamadı.", "error"); return }
       const res = await fetch("/api/save-to-gallery", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -631,27 +755,21 @@ export default function ProductStudioPage() {
     if (!selected.length || batchSaving) return
     setBatchSaving(true)
     try {
-      const token = await getToken()
-      if (!token) return
+      const token = await getToken(); if (!token) return
       const settled = await Promise.allSettled(
-        selected.map((r) =>
-          fetch("/api/save-to-gallery", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify({ generationId: r.generationId, imageUrl: r.url, type: "product" }),
-          }).then(async (res) => {
-            const data = await res.json().catch(() => ({}))
-            if (!res.ok) throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`)
-            return data
-          })
-        )
+        selected.map(r => fetch("/api/save-to-gallery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ generationId: r.generationId, imageUrl: r.url, type: "product" }),
+        }).then(async res => {
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok) throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`)
+          return data
+        }))
       )
-      const savedCount  = settled.filter((r) => r.status === "fulfilled").length
-      const failedCount = settled.length - savedCount
-      showToast(
-        failedCount > 0 ? `${savedCount} kaydedildi, ${failedCount} başarısız.` : `${savedCount} görsel galeriye kaydedildi!`,
-        failedCount > 0 ? "error" : "success"
-      )
+      const ok = settled.filter(r => r.status === "fulfilled").length
+      const fail = settled.length - ok
+      showToast(fail > 0 ? `${ok} kaydedildi, ${fail} başarısız.` : `${ok} görsel galeriye kaydedildi!`, fail > 0 ? "error" : "success")
     } catch { showToast("Kaydetme sırasında hata oluştu.", "error") }
     finally { setBatchSaving(false) }
   }
@@ -661,35 +779,28 @@ export default function ProductStudioPage() {
     if (!toSave.length || multiSaving) return
     setMultiSaving(true)
     try {
-      const token = await getToken()
-      if (!token) return
+      const token = await getToken(); if (!token) return
       const settled = await Promise.allSettled(
-        toSave.map(r =>
-          fetch("/api/save-to-gallery", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-            body: JSON.stringify({ generationId: r.generationId, imageUrl: r.outputUrl, type: "product" }),
-          }).then(async res => {
-            const data = await res.json().catch(() => ({}))
-            if (!res.ok) throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`)
-            return data
-          })
-        )
+        toSave.map(r => fetch("/api/save-to-gallery", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ generationId: r.generationId, imageUrl: r.outputUrl, type: "product" }),
+        }).then(async res => {
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok) throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`)
+          return data
+        }))
       )
-      const savedCount  = settled.filter(r => r.status === "fulfilled").length
-      const failedCount = settled.length - savedCount
-      showToast(
-        failedCount > 0 ? `${savedCount} kaydedildi, ${failedCount} başarısız.` : `${savedCount} görsel galeriye kaydedildi!`,
-        failedCount > 0 ? "error" : "success"
-      )
+      const ok = settled.filter(r => r.status === "fulfilled").length
+      const fail = settled.length - ok
+      showToast(fail > 0 ? `${ok} kaydedildi, ${fail} başarısız.` : `${ok} görsel galeriye kaydedildi!`, fail > 0 ? "error" : "success")
     } catch { showToast("Kaydetme sırasında hata oluştu.", "error") }
     finally { setMultiSaving(false) }
   }
 
   async function downloadUrl(url: string, filename: string) {
     try {
-      const res  = await fetch(url)
-      const blob = await res.blob()
+      const res  = await fetch(url); const blob = await res.blob()
       const href = URL.createObjectURL(blob)
       const a    = document.createElement("a")
       a.href = href; a.download = filename
@@ -699,52 +810,48 @@ export default function ProductStudioPage() {
   }
 
   async function handleBatchDownload() {
-    for (const r of batchResults.filter((r) => r.selected && r.url))
+    for (const r of batchResults.filter(r => r.selected && r.url))
       await downloadUrl(r.url!, `product-${r.scene}-${Date.now()}.jpg`)
   }
-
-  async function handleDownload() {
-    if (resultUrl) await downloadUrl(resultUrl, `product-studio-${Date.now()}.jpg`)
-  }
-
+  async function handleDownload() { if (resultUrl) await downloadUrl(resultUrl, `product-studio-${Date.now()}.jpg`) }
   async function handleMultiDownload() {
     for (const r of multiResults.filter(r => r.selected && r.outputUrl))
       await downloadUrl(r.outputUrl!, `product-multi-${Date.now()}.jpg`)
   }
 
   function toggleBatchSelect(idx: number) {
-    setBatchResults((prev) => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r))
+    setBatchResults(prev => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r))
   }
-
   function toggleMultiSelect(idx: number) {
-    setMultiResults((prev) => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r))
+    setMultiResults(prev => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r))
   }
 
-  // ── Derived values ──
+  // ── Derived values ────────────────────────────────────────────────────────
 
-  const isMultiUpload   = multiFiles.length > 1
+  const isMultiUpload    = multiFiles.length > 1
   const batchCreditCount = mode === "genel" ? 6 : 4
-  const canGenerate     = !!file && !generating && !batchLoading && !multiProcessing
-  const canMultiGenerate = isMultiUpload && !multiProcessing && !generating && !batchLoading
-  const selectedCount   = batchResults.filter((r) => r.selected).length
-  const multiSelCount   = multiResults.filter((r) => r.selected).length
-  const isBatchMode     = batchResults.length > 0 || batchLoading
-  const showMultiPanel  = isMultiUpload && (multiProcessing || multiResults.length > 0)
-  const currentScenes   = mode === "genel" ? SCENES : INDUSTRY_SCENES[industry]
-  const multiDoneCount  = multiResults.filter(r => r.status === "success" || r.status === "failed").length
-  const multiSuccCount  = multiResults.filter(r => r.status === "success").length
+  const atBrandLimit     = brandScenes.length >= MAX_BRAND_SCENES
+  const canGenerate      = !!file && !generating && !batchLoading && !multiProcessing
+  const canGenerateMarka = canGenerate && mode === "marka" && !!selectedBrandScene
+  const canMultiGenerate = isMultiUpload && !multiProcessing && !generating && !batchLoading &&
+    (mode !== "marka" || !!selectedBrandScene)
+  const selectedCount    = batchResults.filter(r => r.selected).length
+  const multiSelCount    = multiResults.filter(r => r.selected).length
+  const isBatchMode      = batchResults.length > 0 || batchLoading
+  const showMultiPanel   = isMultiUpload && (multiProcessing || multiResults.length > 0)
+  const currentScenes    = mode === "genel" ? SCENES : INDUSTRY_SCENES[industry]
+  const multiDoneCount   = multiResults.filter(r => r.status === "success" || r.status === "failed").length
+  const multiSuccCount   = multiResults.filter(r => r.status === "success").length
 
   const sceneLabel = (id: string) => {
-    const g = SCENES.find((s) => s.id === id)
-    if (g) return g.label
+    const g = SCENES.find(s => s.id === id); if (g) return g.label
     for (const scenes of Object.values(INDUSTRY_SCENES)) {
-      const found = scenes.find((s) => s.id === id)
-      if (found) return found.label
+      const found = scenes.find(s => s.id === id); if (found) return found.label
     }
     return id
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div>
@@ -774,7 +881,6 @@ export default function ProductStudioPage() {
             </p>
 
             {isMultiUpload ? (
-              /* Multi-file thumbnail grid */
               <div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {multiFiles.map((_, i) => (
@@ -796,8 +902,6 @@ export default function ProductStudioPage() {
                       )}
                     </div>
                   ))}
-
-                  {/* Add-more slot */}
                   {!multiProcessing && multiFiles.length < MAX_MULTI_FILES && (
                     <div
                       onClick={() => fileInputRef.current?.click()}
@@ -807,75 +911,41 @@ export default function ProductStudioPage() {
                     </div>
                   )}
                 </div>
-
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-[10px] text-[#9CA3AF] tracking-wide">
-                    {multiFiles.length} ürün yüklendi
-                  </p>
+                  <p className="text-[10px] text-[#9CA3AF] tracking-wide">{multiFiles.length} ürün yüklendi</p>
                   {!multiProcessing && (
-                    <button
-                      onClick={clearFile}
-                      className="text-[10px] text-[#9CA3AF] hover:text-[#6B7280] tracking-wide underline cursor-pointer"
-                    >
+                    <button onClick={clearFile} className="text-[10px] text-[#9CA3AF] hover:text-[#6B7280] tracking-wide underline cursor-pointer">
                       Tümünü temizle
                     </button>
                   )}
                 </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = e.target.files
-                    if (files && files.length > 0) handleFiles(Array.from(files))
-                    e.target.value = ""
-                  }}
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
+                  onChange={(e) => { const files = e.target.files; if (files && files.length > 0) handleFiles(Array.from(files)); e.target.value = "" }}
                 />
               </div>
             ) : !preview ? (
-              /* Single-file dropzone */
               <div
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
+                onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative flex flex-col items-center justify-center gap-3 border border-dashed cursor-pointer transition-colors h-52 select-none rounded-none ${
-                  dragging
-                    ? "border-[#C9A96E] bg-[#C9A96E]/5"
-                    : "border-[#D1D5DB] bg-[#FAFAFA] hover:border-[#C9A96E] hover:bg-[#FAFDF9]"
+                  dragging ? "border-[#C9A96E] bg-[#C9A96E]/5" : "border-[#D1D5DB] bg-[#FAFAFA] hover:border-[#C9A96E] hover:bg-[#FAFDF9]"
                 }`}
               >
                 <div className="w-11 h-11 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center shadow-sm">
                   <ImagePlus size={20} className="text-[#6B7280]" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-light tracking-wide text-[#6B7280]">
-                    {dragging ? "Bırakın" : "Sürükleyin veya tıklayın"}
-                  </p>
+                  <p className="text-sm font-light tracking-wide text-[#6B7280]">{dragging ? "Bırakın" : "Sürükleyin veya tıklayın"}</p>
                   <p className="text-[11px] tracking-wide text-[#9CA3AF] mt-0.5">JPG, PNG, WEBP — tek veya çoklu, max 7 MB</p>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = e.target.files
-                    if (files && files.length > 0) handleFiles(Array.from(files))
-                    e.target.value = ""
-                  }}
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
+                  onChange={(e) => { const files = e.target.files; if (files && files.length > 0) handleFiles(Array.from(files)); e.target.value = "" }}
                 />
               </div>
             ) : (
-              /* Single-file preview */
               <div className="relative overflow-hidden border border-[#E5E7EB] bg-[#F9FAFB] h-52 rounded-none">
                 <Image src={preview} alt="Yüklenen ürün" fill className="object-contain p-3" />
-                <button
-                  onClick={clearFile}
+                <button onClick={clearFile}
                   className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center shadow-sm hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                   aria-label="Görseli kaldır"
                 >
@@ -885,54 +955,48 @@ export default function ProductStudioPage() {
             )}
           </div>
 
-          {/* Adım 2 — Mod Seçimi + Sahne */}
+          {/* Adım 2 — Mod / Sahne Seçimi */}
           <div>
             <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">Sahne</p>
 
-            {/* Segmented control */}
+            {/* 3-tab segmented control */}
             <div className="flex border border-[#E5E7EB] mb-4 rounded-none overflow-hidden">
-              {(["genel", "sektorel"] as Mode[]).map((m) => (
+              {(["genel", "sektorel", "marka"] as Mode[]).map((m) => (
                 <button
                   key={m}
                   onClick={() => handleModeChange(m)}
-                  className={`flex-1 py-2 text-[10px] tracking-[0.2em] uppercase font-serif transition-all cursor-pointer ${
+                  className={`flex-1 py-2 text-[9px] tracking-[0.1em] uppercase font-serif transition-all cursor-pointer ${
                     mode === m ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827] hover:bg-[#F9FAFB]"
                   }`}
                 >
-                  {m === "genel" ? "Genel" : "Sektörel"}
+                  {m === "genel" ? "Genel" : m === "sektorel" ? "Sektörel" : "Marka"}
                 </button>
               ))}
             </div>
 
-            {/* GENEL — 6 scene cards */}
+            {/* GENEL */}
             {mode === "genel" && (
               <div className="grid grid-cols-3 gap-2">
                 {SCENES.map(({ id, label, description, icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setScene(id)}
+                  <button key={id} onClick={() => setScene(id)}
                     className={`flex flex-col items-center gap-1.5 p-3 border transition-all cursor-pointer rounded-none text-center ${
                       scene === id ? "border-[#C9A96E] bg-[#C9A96E]/5" : "border-[#E5E7EB] bg-white hover:border-[#C9A96E]/40"
                     }`}
                   >
                     <span className={scene === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}>{icon}</span>
-                    <span className={`text-[11px] font-medium tracking-wide leading-tight ${scene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>
-                      {label}
-                    </span>
+                    <span className={`text-[11px] font-medium tracking-wide leading-tight ${scene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>{label}</span>
                     <span className="text-[10px] text-[#9CA3AF] font-light leading-tight">{description}</span>
                   </button>
                 ))}
               </div>
             )}
 
-            {/* SEKTÖREL — industry chips + sub-scene grid */}
+            {/* SEKTÖREL */}
             {mode === "sektorel" && (
               <div className="space-y-4">
                 <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible">
                   {INDUSTRIES.map(({ id, label, emoji }) => (
-                    <button
-                      key={id}
-                      onClick={() => handleIndustryChange(id)}
+                    <button key={id} onClick={() => handleIndustryChange(id)}
                       className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border text-[11px] tracking-wide transition-all cursor-pointer rounded-none whitespace-nowrap ${
                         industry === id
                           ? "border-[#C9A96E] bg-[#C9A96E]/8 text-[#111827]"
@@ -944,48 +1008,99 @@ export default function ProductStudioPage() {
                     </button>
                   ))}
                 </div>
-
                 <div className="grid grid-cols-2 gap-2">
                   {INDUSTRY_SCENES[industry].map(({ id, label, description, icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => setIndustryScene(id)}
+                    <button key={id} onClick={() => setIndustryScene(id)}
                       className={`flex flex-col items-center gap-1.5 p-3 border transition-all cursor-pointer rounded-none text-center ${
                         industryScene === id ? "border-[#C9A96E] bg-[#C9A96E]/5" : "border-[#E5E7EB] bg-white hover:border-[#C9A96E]/40"
                       }`}
                     >
                       <span className={industryScene === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}>{icon}</span>
-                      <span className={`text-[11px] font-medium tracking-wide leading-tight ${industryScene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>
-                        {label}
-                      </span>
+                      <span className={`text-[11px] font-medium tracking-wide leading-tight ${industryScene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>{label}</span>
                       <span className="text-[10px] text-[#9CA3AF] font-light leading-tight">{description}</span>
                     </button>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* MARKA SAHNELERİM */}
+            {mode === "marka" && (
+              <div>
+                {brandScenesLoading ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Array.from({ length: 4 }).map((_, i) => <BrandSceneSkeletonCard key={i} />)}
+                  </div>
+                ) : brandScenes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-center">
+                      <Star size={20} strokeWidth={1} className="text-[#D1D5DB]" />
+                    </div>
+                    <p className="text-sm font-light tracking-wide text-[#111827]">Henüz marka sahneniz yok</p>
+                    <p className="text-[11px] text-[#9CA3AF] tracking-wide leading-relaxed max-w-xs">
+                      Beğendiğiniz bir üretim sonucunu marka sahnesi olarak kaydedin, tüm ürünlerinizde aynı stili kullanın.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {brandScenes.map((bs) => (
+                      <div
+                        key={bs.id}
+                        onClick={() => setSelectedBrandScene(bs.id === selectedBrandScene ? null : bs.id)}
+                        className={`relative aspect-square border-2 overflow-hidden cursor-pointer transition-all group rounded-none ${
+                          selectedBrandScene === bs.id
+                            ? "border-[#C9A96E] shadow-sm"
+                            : "border-[#E5E7EB] hover:border-[#C9A96E]/40"
+                        }`}
+                      >
+                        <img src={bs.referenceImageUrl} alt={bs.name} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
+                          <p className="text-[9px] tracking-[0.1em] uppercase text-white truncate font-light">{bs.name}</p>
+                        </div>
+                        {selectedBrandScene === bs.id && (
+                          <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-[#C9A96E] flex items-center justify-center">
+                            <Check size={10} strokeWidth={2.5} className="text-white" />
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteBrandScene(bs.id) }}
+                          className="absolute top-1.5 right-1.5 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-white cursor-pointer"
+                          aria-label="Sahneyi sil"
+                        >
+                          <Trash2 size={10} className="text-[#6B7280]" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {brandScenes.length > 0 && (
+                  <p className="text-[10px] text-[#9CA3AF] tracking-wide mt-2">
+                    {brandScenes.length}/{MAX_BRAND_SCENES} marka sahnesi kullanılıyor
+                    {atBrandLimit && <span className="text-[#C9A96E]"> — limite ulaşıldı</span>}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Adım 3 — Gölge Kontrolü */}
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">Gölge</p>
-            <div className="flex gap-2">
-              {SHADOWS.map(({ id, label, symbol }) => (
-                <button
-                  key={id}
-                  onClick={() => setShadow(id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 border text-[11px] tracking-wide transition-all cursor-pointer rounded-none ${
-                    shadow === id
-                      ? "border-[#C9A96E] bg-[#C9A96E]/5 text-[#111827]"
-                      : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C9A96E]/40"
-                  }`}
-                >
-                  <span className={`text-[13px] leading-none ${shadow === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}`}>{symbol}</span>
-                  <span className="font-light">{label}</span>
-                </button>
-              ))}
+          {/* Adım 3 — Gölge (hidden in marka empty state) */}
+          {!(mode === "marka" && brandScenes.length === 0) && (
+            <div>
+              <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">Gölge</p>
+              <div className="flex gap-2">
+                {SHADOWS.map(({ id, label, symbol }) => (
+                  <button key={id} onClick={() => setShadow(id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 border text-[11px] tracking-wide transition-all cursor-pointer rounded-none ${
+                      shadow === id ? "border-[#C9A96E] bg-[#C9A96E]/5 text-[#111827]" : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C9A96E]/40"
+                    }`}
+                  >
+                    <span className={`text-[13px] leading-none ${shadow === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}`}>{symbol}</span>
+                    <span className="font-light">{label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Uyarı bandı */}
           <div className="flex items-start gap-2 bg-[#FDF8F0] border border-[#C9A96E]/20 px-3 py-2.5">
@@ -995,13 +1110,10 @@ export default function ProductStudioPage() {
             </p>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">{error}</p>}
 
           {/* ── Buttons ── */}
           {isMultiUpload ? (
-            /* Multi-product mode buttons */
             <>
               <button
                 onClick={handleMultiGenerate}
@@ -1009,33 +1121,42 @@ export default function ProductStudioPage() {
                 className="w-full h-12 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {multiProcessing ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {currentIdx + 1}/{multiFiles.length} İşleniyor...
-                  </>
+                  <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{currentIdx + 1}/{multiFiles.length} İşleniyor...</>
                 ) : (
-                  <>
-                    <Sparkles size={13} strokeWidth={1.5} />
-                    Toplu Üret · {multiFiles.length} Kredi
-                  </>
+                  <><Sparkles size={13} strokeWidth={1.5} />Toplu Üret · {multiFiles.length} Kredi</>
                 )}
               </button>
-
               {multiProcessing && (
-                <button
-                  onClick={() => { cancelRef.current = true }}
+                <button onClick={() => { cancelRef.current = true }}
                   className="w-full h-10 border border-red-200 hover:border-red-400 text-red-500 hover:text-red-700 text-[10px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   İptal Et
                 </button>
               )}
-
               <p className="text-[10px] text-[#9C9588] tracking-wide text-center -mt-2">
                 {multiFiles.length} ürün × 1 sahne = {multiFiles.length} kredi
               </p>
             </>
+          ) : mode === "marka" ? (
+            <>
+              {brandScenes.length > 0 && (
+                <button
+                  onClick={handleGenerate}
+                  disabled={!canGenerateMarka}
+                  className="w-full h-12 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {generating ? (
+                    <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{PROGRESS_STEPS[progressStep]}</>
+                  ) : (
+                    <><Star size={13} strokeWidth={1.5} />Marka Sahnesiyle Üret · 1 Kredi</>
+                  )}
+                </button>
+              )}
+              {!selectedBrandScene && brandScenes.length > 0 && (
+                <p className="text-[10px] text-[#9CA3AF] tracking-wide text-center -mt-2">Yukarıdan bir marka sahnesi seçin</p>
+              )}
+            </>
           ) : (
-            /* Single-product mode buttons */
             <>
               <button
                 onClick={handleBatchGenerate}
@@ -1043,36 +1164,22 @@ export default function ProductStudioPage() {
                 className="w-full h-12 bg-white border border-[#111827] hover:bg-[#F9FAFB] text-[#111827] text-[11px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {batchLoading ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-[#111827]/30 border-t-[#111827] rounded-full animate-spin" />
-                    Sahneler Hazırlanıyor...
-                  </>
+                  <><span className="w-3.5 h-3.5 border-2 border-[#111827]/30 border-t-[#111827] rounded-full animate-spin" />Sahneler Hazırlanıyor...</>
                 ) : (
-                  <>
-                    <Gem size={13} strokeWidth={1.5} />
-                    Tüm Sahneleri Üret · {batchCreditCount} Kredi
-                  </>
+                  <><Gem size={13} strokeWidth={1.5} />Tüm Sahneleri Üret · {batchCreditCount} Kredi</>
                 )}
               </button>
-
               <button
                 onClick={handleGenerate}
                 disabled={!canGenerate}
                 className="w-full h-12 bg-[#111827] hover:bg-[#000000] text-white text-[11px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {generating ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {PROGRESS_STEPS[progressStep]}
-                  </>
+                  <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{PROGRESS_STEPS[progressStep]}</>
                 ) : (
-                  <>
-                    <Sparkles size={13} strokeWidth={1.5} />
-                    Ürün Görseli Oluştur · 1 Kredi
-                  </>
+                  <><Sparkles size={13} strokeWidth={1.5} />Ürün Görseli Oluştur · 1 Kredi</>
                 )}
               </button>
-
               <p className="text-[10px] text-[#9C9588] tracking-wide text-center -mt-2">
                 Tek sahne: 1 kredi · Tüm sahneler: {batchCreditCount} kredi
               </p>
@@ -1087,26 +1194,17 @@ export default function ProductStudioPage() {
           {showMultiPanel ? (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">
-                  Toplu Üretim
-                </p>
+                <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">Toplu Üretim</p>
                 <div className="flex items-center gap-3">
                   {multiProcessing ? (
                     <>
-                      <p className="text-[10px] tracking-wide text-[#6B7280]">
-                        {multiDoneCount}/{multiFiles.length} tamamlandı
-                      </p>
-                      <button
-                        onClick={() => { cancelRef.current = true }}
+                      <p className="text-[10px] tracking-wide text-[#6B7280]">{multiDoneCount}/{multiFiles.length} tamamlandı</p>
+                      <button onClick={() => { cancelRef.current = true }}
                         className="text-[10px] tracking-[0.1em] uppercase text-red-500 hover:text-red-700 font-medium cursor-pointer"
-                      >
-                        İptal Et
-                      </button>
+                      >İptal Et</button>
                     </>
                   ) : multiResults.length > 0 && (
-                    <p className="text-[10px] tracking-wide text-[#6B7280]">
-                      {multiSuccCount}/{multiResults.length} başarılı
-                    </p>
+                    <p className="text-[10px] tracking-wide text-[#6B7280]">{multiSuccCount}/{multiResults.length} başarılı</p>
                   )}
                 </div>
               </div>
@@ -1114,36 +1212,26 @@ export default function ProductStudioPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {multiResults.map((r, idx) => (
                   <MultiResultCard
-                    key={idx}
-                    result={r}
-                    idx={idx}
-                    isCurrent={currentIdx === idx}
-                    onToggle={toggleMultiSelect}
-                    onRetry={handleRetryMulti}
-                    disabled={multiProcessing}
+                    key={idx} result={r} idx={idx} isCurrent={currentIdx === idx}
+                    onToggle={toggleMultiSelect} onRetry={handleRetryMulti}
+                    onSaveBrandScene={(url) => openBrandModal(url, currentSceneContext())}
+                    disabled={multiProcessing} atBrandLimit={atBrandLimit}
                   />
                 ))}
               </div>
 
               {!multiProcessing && multiResults.length > 0 && (
                 <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={handleMultiDownload}
-                    disabled={multiSelCount === 0}
+                  <button onClick={handleMultiDownload} disabled={multiSelCount === 0}
                     className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Download size={11} strokeWidth={1.5} />
                     {multiSelCount > 0 ? `İndir (${multiSelCount})` : "İndir"}
                   </button>
-                  <button
-                    onClick={clearFile}
+                  <button onClick={clearFile}
                     className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    Tekrar Dene
-                  </button>
-                  <button
-                    onClick={handleMultiSave}
-                    disabled={multiSelCount === 0 || multiSaving}
+                  >Tekrar Dene</button>
+                  <button onClick={handleMultiSave} disabled={multiSelCount === 0 || multiSaving}
                     className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <BookmarkPlus size={11} strokeWidth={1.5} />
@@ -1157,14 +1245,11 @@ export default function ProductStudioPage() {
           ) : isBatchMode ? (
             <div>
               <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">Tüm Sahneler</p>
-
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {batchLoading
                   ? currentScenes.map((s) => <BatchSkeletonCard key={s.id} label={s.label} />)
                   : batchResults.map((r, idx) => (
-                    <div
-                      key={r.scene}
-                      onClick={() => r.url && toggleBatchSelect(idx)}
+                    <div key={r.scene} onClick={() => r.url && toggleBatchSelect(idx)}
                       className={`relative rounded-lg border-2 overflow-hidden transition-all ${
                         r.selected ? "border-[#C9A96E] shadow-sm" : "border-[#E5E7EB]"
                       } ${r.url ? "cursor-pointer hover:shadow-md" : "cursor-default opacity-60"}`}
@@ -1181,11 +1266,21 @@ export default function ProductStudioPage() {
                           {sceneLabel(r.scene)}
                         </span>
                         {r.url && (
-                          <div className={`absolute top-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            r.selected ? "bg-[#C9A96E] border-[#C9A96E]" : "bg-white/80 border-white/80"
-                          }`}>
-                            {r.selected && <Check size={11} strokeWidth={2.5} className="text-white" />}
-                          </div>
+                          <>
+                            <div className={`absolute top-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              r.selected ? "bg-[#C9A96E] border-[#C9A96E]" : "bg-white/80 border-white/80"
+                            }`}>
+                              {r.selected && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openBrandModal(r.url!, sceneLabel(r.scene)) }}
+                              disabled={atBrandLimit}
+                              title={atBrandLimit ? "Maksimum 10 marka sahnesi kaydedebilirsiniz" : "Marka sahnesi olarak kaydet"}
+                              className="absolute bottom-2 right-2 w-5 h-5 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <Star size={9} strokeWidth={1.5} className="text-[#C9A96E]" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -1195,23 +1290,16 @@ export default function ProductStudioPage() {
 
               {!batchLoading && batchResults.length > 0 && (
                 <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={handleBatchDownload}
-                    disabled={selectedCount === 0}
+                  <button onClick={handleBatchDownload} disabled={selectedCount === 0}
                     className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Download size={11} strokeWidth={1.5} />
                     İndir {selectedCount > 0 ? `(${selectedCount})` : ""}
                   </button>
-                  <button
-                    onClick={clearFile}
+                  <button onClick={clearFile}
                     className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    Tekrar Dene
-                  </button>
-                  <button
-                    onClick={handleBatchSave}
-                    disabled={selectedCount === 0 || batchSaving}
+                  >Tekrar Dene</button>
+                  <button onClick={handleBatchSave} disabled={selectedCount === 0 || batchSaving}
                     className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <BookmarkPlus size={11} strokeWidth={1.5} />
@@ -1225,7 +1313,6 @@ export default function ProductStudioPage() {
             /* Priority 3: Single preview */
             <div>
               <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">Önizleme</p>
-
               <div className="relative border border-[#E5E7EB] bg-white overflow-hidden rounded-none" style={{ minHeight: "420px" }}>
                 {generating && (
                   <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
@@ -1236,25 +1323,21 @@ export default function ProductStudioPage() {
                         <Sparkles size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "400ms" }} />
                         <Watch    size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "600ms" }} />
                       </div>
-                      <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">
-                        {PROGRESS_STEPS[progressStep]}
-                      </p>
+                      <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">{PROGRESS_STEPS[progressStep]}</p>
                     </div>
                   </div>
                 )}
-
                 {resultUrl && !generating && (
                   <div className="absolute inset-0">
                     <img src={resultUrl} alt="Üretim sonucu" className="w-full h-full object-contain" />
                   </div>
                 )}
-
                 {!resultUrl && !generating && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
                     <div className="w-px h-12 bg-[#E5E7EB]" />
                     <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">Sonuç Burada Görünecek</p>
                     <p className="text-[10px] tracking-wide text-[#D1D5DB]">
-                      {isMultiUpload ? "Toplu üretimi başlatın." : "Ürün fotoğrafı yükleyin ve sahne seçin."}
+                      {mode === "marka" ? "Marka sahnesi seçip üretin." : "Ürün fotoğrafı yükleyin ve sahne seçin."}
                     </p>
                     <div className="w-px h-12 bg-[#E5E7EB]" />
                   </div>
@@ -1262,29 +1345,36 @@ export default function ProductStudioPage() {
               </div>
 
               {resultUrl && !generating && (
-                <div className="flex gap-2 mt-3">
+                <div className="space-y-2 mt-3">
+                  {/* Row 1: İndir / Tekrar Dene / Kaydet */}
+                  <div className="flex gap-2">
+                    <button onClick={handleDownload}
+                      className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Download size={11} strokeWidth={1.5} /> İndir
+                    </button>
+                    <button onClick={clearFile}
+                      className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >Tekrar Dene</button>
+                    <button onClick={handleSave} disabled={saved || saving}
+                      className={`flex-1 h-8 border text-[10px] tracking-[0.1em] uppercase font-light transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 ${
+                        saved ? "border-[#C9A96E] text-[#C9A96E]" : "border-[#E5E7EB] hover:border-[#111827] text-[#6B7280] hover:text-[#111827]"
+                      }`}
+                    >
+                      {saved ? <Check size={11} strokeWidth={1.5} /> : <BookmarkPlus size={11} strokeWidth={1.5} />}
+                      {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
+                    </button>
+                  </div>
+
+                  {/* Row 2: ★ Marka Sahnesi Olarak Kaydet */}
                   <button
-                    onClick={handleDownload}
-                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    onClick={() => openBrandModal(resultUrl, currentSceneContext())}
+                    disabled={atBrandLimit}
+                    title={atBrandLimit ? "Maksimum 10 marka sahnesi kaydedebilirsiniz" : undefined}
+                    className="w-full h-8 border border-[#C9A96E]/40 hover:border-[#C9A96E] text-[10px] tracking-[0.1em] uppercase font-light text-[#C9A96E] hover:bg-[#C9A96E]/5 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <Download size={11} strokeWidth={1.5} />
-                    İndir
-                  </button>
-                  <button
-                    onClick={clearFile}
-                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    Tekrar Dene
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saved || saving}
-                    className={`flex-1 h-8 border text-[10px] tracking-[0.1em] uppercase font-light transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 ${
-                      saved ? "border-[#C9A96E] text-[#C9A96E]" : "border-[#E5E7EB] hover:border-[#111827] text-[#6B7280] hover:text-[#111827]"
-                    }`}
-                  >
-                    {saved ? <Check size={11} strokeWidth={1.5} /> : <BookmarkPlus size={11} strokeWidth={1.5} />}
-                    {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
+                    <Star size={11} strokeWidth={1.5} />
+                    Marka Sahnesi Olarak Kaydet
                   </button>
                 </div>
               )}
@@ -1292,6 +1382,15 @@ export default function ProductStudioPage() {
           )}
         </div>
       </div>
+
+      {/* ── Brand Scene Save Modal ── */}
+      {brandModal.open && (
+        <SaveBrandSceneModal
+          onClose={() => setBrandModal({ open: false, imageUrl: "", sceneContext: "" })}
+          onSave={handleSaveBrandScene}
+          saving={savingBrandScene}
+        />
+      )}
     </div>
   )
 }
