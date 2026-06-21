@@ -11,18 +11,31 @@ import {
   ShoppingBag, Layers, Coffee, Leaf, Square,
 } from "lucide-react"
 
-type Scene = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
+type Scene  = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
+type Shadow = "hafif" | "normal" | "dramatik"
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
 
 const SCENES: { id: Scene; label: string; description: string; icon: React.ReactNode }[] = [
-  { id: "ecommerce",    label: "E-ticaret",    description: "Beyaz arka plan",      icon: <ShoppingBag size={18} strokeWidth={1.5} /> },
-  { id: "marble",       label: "Mermer",       description: "Taş yüzey dokusu",     icon: <Layers      size={18} strokeWidth={1.5} /> },
-  { id: "lifestyle",    label: "Lifestyle",    description: "Kahve & günlük yaşam", icon: <Coffee      size={18} strokeWidth={1.5} /> },
-  { id: "nature",       label: "Doğa",         description: "Doğal ortam, yaprak",  icon: <Leaf        size={18} strokeWidth={1.5} /> },
-  { id: "minimal",      label: "Minimal",      description: "Sade, geometrik",      icon: <Square      size={18} strokeWidth={1.5} /> },
-  { id: "dark_luxury",  label: "Dark Luxury",  description: "Karanlık lüks atmosfer", icon: <Gem       size={18} strokeWidth={1.5} /> },
+  { id: "ecommerce",   label: "E-ticaret",   description: "Beyaz arka plan",        icon: <ShoppingBag size={18} strokeWidth={1.5} /> },
+  { id: "marble",      label: "Mermer",      description: "Taş yüzey dokusu",       icon: <Layers      size={18} strokeWidth={1.5} /> },
+  { id: "lifestyle",   label: "Lifestyle",   description: "Kahve & günlük yaşam",   icon: <Coffee      size={18} strokeWidth={1.5} /> },
+  { id: "nature",      label: "Doğa",        description: "Doğal ortam, yaprak",    icon: <Leaf        size={18} strokeWidth={1.5} /> },
+  { id: "minimal",     label: "Minimal",     description: "Sade, geometrik",        icon: <Square      size={18} strokeWidth={1.5} /> },
+  { id: "dark_luxury", label: "Dark Luxury", description: "Karanlık lüks atmosfer", icon: <Gem         size={18} strokeWidth={1.5} /> },
 ]
+
+const SHADOWS: { id: Shadow; label: string; symbol: string }[] = [
+  { id: "hafif",    label: "Hafif",    symbol: "☁" },
+  { id: "normal",   label: "Normal",   symbol: "◐" },
+  { id: "dramatik", label: "Dramatik", symbol: "◑" },
+]
+
+const SHADOW_INTENSITY: Record<Shadow, string> = {
+  hafif:    "soft",
+  normal:   "medium",
+  dramatik: "dramatic",
+}
 
 const PROGRESS_STEPS = [
   "Görsel analiz ediliyor...",
@@ -30,6 +43,13 @@ const PROGRESS_STEPS = [
   "Işıklandırma ayarlanıyor...",
   "Son rötuşlar yapılıyor...",
 ]
+
+type BatchResult = {
+  scene: Scene
+  url: string | null
+  generationId: string | null
+  selected: boolean
+}
 
 function InfoTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
@@ -56,11 +76,24 @@ function InfoTooltip({ text }: { text: string }) {
   )
 }
 
+function BatchSkeletonCard() {
+  return (
+    <div className="rounded-lg border border-[#E5E7EB] overflow-hidden animate-pulse">
+      <div className="aspect-square bg-[#F3F4F6]" />
+      <div className="p-2 flex items-center justify-between">
+        <div className="h-3 w-16 bg-[#E5E7EB] rounded" />
+        <div className="w-4 h-4 bg-[#E5E7EB] rounded" />
+      </div>
+    </div>
+  )
+}
+
 export default function ProductStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { showToast } = useToast()
 
   const [scene,        setScene]        = useState<Scene>("ecommerce")
+  const [shadow,       setShadow]       = useState<Shadow>("normal")
   const [file,         setFile]         = useState<File | null>(null)
   const [preview,      setPreview]      = useState<string | null>(null)
   const [dragging,     setDragging]     = useState(false)
@@ -72,23 +105,39 @@ export default function ProductStudioPage() {
   const [saved,        setSaved]        = useState(false)
   const [saving,       setSaving]       = useState(false)
 
+  const [batchLoading, setBatchLoading] = useState(false)
+  const [batchResults, setBatchResults] = useState<BatchResult[]>([])
+  const [batchSaving,  setBatchSaving]  = useState(false)
+
   function handleFile(f: File) {
     if (!f.type.startsWith("image/")) { setError("Lütfen bir görsel dosyası seçin."); return }
     if (f.size > MAX_FILE_BYTES)      { setError("Dosya boyutu 7 MB'ı geçemez.");    return }
     setFile(f)
     setPreview(URL.createObjectURL(f))
     setResultUrl(null)
+    setBatchResults([])
     setError("")
   }
 
-  const onDrop     = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }, [])
+  const onDrop      = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }, [])
   const onDragOver  = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true) }, [])
   const onDragLeave = useCallback(() => setDragging(false), [])
 
   function clearFile() {
     setFile(null); setPreview(null); setResultUrl(null)
     setError(""); setGenerationId(null); setSaved(false)
+    setBatchResults([])
     if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  async function getToken() {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token ?? null
+  }
+
+  async function getImageBase64(): Promise<string> {
+    const buf = await file!.arrayBuffer()
+    return Buffer.from(buf).toString("base64")
   }
 
   async function handleGenerate() {
@@ -96,26 +145,21 @@ export default function ProductStudioPage() {
     setGenerating(true)
     setProgressStep(0)
     setError("")
+    setBatchResults([])
 
     const progressInterval = setInterval(() => {
       setProgressStep((s) => (s < PROGRESS_STEPS.length - 1 ? s + 1 : s))
     }, 6000)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
+      const token = await getToken()
       if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
-
-      const arrayBuffer = await file.arrayBuffer()
-      const imageBase64 = Buffer.from(arrayBuffer).toString("base64")
+      const imageBase64 = await getImageBase64()
 
       const res = await fetch("/api/product-shot", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageBase64, scene_type: scene }),
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64, scene_type: scene, shadow_intensity: SHADOW_INTENSITY[shadow] }),
       })
 
       if (!res.ok) {
@@ -132,11 +176,7 @@ export default function ProductStudioPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
       setError(msg)
-      if (msg.toLowerCase().includes("kredi") || msg.toLowerCase().includes("credit")) {
-        showToast("Yetersiz kredi", "error")
-      } else {
-        showToast(msg || "Üretim başarısız oldu", "error")
-      }
+      showToast(msg.toLowerCase().includes("kredi") || msg.toLowerCase().includes("credit") ? "Yetersiz kredi" : msg || "Üretim başarısız oldu", "error")
     } finally {
       setGenerating(false)
       clearInterval(progressInterval)
@@ -144,12 +184,53 @@ export default function ProductStudioPage() {
     }
   }
 
+  async function handleBatchGenerate() {
+    if (!file) return
+    setBatchLoading(true)
+    setResultUrl(null)
+    setGenerationId(null)
+    setSaved(false)
+    setError("")
+
+    try {
+      const token = await getToken()
+      if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
+      const imageBase64 = await getImageBase64()
+      const batch_id = crypto.randomUUID()
+
+      const res = await fetch("/api/product-shot/batch", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64, shadow_intensity: SHADOW_INTENSITY[shadow], batch_id }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Batch üretim başarısız oldu.")
+      }
+
+      const data = await res.json() as {
+        results: { scene_type: Scene; status: 'success' | 'failed'; outputUrl?: string; generationId?: string | null }[]
+      }
+      setBatchResults(
+        data.results.map((r) => ({ scene: r.scene_type, url: r.outputUrl ?? null, generationId: r.generationId ?? null, selected: r.status === 'success' }))
+      )
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Tüm sahneler üretildi!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setError(msg)
+      showToast(msg || "Üretim başarısız oldu", "error")
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
   async function handleSave() {
     if (!resultUrl || !generationId || saved || saving) return
     setSaving(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
+      const token = await getToken()
       if (!token) return
       const res = await fetch("/api/save-to-gallery", {
         method: "POST",
@@ -162,6 +243,47 @@ export default function ProductStudioPage() {
       showToast("Bir hata oluştu.", "error")
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleBatchSave() {
+    const selected = batchResults.filter((r) => r.selected && r.url && r.generationId)
+    if (!selected.length || batchSaving) return
+    setBatchSaving(true)
+    try {
+      const token = await getToken()
+      if (!token) return
+      await Promise.all(
+        selected.map((r) =>
+          fetch("/api/save-to-gallery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ generationId: r.generationId, imageUrl: r.url, type: "product" }),
+          })
+        )
+      )
+      showToast(`${selected.length} görsel galeriye kaydedildi!`, "success")
+    } catch {
+      showToast("Kaydetme sırasında hata oluştu.", "error")
+    } finally {
+      setBatchSaving(false)
+    }
+  }
+
+  async function handleBatchDownload() {
+    const selected = batchResults.filter((r) => r.selected && r.url)
+    for (const r of selected) {
+      try {
+        const res  = await fetch(r.url!)
+        const blob = await res.blob()
+        const url  = URL.createObjectURL(blob)
+        const a    = document.createElement("a")
+        a.href = url; a.download = `product-${r.scene}-${Date.now()}.jpg`
+        document.body.appendChild(a); a.click()
+        document.body.removeChild(a); URL.revokeObjectURL(url)
+      } catch {
+        window.open(r.url!, "_blank")
+      }
     }
   }
 
@@ -180,7 +302,14 @@ export default function ProductStudioPage() {
     }
   }
 
-  const canGenerate = !!file && !generating
+  function toggleBatchSelect(idx: number) {
+    setBatchResults((prev) => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r))
+  }
+
+  const canGenerate   = !!file && !generating && !batchLoading
+  const selectedCount = batchResults.filter((r) => r.selected).length
+  const isBatchMode   = batchResults.length > 0 || batchLoading
+  const sceneLabel    = (id: Scene) => SCENES.find((s) => s.id === id)?.label ?? id
 
   return (
     <div>
@@ -287,6 +416,31 @@ export default function ProductStudioPage() {
             </div>
           </div>
 
+          {/* Adım 3 — Gölge Kontrolü */}
+          <div>
+            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+              Gölge
+            </p>
+            <div className="flex gap-2">
+              {SHADOWS.map(({ id, label, symbol }) => (
+                <button
+                  key={id}
+                  onClick={() => setShadow(id)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 border text-[11px] tracking-wide transition-all cursor-pointer rounded-none ${
+                    shadow === id
+                      ? "border-[#C9A96E] bg-[#C9A96E]/5 text-[#111827]"
+                      : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C9A96E]/40"
+                  }`}
+                >
+                  <span className={`text-[13px] leading-none ${shadow === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}`}>
+                    {symbol}
+                  </span>
+                  <span className="font-light">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Uyarı bandı */}
           <div className="flex items-start gap-2 bg-[#FDF8F0] border border-[#C9A96E]/20 px-3 py-2.5">
             <InfoIcon size={13} strokeWidth={1.5} className="text-[#C9A96E] mt-0.5 flex-shrink-0" />
@@ -301,6 +455,26 @@ export default function ProductStudioPage() {
             </p>
           )}
 
+          {/* Tüm Sahneleri Üret */}
+          <button
+            onClick={handleBatchGenerate}
+            disabled={!canGenerate}
+            className="w-full h-12 bg-white border border-[#111827] hover:bg-[#F9FAFB] text-[#111827] text-[11px] font-medium tracking-[0.2em] uppercase rounded-none transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {batchLoading ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-[#111827]/30 border-t-[#111827] rounded-full animate-spin" />
+                Sahneler Hazırlanıyor...
+              </>
+            ) : (
+              <>
+                <Gem size={13} strokeWidth={1.5} />
+                Tüm Sahneleri Üret · 6 Kredi
+              </>
+            )}
+          </button>
+
+          {/* Tek Sahne Üret */}
           <button
             onClick={handleGenerate}
             disabled={!canGenerate}
@@ -320,81 +494,170 @@ export default function ProductStudioPage() {
           </button>
 
           <p className="text-[10px] text-[#9C9588] tracking-wide text-center -mt-2">
-            1 kredi kullanılacak
+            Tek sahne: 1 kredi · Tüm sahneler: 6 kredi
           </p>
         </div>
 
         {/* ── SAĞ PANEL ── */}
         <div className="relative">
-          <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
-            Önizleme
-          </p>
 
-          <div className="relative border border-[#E5E7EB] bg-white overflow-hidden rounded-none" style={{ minHeight: "420px" }}>
+          {/* ── BATCH MOD ── */}
+          {isBatchMode ? (
+            <div>
+              <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                Tüm Sahneler
+              </p>
 
-            {generating && (
-              <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
-                <div className="flex flex-col items-center gap-6">
-                  <div className="grid grid-cols-2 gap-5">
-                    <Gem      size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "0ms" }} />
-                    <Circle   size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "200ms" }} />
-                    <Sparkles size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "400ms" }} />
-                    <Watch    size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "600ms" }} />
-                  </div>
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">
-                    {PROGRESS_STEPS[progressStep]}
-                  </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {batchLoading
+                  ? Array.from({ length: 6 }).map((_, i) => <BatchSkeletonCard key={i} />)
+                  : batchResults.map((r, idx) => (
+                    <div
+                      key={r.scene}
+                      onClick={() => r.url && toggleBatchSelect(idx)}
+                      className={`relative rounded-lg border-2 overflow-hidden transition-all ${
+                        r.selected
+                          ? "border-[#C9A96E] shadow-sm"
+                          : "border-[#E5E7EB]"
+                      } ${r.url ? "cursor-pointer hover:shadow-md" : "cursor-default opacity-60"}`}
+                    >
+                      {/* Görsel */}
+                      <div className="aspect-square bg-[#F9FAFB] relative overflow-hidden">
+                        {r.url ? (
+                          <img src={r.url} alt={r.scene} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <p className="text-[10px] tracking-wide text-[#9CA3AF] text-center px-2">
+                              Üretilemedi
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Sahne badge */}
+                        <span className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-white text-[9px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-sm">
+                          {sceneLabel(r.scene)}
+                        </span>
+
+                        {/* Checkbox */}
+                        {r.url && (
+                          <div
+                            className={`absolute top-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              r.selected
+                                ? "bg-[#C9A96E] border-[#C9A96E]"
+                                : "bg-white/80 border-white/80"
+                            }`}
+                          >
+                            {r.selected && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+
+              {/* Batch aksiyon butonları */}
+              {!batchLoading && batchResults.length > 0 && (
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={handleBatchDownload}
+                    disabled={selectedCount === 0}
+                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <Download size={11} strokeWidth={1.5} />
+                    İndir {selectedCount > 0 ? `(${selectedCount})` : ""}
+                  </button>
+                  <button
+                    onClick={clearFile}
+                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    Tekrar Dene
+                  </button>
+                  <button
+                    onClick={handleBatchSave}
+                    disabled={selectedCount === 0 || batchSaving}
+                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <BookmarkPlus size={11} strokeWidth={1.5} />
+                    {batchSaving ? "Kaydediliyor..." : `Kaydet ${selectedCount > 0 ? `(${selectedCount})` : ""}`}
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+          ) : (
+            /* ── TEK SAHNE MODU ── */
+            <div>
+              <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                Önizleme
+              </p>
 
-            {resultUrl && !generating && (
-              <div className="absolute inset-0">
-                <img src={resultUrl} alt="Üretim sonucu" className="w-full h-full object-contain" />
-              </div>
-            )}
+              <div className="relative border border-[#E5E7EB] bg-white overflow-hidden rounded-none" style={{ minHeight: "420px" }}>
 
-            {!resultUrl && !generating && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
-                <div className="w-px h-12 bg-[#E5E7EB]" />
-                <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
-                  Sonuç Burada Görünecek
-                </p>
-                <p className="text-[10px] tracking-wide text-[#D1D5DB]">
-                  Ürün fotoğrafı yükleyin ve sahne seçin.
-                </p>
-                <div className="w-px h-12 bg-[#E5E7EB]" />
-              </div>
-            )}
-          </div>
+                {generating && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
+                    <div className="flex flex-col items-center gap-6">
+                      <div className="grid grid-cols-2 gap-5">
+                        <Gem      size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "0ms" }} />
+                        <Circle   size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "200ms" }} />
+                        <Sparkles size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "400ms" }} />
+                        <Watch    size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: "600ms" }} />
+                      </div>
+                      <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">
+                        {PROGRESS_STEPS[progressStep]}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-          {resultUrl && !generating && (
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={handleDownload}
-                className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Download size={11} strokeWidth={1.5} />
-                İndir
-              </button>
-              <button
-                onClick={clearFile}
-                className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                Tekrar Dene
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saved || saving}
-                className={`flex-1 h-8 border text-[10px] tracking-[0.1em] uppercase font-light transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 ${
-                  saved
-                    ? "border-[#C9A96E] text-[#C9A96E]"
-                    : "border-[#E5E7EB] hover:border-[#111827] text-[#6B7280] hover:text-[#111827]"
-                }`}
-              >
-                {saved ? <Check size={11} strokeWidth={1.5} /> : <BookmarkPlus size={11} strokeWidth={1.5} />}
-                {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
-              </button>
+                {resultUrl && !generating && (
+                  <div className="absolute inset-0">
+                    <img src={resultUrl} alt="Üretim sonucu" className="w-full h-full object-contain" />
+                  </div>
+                )}
+
+                {!resultUrl && !generating && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+                    <div className="w-px h-12 bg-[#E5E7EB]" />
+                    <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
+                      Sonuç Burada Görünecek
+                    </p>
+                    <p className="text-[10px] tracking-wide text-[#D1D5DB]">
+                      Ürün fotoğrafı yükleyin ve sahne seçin.
+                    </p>
+                    <div className="w-px h-12 bg-[#E5E7EB]" />
+                  </div>
+                )}
+              </div>
+
+              {resultUrl && !generating && (
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={handleDownload}
+                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Download size={11} strokeWidth={1.5} />
+                    İndir
+                  </button>
+                  <button
+                    onClick={clearFile}
+                    className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    Tekrar Dene
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saved || saving}
+                    className={`flex-1 h-8 border text-[10px] tracking-[0.1em] uppercase font-light transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 ${
+                      saved
+                        ? "border-[#C9A96E] text-[#C9A96E]"
+                        : "border-[#E5E7EB] hover:border-[#111827] text-[#6B7280] hover:text-[#111827]"
+                    }`}
+                  >
+                    {saved ? <Check size={11} strokeWidth={1.5} /> : <BookmarkPlus size={11} strokeWidth={1.5} />}
+                    {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
