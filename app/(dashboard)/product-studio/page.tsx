@@ -9,10 +9,13 @@ import {
   ImagePlus, X, Circle, Gem, Sparkles, Watch,
   InfoIcon, Download, BookmarkPlus, Check,
   ShoppingBag, Layers, Coffee, Leaf, Square,
+  Monitor, Briefcase, ChefHat, Utensils, Flower2, Droplets, Eye, Zap,
 } from "lucide-react"
 
-type Scene  = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
-type Shadow = "hafif" | "normal" | "dramatik"
+type Scene    = "ecommerce" | "marble" | "lifestyle" | "nature" | "minimal" | "dark_luxury"
+type Shadow   = "hafif" | "normal" | "dramatik"
+type Mode     = "genel" | "sektorel"
+type Industry = "kitchen" | "cosmetics" | "tech" | "fashion" | "food"
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
 
@@ -24,6 +27,47 @@ const SCENES: { id: Scene; label: string; description: string; icon: React.React
   { id: "minimal",     label: "Minimal",     description: "Sade, geometrik",        icon: <Square      size={18} strokeWidth={1.5} /> },
   { id: "dark_luxury", label: "Dark Luxury", description: "Karanlık lüks atmosfer", icon: <Gem         size={18} strokeWidth={1.5} /> },
 ]
+
+const INDUSTRIES: { id: Industry; label: string; emoji: string }[] = [
+  { id: "kitchen",   label: "Ev & Mutfak",  emoji: "🏠" },
+  { id: "cosmetics", label: "Kozmetik",     emoji: "💄" },
+  { id: "tech",      label: "Teknoloji",    emoji: "💻" },
+  { id: "fashion",   label: "Moda Aksesuar", emoji: "👜" },
+  { id: "food",      label: "Yiyecek",      emoji: "🍽️" },
+]
+
+const INDUSTRY_SCENES: Record<Industry, { id: string; label: string; description: string; icon: React.ReactNode }[]> = {
+  kitchen: [
+    { id: "wooden_counter",  label: "Ahşap Tezgah",    description: "Doğal ahşap yüzey",   icon: <Coffee    size={18} strokeWidth={1.5} /> },
+    { id: "modern_kitchen",  label: "Modern Mutfak",   description: "Çağdaş tasarım",      icon: <Layers    size={18} strokeWidth={1.5} /> },
+    { id: "rustic_shelf",    label: "Rustik Raf",      description: "Vintage stil",         icon: <Square    size={18} strokeWidth={1.5} /> },
+    { id: "breakfast_table", label: "Kahvaltı Masası", description: "Sabah atmosferi",      icon: <ChefHat   size={18} strokeWidth={1.5} /> },
+  ],
+  cosmetics: [
+    { id: "spa_bathroom",   label: "Spa Banyo",        description: "Lüks spa ortamı",     icon: <Droplets  size={18} strokeWidth={1.5} /> },
+    { id: "water_droplets", label: "Su Damlacıkları",  description: "Ferah su efekti",     icon: <Circle    size={18} strokeWidth={1.5} /> },
+    { id: "rose_petals",    label: "Gül Yaprakları",   description: "Romantik dekor",      icon: <Flower2   size={18} strokeWidth={1.5} /> },
+    { id: "vanity_mirror",  label: "Makyaj Masası",    description: "Şık aydınlatma",      icon: <Eye       size={18} strokeWidth={1.5} /> },
+  ],
+  tech: [
+    { id: "modern_desk",      label: "Modern Masa",    description: "Temiz çalışma alanı", icon: <Monitor   size={18} strokeWidth={1.5} /> },
+    { id: "dark_gaming",      label: "Gaming Odası",   description: "RGB atmosfer",        icon: <Zap       size={18} strokeWidth={1.5} /> },
+    { id: "concrete_minimal", label: "Beton Minimal",  description: "Sade beton yüzey",   icon: <Square    size={18} strokeWidth={1.5} /> },
+    { id: "workspace_flat",   label: "Çalışma Alanı",  description: "Flat lay düzeni",     icon: <Briefcase size={18} strokeWidth={1.5} /> },
+  ],
+  fashion: [
+    { id: "velvet_display", label: "Kadife Yüzey",    description: "Lüks kadife zemin",   icon: <Gem         size={18} strokeWidth={1.5} /> },
+    { id: "boutique_shelf", label: "Butik Rafı",      description: "Mağaza sergisi",       icon: <ShoppingBag size={18} strokeWidth={1.5} /> },
+    { id: "marble_vanity",  label: "Mermer Makyaj",   description: "Mermer yüzey",        icon: <Layers      size={18} strokeWidth={1.5} /> },
+    { id: "linen_flatlay",  label: "Keten Flat-lay",  description: "Doğal keten doku",    icon: <Square      size={18} strokeWidth={1.5} /> },
+  ],
+  food: [
+    { id: "restaurant_table", label: "Restoran Masası", description: "Fine dining ortamı", icon: <Utensils size={18} strokeWidth={1.5} /> },
+    { id: "kitchen_prep",     label: "Mutfak Tezgahı",  description: "Hazırlık yüzeyi",    icon: <ChefHat  size={18} strokeWidth={1.5} /> },
+    { id: "picnic_outdoor",   label: "Piknik",           description: "Açık hava piknik",   icon: <Leaf     size={18} strokeWidth={1.5} /> },
+    { id: "cafe_counter",     label: "Kafe Tezgahı",    description: "Kahve kafe ortamı",  icon: <Coffee   size={18} strokeWidth={1.5} /> },
+  ],
+}
 
 const SHADOWS: { id: Shadow; label: string; symbol: string }[] = [
   { id: "hafif",    label: "Hafif",    symbol: "☁" },
@@ -45,7 +89,7 @@ const PROGRESS_STEPS = [
 ]
 
 type BatchResult = {
-  scene: Scene
+  scene: string
   url: string | null
   generationId: string | null
   selected: boolean
@@ -100,8 +144,12 @@ export default function ProductStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { showToast } = useToast()
 
-  const [scene,        setScene]        = useState<Scene>("ecommerce")
-  const [shadow,       setShadow]       = useState<Shadow>("normal")
+  const [mode,          setMode]          = useState<Mode>("genel")
+  const [scene,         setScene]         = useState<Scene>("ecommerce")
+  const [shadow,        setShadow]        = useState<Shadow>("normal")
+  const [industry,      setIndustry]      = useState<Industry>("kitchen")
+  const [industryScene, setIndustryScene] = useState<string>("wooden_counter")
+
   const [file,         setFile]         = useState<File | null>(null)
   const [preview,      setPreview]      = useState<string | null>(null)
   const [dragging,     setDragging]     = useState(false)
@@ -138,6 +186,25 @@ export default function ProductStudioPage() {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  function handleModeChange(m: Mode) {
+    setMode(m)
+    setResultUrl(null)
+    setBatchResults([])
+    setGenerationId(null)
+    setSaved(false)
+    setError("")
+  }
+
+  function handleIndustryChange(ind: Industry) {
+    setIndustry(ind)
+    setIndustryScene(INDUSTRY_SCENES[ind][0].id)
+    setBatchResults([])
+    setResultUrl(null)
+    setGenerationId(null)
+    setSaved(false)
+    setError("")
+  }
+
   async function getToken() {
     const { data: { session } } = await supabase.auth.getSession()
     return session?.access_token ?? null
@@ -164,10 +231,14 @@ export default function ProductStudioPage() {
       if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
       const imageBase64 = await getImageBase64()
 
+      const body = mode === "genel"
+        ? { imageBase64, scene_type: scene, shadow_intensity: SHADOW_INTENSITY[shadow] }
+        : { imageBase64, industry, industry_scene: industryScene, shadow_intensity: SHADOW_INTENSITY[shadow] }
+
       const res = await fetch("/api/product-shot", {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, scene_type: scene, shadow_intensity: SHADOW_INTENSITY[shadow] }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
@@ -176,7 +247,6 @@ export default function ProductStudioPage() {
       }
 
       const data = await res.json() as { outputUrl?: string; generationId?: string }
-      console.log("GENERATE result:", { outputUrl: data.outputUrl, generationId: data.generationId, dbError: (data as any).dbError })
       setResultUrl(data.outputUrl ?? null)
       setGenerationId(data.generationId ?? null)
       setSaved(false)
@@ -202,22 +272,27 @@ export default function ProductStudioPage() {
     setSaved(false)
     setError("")
 
-    const BATCH_SCENE_IDS = SCENES.map((s) => s.id)
+    const batchScenes = mode === "genel"
+      ? SCENES.map((s) => s.id as string)
+      : INDUSTRY_SCENES[industry].map((s) => s.id)
 
     try {
       const token = await getToken()
       if (!token) { setError("Oturum bulunamadı. Lütfen tekrar giriş yapın."); return }
 
-      const imageBase64   = await getImageBase64()
+      const imageBase64      = await getImageBase64()
       const shadow_intensity = SHADOW_INTENSITY[shadow]
 
-      // 6 paralel POST — her biri kendi 60s timeout'unda çalışır
       const settled = await Promise.allSettled(
-        BATCH_SCENE_IDS.map(async (sceneId) => {
+        batchScenes.map(async (sceneId) => {
+          const body = mode === "genel"
+            ? { imageBase64, scene_type: sceneId, shadow_intensity }
+            : { imageBase64, industry, industry_scene: sceneId, shadow_intensity }
+
           const res = await fetch("/api/product-shot", {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ imageBase64, scene_type: sceneId, shadow_intensity }),
+            body: JSON.stringify(body),
           })
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}))
@@ -229,7 +304,7 @@ export default function ProductStudioPage() {
       )
 
       setBatchResults(
-        BATCH_SCENE_IDS.map((sceneId, i) => {
+        batchScenes.map((sceneId, i) => {
           const result = settled[i]
           if (result.status === "fulfilled") {
             return { scene: sceneId, url: result.value.outputUrl, generationId: result.value.generationId, selected: true }
@@ -240,10 +315,10 @@ export default function ProductStudioPage() {
 
       window.dispatchEvent(new Event("credits-updated"))
       const successCount = settled.filter((r) => r.status === "fulfilled").length
-      if (successCount === BATCH_SCENE_IDS.length) {
+      if (successCount === batchScenes.length) {
         showToast("Tüm sahneler üretildi!", "success")
       } else {
-        showToast(`${successCount}/${BATCH_SCENE_IDS.length} sahne üretildi.`, "success")
+        showToast(`${successCount}/${batchScenes.length} sahne üretildi.`, "success")
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
@@ -255,9 +330,8 @@ export default function ProductStudioPage() {
   }
 
   async function handleSave() {
-    console.log("SAVE REQUEST:", { type: "product", generationId, resultUrl })
     if (!resultUrl) { showToast("Görsel URL eksik.", "error"); return }
-    if (!generationId) { showToast("Generation ID eksik — görsel DB'ye kaydedilemedi.", "error"); console.error("SAVE BLOCKED: generationId is null"); return }
+    if (!generationId) { showToast("Generation ID eksik — görsel DB'ye kaydedilemedi.", "error"); return }
     if (saved || saving) return
     setSaving(true)
     try {
@@ -269,7 +343,6 @@ export default function ProductStudioPage() {
         body: JSON.stringify({ generationId, imageUrl: resultUrl, type: "product" }),
       })
       const data = await res.json().catch(() => ({})) as { saved?: boolean; error?: string }
-      console.log("SAVE RESPONSE:", res.status, data)
       if (res.ok) { setSaved(true); showToast("Galeriye kaydedildi!", "success") }
       else showToast(data.error ?? "Kaydetme başarısız oldu.", "error")
     } catch (err) {
@@ -287,7 +360,6 @@ export default function ProductStudioPage() {
     try {
       const token = await getToken()
       if (!token) return
-      console.log("SAVE batch: ids=", selected.map((r) => r.generationId))
       const settled = await Promise.allSettled(
         selected.map((r) =>
           fetch("/api/save-to-gallery", {
@@ -297,16 +369,14 @@ export default function ProductStudioPage() {
           }).then(async (res) => {
             const data = await res.json().catch(() => ({}))
             if (!res.ok) throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`)
-            console.log(`SAVE: scene ${r.scene} →`, data)
             return data
           })
         )
       )
-      const savedCount = settled.filter((r) => r.status === "fulfilled").length
+      const savedCount  = settled.filter((r) => r.status === "fulfilled").length
       const failedCount = settled.length - savedCount
       if (failedCount > 0) {
         const errors = settled.filter((r) => r.status === "rejected").map((r) => (r as PromiseRejectedResult).reason?.message).join(", ")
-        console.error("SAVE batch errors:", errors)
         showToast(`${savedCount} kaydedildi, ${failedCount} başarısız: ${errors}`, "error")
       } else {
         showToast(`${savedCount} görsel galeriye kaydedildi!`, "success")
@@ -355,10 +425,21 @@ export default function ProductStudioPage() {
     setBatchResults((prev) => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r))
   }
 
-  const canGenerate   = !!file && !generating && !batchLoading
-  const selectedCount = batchResults.filter((r) => r.selected).length
-  const isBatchMode   = batchResults.length > 0 || batchLoading
-  const sceneLabel    = (id: Scene) => SCENES.find((s) => s.id === id)?.label ?? id
+  const batchCreditCount = mode === "genel" ? 6 : 4
+  const canGenerate      = !!file && !generating && !batchLoading
+  const selectedCount    = batchResults.filter((r) => r.selected).length
+  const isBatchMode      = batchResults.length > 0 || batchLoading
+  const currentScenes    = mode === "genel" ? SCENES : INDUSTRY_SCENES[industry]
+
+  const sceneLabel = (id: string) => {
+    const g = SCENES.find((s) => s.id === id)
+    if (g) return g.label
+    for (const scenes of Object.values(INDUSTRY_SCENES)) {
+      const found = scenes.find((s) => s.id === id)
+      if (found) return found.label
+    }
+    return id
+  }
 
   return (
     <div>
@@ -435,34 +516,103 @@ export default function ProductStudioPage() {
             )}
           </div>
 
-          {/* Adım 2 — Sahne Seçimi */}
+          {/* Adım 2 — Mod Seçimi + Sahne */}
           <div>
             <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
               Sahne
             </p>
-            <div className="grid grid-cols-3 gap-2">
-              {SCENES.map(({ id, label, description, icon }) => (
+
+            {/* Segmented control */}
+            <div className="flex border border-[#E5E7EB] mb-4 rounded-none overflow-hidden">
+              {(["genel", "sektorel"] as Mode[]).map((m) => (
                 <button
-                  key={id}
-                  onClick={() => setScene(id)}
-                  className={`flex flex-col items-center gap-1.5 p-3 border transition-all cursor-pointer rounded-none text-center ${
-                    scene === id
-                      ? "border-[#C9A96E] bg-[#C9A96E]/5"
-                      : "border-[#E5E7EB] bg-white hover:border-[#C9A96E]/40"
+                  key={m}
+                  onClick={() => handleModeChange(m)}
+                  className={`flex-1 py-2 text-[10px] tracking-[0.2em] uppercase font-serif transition-all cursor-pointer ${
+                    mode === m
+                      ? "bg-[#111827] text-white"
+                      : "bg-white text-[#9CA3AF] hover:text-[#111827] hover:bg-[#F9FAFB]"
                   }`}
                 >
-                  <span className={scene === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}>
-                    {icon}
-                  </span>
-                  <span className={`text-[11px] font-medium tracking-wide leading-tight ${scene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>
-                    {label}
-                  </span>
-                  <span className="text-[10px] text-[#9CA3AF] font-light leading-tight">
-                    {description}
-                  </span>
+                  {m === "genel" ? "Genel" : "Sektörel"}
                 </button>
               ))}
             </div>
+
+            {/* GENEL: 6 scene cards */}
+            {mode === "genel" && (
+              <div className="grid grid-cols-3 gap-2">
+                {SCENES.map(({ id, label, description, icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setScene(id)}
+                    className={`flex flex-col items-center gap-1.5 p-3 border transition-all cursor-pointer rounded-none text-center ${
+                      scene === id
+                        ? "border-[#C9A96E] bg-[#C9A96E]/5"
+                        : "border-[#E5E7EB] bg-white hover:border-[#C9A96E]/40"
+                    }`}
+                  >
+                    <span className={scene === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}>
+                      {icon}
+                    </span>
+                    <span className={`text-[11px] font-medium tracking-wide leading-tight ${scene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-[#9CA3AF] font-light leading-tight">
+                      {description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* SEKTÖREL: industry chips + sub-scene cards */}
+            {mode === "sektorel" && (
+              <div className="space-y-4">
+                {/* Industry chips — horizontal scroll on mobile, flex-wrap on desktop */}
+                <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-x-visible scrollbar-hide">
+                  {INDUSTRIES.map(({ id, label, emoji }) => (
+                    <button
+                      key={id}
+                      onClick={() => handleIndustryChange(id)}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border text-[11px] tracking-wide transition-all cursor-pointer rounded-none whitespace-nowrap ${
+                        industry === id
+                          ? "border-[#C9A96E] bg-[#C9A96E]/8 text-[#111827]"
+                          : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#C9A96E]/50 hover:text-[#111827]"
+                      }`}
+                    >
+                      <span className="text-sm leading-none">{emoji}</span>
+                      <span className="font-light">{label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub-scene cards (2×2 grid) */}
+                <div className="grid grid-cols-2 gap-2">
+                  {INDUSTRY_SCENES[industry].map(({ id, label, description, icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setIndustryScene(id)}
+                      className={`flex flex-col items-center gap-1.5 p-3 border transition-all cursor-pointer rounded-none text-center ${
+                        industryScene === id
+                          ? "border-[#C9A96E] bg-[#C9A96E]/5"
+                          : "border-[#E5E7EB] bg-white hover:border-[#C9A96E]/40"
+                      }`}
+                    >
+                      <span className={industryScene === id ? "text-[#C9A96E]" : "text-[#9CA3AF]"}>
+                        {icon}
+                      </span>
+                      <span className={`text-[11px] font-medium tracking-wide leading-tight ${industryScene === id ? "text-[#111827]" : "text-[#6B7280]"}`}>
+                        {label}
+                      </span>
+                      <span className="text-[10px] text-[#9CA3AF] font-light leading-tight">
+                        {description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Adım 3 — Gölge Kontrolü */}
@@ -518,7 +668,7 @@ export default function ProductStudioPage() {
             ) : (
               <>
                 <Gem size={13} strokeWidth={1.5} />
-                Tüm Sahneleri Üret · 6 Kredi
+                Tüm Sahneleri Üret · {batchCreditCount} Kredi
               </>
             )}
           </button>
@@ -543,7 +693,7 @@ export default function ProductStudioPage() {
           </button>
 
           <p className="text-[10px] text-[#9C9588] tracking-wide text-center -mt-2">
-            Tek sahne: 1 kredi · Tüm sahneler: 6 kredi
+            Tek sahne: 1 kredi · Tüm sahneler: {batchCreditCount} kredi
           </p>
         </div>
 
@@ -559,7 +709,7 @@ export default function ProductStudioPage() {
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {batchLoading
-                  ? SCENES.map((s) => <BatchSkeletonCard key={s.id} label={s.label} />)
+                  ? currentScenes.map((s) => <BatchSkeletonCard key={s.id} label={s.label} />)
                   : batchResults.map((r, idx) => (
                     <div
                       key={r.scene}
@@ -570,7 +720,6 @@ export default function ProductStudioPage() {
                           : "border-[#E5E7EB]"
                       } ${r.url ? "cursor-pointer hover:shadow-md" : "cursor-default opacity-60"}`}
                     >
-                      {/* Görsel */}
                       <div className="aspect-square bg-[#F9FAFB] relative overflow-hidden">
                         {r.url ? (
                           <img src={r.url} alt={r.scene} className="w-full h-full object-cover" />
@@ -582,12 +731,10 @@ export default function ProductStudioPage() {
                           </div>
                         )}
 
-                        {/* Sahne badge */}
                         <span className="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-white text-[9px] tracking-[0.1em] uppercase px-1.5 py-0.5 rounded-sm">
                           {sceneLabel(r.scene)}
                         </span>
 
-                        {/* Checkbox */}
                         {r.url && (
                           <div
                             className={`absolute top-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
@@ -605,7 +752,6 @@ export default function ProductStudioPage() {
                 }
               </div>
 
-              {/* Batch aksiyon butonları */}
               {!batchLoading && batchResults.length > 0 && (
                 <div className="flex gap-2 mt-4">
                   <button
