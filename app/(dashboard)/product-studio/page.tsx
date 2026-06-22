@@ -920,13 +920,19 @@ export default function ProductStudioPage() {
   }
 
   async function handleBatchDownload() {
+    const formatSlug = batchExportFormat ? `lunia-${batchExportFormat}-` : `lunia-`
     for (const r of batchResults.filter(r => r.selected && r.url))
-      await downloadUrl(r.url!, `product-${r.scene}-${Date.now()}.jpg`)
+      await downloadUrl(r.url!, `${formatSlug}${r.scene}-${Date.now()}.jpg`)
   }
-  async function handleDownload() { if (resultUrl) await downloadUrl(resultUrl, `product-studio-${Date.now()}.jpg`) }
+  async function handleDownload() {
+    if (!resultUrl) return
+    const formatSlug = activeExportFormat ? `lunia-${activeExportFormat}-` : `lunia-`
+    await downloadUrl(resultUrl, `${formatSlug}${Date.now()}.jpg`)
+  }
   async function handleMultiDownload() {
+    const formatSlug = multiExportFormat ? `lunia-${multiExportFormat}-` : `lunia-`
     for (const r of multiResults.filter(r => r.selected && r.outputUrl))
-      await downloadUrl(r.outputUrl!, `product-multi-${Date.now()}.jpg`)
+      await downloadUrl(r.outputUrl!, `${formatSlug}multi-${Date.now()}.jpg`)
   }
 
   function toggleBatchSelect(idx: number) {
