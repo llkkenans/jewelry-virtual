@@ -45,10 +45,11 @@ async function cropForCategory(imageBuffer: Buffer, category: Category): Promise
 }
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, category: Category, gender: Gender, skinTone: SkinTone
+  let imageBase64: string, category: Category, gender: Gender, skinTone: SkinTone, avatarId: string | undefined
   try {
     const body = await req.json()
     ;({ imageBase64, category } = body as { imageBase64: string; category: Category })
+    avatarId = body.avatarId as string | undefined
     gender = (body.gender as Gender) ?? 'woman'
     skinTone = (body.skinTone as SkinTone) ?? 'medium'
   } catch {
@@ -74,18 +75,21 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  if (!VALID_GENDERS.includes(gender)) {
-    return NextResponse.json(
-      { error: `Geçersiz gender. Geçerli değerler: ${VALID_GENDERS.join(', ')}` },
-      { status: 400 }
-    )
-  }
+  // gender/skinTone validation only needed when not using an avatar
+  if (!avatarId) {
+    if (!VALID_GENDERS.includes(gender)) {
+      return NextResponse.json(
+        { error: `Geçersiz gender. Geçerli değerler: ${VALID_GENDERS.join(', ')}` },
+        { status: 400 }
+      )
+    }
 
-  if (!VALID_SKIN_TONES.includes(skinTone)) {
-    return NextResponse.json(
-      { error: `Geçersiz skinTone. Geçerli değerler: ${VALID_SKIN_TONES.join(', ')}` },
-      { status: 400 }
-    )
+    if (!VALID_SKIN_TONES.includes(skinTone)) {
+      return NextResponse.json(
+        { error: `Geçersiz skinTone. Geçerli değerler: ${VALID_SKIN_TONES.join(', ')}` },
+        { status: 400 }
+      )
+    }
   }
 
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -122,33 +126,66 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const randomIndex = Math.floor(Math.random() * POSE_COUNTS[gender]) + 1
-  const r2Key = `clothing-references/${gender}/${skinTone}/${randomIndex}.png`
-
   let modelImageUrl: string
-  try {
-    const modelImageBuffer = await getFromR2(r2Key)
-    const modelBlob = new Blob([modelImageBuffer], { type: 'image/png' })
-    modelImageUrl = await fal.storage.upload(modelBlob)
-  } catch (err) {
-    console.error('R2 model fetch failed for key:', r2Key, err)
+  let effectiveGender: Gender = gender
+  let effectiveSkinTone: SkinTone = skinTone
 
-    if (randomIndex !== 1) {
-      const fallbackKey = `clothing-references/${gender}/${skinTone}/1.png`
-      try {
-        const fallbackBuffer = await getFromR2(fallbackKey)
-        const fallbackBlob = new Blob([fallbackBuffer], { type: 'image/png' })
-        modelImageUrl = await fal.storage.upload(fallbackBlob)
-      } catch (fallbackErr) {
-        console.error('Fallback also failed:', fallbackKey, fallbackErr)
+  if (avatarId) {
+    const { data: avatar, error: avatarError } = await supabaseAdmin
+      .from('avatars')
+      .select('id, gender, skin_tone, pose_count')
+      .eq('id', avatarId)
+      .eq('is_active', true)
+      .single()
+
+    if (avatarError || !avatar) {
+      return NextResponse.json({ error: 'Avatar bulunamadı' }, { status: 400 })
+    }
+
+    effectiveGender = avatar.gender as Gender
+    effectiveSkinTone = avatar.skin_tone as SkinTone
+
+    const poseIndex = Math.floor(Math.random() * avatar.pose_count) + 1
+    const avatarKey = `clothing-references/avatars/${avatarId}/${poseIndex}.png`
+
+    try {
+      const avatarBuffer = await getFromR2(avatarKey)
+      const avatarBlob = new Blob([avatarBuffer], { type: 'image/png' })
+      modelImageUrl = await fal.storage.upload(avatarBlob)
+    } catch (err) {
+      console.error('R2 avatar fetch failed for key:', avatarKey, err)
+      return NextResponse.json({
+        error: 'Avatar görseli yüklenemedi. Lütfen tekrar deneyin.'
+      }, { status: 500 })
+    }
+  } else {
+    const randomIndex = Math.floor(Math.random() * POSE_COUNTS[gender]) + 1
+    const r2Key = `clothing-references/${gender}/${skinTone}/${randomIndex}.png`
+
+    try {
+      const modelImageBuffer = await getFromR2(r2Key)
+      const modelBlob = new Blob([modelImageBuffer], { type: 'image/png' })
+      modelImageUrl = await fal.storage.upload(modelBlob)
+    } catch (err) {
+      console.error('R2 model fetch failed for key:', r2Key, err)
+
+      if (randomIndex !== 1) {
+        const fallbackKey = `clothing-references/${gender}/${skinTone}/1.png`
+        try {
+          const fallbackBuffer = await getFromR2(fallbackKey)
+          const fallbackBlob = new Blob([fallbackBuffer], { type: 'image/png' })
+          modelImageUrl = await fal.storage.upload(fallbackBlob)
+        } catch (fallbackErr) {
+          console.error('Fallback also failed:', fallbackKey, fallbackErr)
+          return NextResponse.json({
+            error: 'Üretim sırasında bir sorun oluştu. Lütfen tekrar deneyin.'
+          }, { status: 500 })
+        }
+      } else {
         return NextResponse.json({
-          error: 'Üretim sırasında bir sorun oluştu. Lütfen tekrar deneyin.'
+          error: `Referans görsel bulunamadı: ${r2Key}. Lütfen bu görselin R2'ye yüklendiğinden emin olun.`
         }, { status: 500 })
       }
-    } else {
-      return NextResponse.json({
-        error: `Referans görsel bulunamadı: ${r2Key}. Lütfen bu görselin R2'ye yüklendiğinden emin olun.`
-      }, { status: 500 })
     }
   }
 
@@ -175,8 +212,9 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: user.id,
         category,
-        gender,
-        skin_tone: skinTone,
+        gender: effectiveGender,
+        skin_tone: effectiveSkinTone,
+        avatar_id: avatarId ?? null,
         status: 'failed',
         credits_used: 0,
       })
@@ -234,8 +272,9 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id: user.id,
       category,
-      gender,
-      skin_tone: skinTone,
+      gender: effectiveGender,
+      skin_tone: effectiveSkinTone,
+      avatar_id: avatarId ?? null,
       status: 'done',
       credits_used: 1,
       output_image_url: outputUrl,
