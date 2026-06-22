@@ -1,15 +1,38 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/toast"
 import Image from "next/image"
 import Link from "next/link"
 import { ImagePlus, X, Circle, Gem, Sparkles, Watch, InfoIcon, Download, BookmarkPlus, Check } from "lucide-react"
 
-type Category = "tops" | "bottoms" | "one-pieces"
-type Gender   = "woman" | "man"
-type SkinTone = "light" | "medium" | "dark"
+function IconPlus({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
+}
+
+function IconUserSilhouette({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  )
+}
+
+type Category  = "tops" | "bottoms" | "one-pieces"
+type Gender    = "woman" | "man"
+type SkinTone  = "light" | "medium" | "dark"
+type ModelMode = "avatar" | "random"
+
+interface Avatar {
+  id: string
+  name: string
+  previewUrl: string | null
+}
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
 
@@ -74,23 +97,97 @@ function fileToBase64(f: File): Promise<string> {
   })
 }
 
+function AvatarCard({
+  avatar,
+  selected,
+  onSelect,
+}: {
+  avatar: Avatar
+  selected: boolean
+  onSelect: () => void
+}) {
+  const [imgError, setImgError] = useState(false)
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer transition-all group ${
+        selected ? "scale-[1.03]" : "opacity-70 hover:opacity-100"
+      }`}
+    >
+      <div
+        className={`w-[100px] h-[136px] overflow-hidden border transition-all ${
+          selected
+            ? "border-[#C9A96E] ring-2 ring-[#C9A96E] ring-offset-1"
+            : "border-[#E5E7EB] group-hover:border-[#C9A96E]"
+        }`}
+      >
+        {avatar.previewUrl && !imgError ? (
+          <img
+            src={avatar.previewUrl}
+            alt={avatar.name}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full h-full bg-[#F3F4F6] flex items-center justify-center">
+            <IconUserSilhouette size={32} />
+          </div>
+        )}
+      </div>
+      <span
+        className={`text-[10px] tracking-wider uppercase font-medium transition-colors ${
+          selected ? "text-[#111827]" : "text-[#9CA3AF]"
+        }`}
+      >
+        {avatar.name}
+      </span>
+    </button>
+  )
+}
+
+function ComingSoonCard() {
+  return (
+    <div className="flex-shrink-0 flex flex-col items-center gap-1.5 opacity-40 cursor-not-allowed">
+      <div className="w-[100px] h-[136px] border border-dashed border-[#D1D5DB] bg-[#F9FAFB] flex items-center justify-center">
+        <IconPlus size={20} />
+      </div>
+      <span className="text-[10px] tracking-wider uppercase font-medium text-[#9CA3AF]">
+        Yakında
+      </span>
+    </div>
+  )
+}
+
 export default function ClothingStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { showToast } = useToast()
 
-  const [category,  setCategory]  = useState<Category>("tops")
-  const [gender,    setGender]    = useState<Gender>("woman")
-  const [skinTone,  setSkinTone]  = useState<SkinTone>("medium")
-  const [file,      setFile]      = useState<File | null>(null)
-  const [preview,   setPreview]   = useState<string | null>(null)
-  const [dragging,  setDragging]  = useState(false)
-  const [generating, setGenerating] = useState(false)
-  const [progressStep, setProgressStep] = useState(0)
-  const [resultUrl, setResultUrl] = useState<string | null>(null)
-  const [error,     setError]     = useState("")
-  const [generationId, setGenerationId] = useState<string | null>(null)
-  const [saved,     setSaved]     = useState(false)
-  const [saving,    setSaving]    = useState(false)
+  const [category,      setCategory]      = useState<Category>("tops")
+  const [gender,        setGender]        = useState<Gender>("woman")
+  const [skinTone,      setSkinTone]      = useState<SkinTone>("medium")
+  const [file,          setFile]          = useState<File | null>(null)
+  const [preview,       setPreview]       = useState<string | null>(null)
+  const [dragging,      setDragging]      = useState(false)
+  const [generating,    setGenerating]    = useState(false)
+  const [progressStep,  setProgressStep]  = useState(0)
+  const [resultUrl,     setResultUrl]     = useState<string | null>(null)
+  const [error,         setError]         = useState("")
+  const [generationId,  setGenerationId]  = useState<string | null>(null)
+  const [saved,         setSaved]         = useState(false)
+  const [saving,        setSaving]        = useState(false)
+
+  const [avatars,        setAvatars]        = useState<Avatar[]>([])
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+  const [modelMode,      setModelMode]      = useState<ModelMode>("avatar")
+
+  useEffect(() => {
+    fetch("/api/avatars")
+      .then((res) => res.json())
+      .then((data: { avatars?: Avatar[] }) => setAvatars(data.avatars ?? []))
+      .catch(console.error)
+  }, [])
 
   function handleFile(f: File) {
     if (!f.type.startsWith("image/")) {
@@ -147,13 +244,18 @@ export default function ClothingStudioPage() {
 
       const imageBase64 = await fileToBase64(file)
 
+      const bodyPayload =
+        modelMode === "avatar" && selectedAvatar
+          ? { imageBase64, category, avatarId: selectedAvatar }
+          : { imageBase64, category, gender, skinTone }
+
       const res = await fetch("/api/clothing-tryon", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageBase64, category, gender, skinTone }),
+        body: JSON.stringify(bodyPayload),
       })
 
       if (!res.ok) {
@@ -225,7 +327,10 @@ export default function ClothingStudioPage() {
     }
   }
 
-  const canGenerate = !!file && !generating
+  const canGenerate =
+    !!file &&
+    !generating &&
+    (modelMode === "random" || (modelMode === "avatar" && !!selectedAvatar))
 
   return (
     <div>
@@ -305,7 +410,124 @@ export default function ClothingStudioPage() {
             )}
           </div>
 
-          {/* Adım 2 — Kategori */}
+          {/* Model Seç */}
+          <div>
+            {/* Mode toggle */}
+            <div className="flex items-center gap-4 mb-4 border-b border-[#F3F4F6]">
+              <button
+                type="button"
+                onClick={() => setModelMode("avatar")}
+                className={`pb-2.5 text-[10px] font-medium tracking-[0.15em] uppercase transition-all cursor-pointer ${
+                  modelMode === "avatar"
+                    ? "text-[#111827] border-b-2 border-[#C9A96E] -mb-px"
+                    : "text-[#9CA3AF] hover:text-[#6B7280]"
+                }`}
+              >
+                Avatar
+              </button>
+              <button
+                type="button"
+                onClick={() => setModelMode("random")}
+                className={`pb-2.5 text-[10px] font-medium tracking-[0.15em] uppercase transition-all cursor-pointer ${
+                  modelMode === "random"
+                    ? "text-[#111827] border-b-2 border-[#C9A96E] -mb-px"
+                    : "text-[#9CA3AF] hover:text-[#6B7280]"
+                }`}
+              >
+                Rastgele Model
+              </button>
+            </div>
+
+            {/* Avatar mode */}
+            {modelMode === "avatar" && (
+              <div>
+                <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                  Model Seç
+                </p>
+                {avatars.length === 0 ? (
+                  <div className="flex gap-3 overflow-x-auto pb-1">
+                    <ComingSoonCard />
+                    <ComingSoonCard />
+                    <ComingSoonCard />
+                  </div>
+                ) : (
+                  <div className="flex gap-3 overflow-x-auto pb-1">
+                    {avatars.map((avatar) => (
+                      <AvatarCard
+                        key={avatar.id}
+                        avatar={avatar}
+                        selected={selectedAvatar === avatar.id}
+                        onSelect={() =>
+                          setSelectedAvatar(selectedAvatar === avatar.id ? null : avatar.id)
+                        }
+                      />
+                    ))}
+                    <ComingSoonCard />
+                  </div>
+                )}
+                {modelMode === "avatar" && !selectedAvatar && (
+                  <p className="text-[10px] text-[#C9A96E] tracking-wide mt-2">
+                    Devam etmek için bir avatar seçin.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Random mode */}
+            {modelMode === "random" && (
+              <div className="space-y-5">
+                {/* Cinsiyet */}
+                <div>
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                    Cinsiyet
+                  </p>
+                  <div className="flex gap-2">
+                    {GENDERS.map(({ id, label }) => (
+                      <button
+                        key={id}
+                        onClick={() => setGender(id)}
+                        className={`flex-1 py-2 border text-sm font-light tracking-[0.1em] transition-all cursor-pointer rounded-none ${
+                          gender === id
+                            ? "border-[#111827] bg-[#111827] text-white"
+                            : "border-[#E5E7EB] bg-white text-[#111827] hover:border-[#111827]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ten Tonu */}
+                <div>
+                  <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                    Ten Tonu
+                  </p>
+                  <div className="flex gap-4">
+                    {SKIN_TONES.map(({ id, label, hex }) => (
+                      <div key={id} className="flex flex-col items-center gap-1.5">
+                        <button
+                          onClick={() => setSkinTone(id)}
+                          className={`w-7 h-7 rounded-full transition-all cursor-pointer ${
+                            skinTone === id
+                              ? "ring-1 ring-offset-2 ring-[#111827]"
+                              : "opacity-50 hover:opacity-80"
+                          }`}
+                          style={{ backgroundColor: hex }}
+                          title={label}
+                        />
+                        <span className={`text-[10px] tracking-wide ${
+                          skinTone === id ? "text-[#111827] font-medium" : "text-[#9CA3AF]"
+                        }`}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Adım — Kategori */}
           <div>
             <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3 flex items-center gap-1.5">
               Kategori
@@ -324,54 +546,6 @@ export default function ClothingStudioPage() {
                 >
                   {label}
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Adım 3 — Cinsiyet */}
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
-              Cinsiyet
-            </p>
-            <div className="flex gap-2">
-              {GENDERS.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setGender(id)}
-                  className={`flex-1 py-2 border text-sm font-light tracking-[0.1em] transition-all cursor-pointer rounded-none ${
-                    gender === id
-                      ? "border-[#111827] bg-[#111827] text-white"
-                      : "border-[#E5E7EB] bg-white text-[#111827] hover:border-[#111827]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Adım 4 — Ten Tonu */}
-          <div>
-            <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
-              Ten Tonu
-            </p>
-            <div className="flex gap-4">
-              {SKIN_TONES.map(({ id, label, hex }) => (
-                <div key={id} className="flex flex-col items-center gap-1.5">
-                  <button
-                    onClick={() => setSkinTone(id)}
-                    className={`w-7 h-7 rounded-full transition-all cursor-pointer ${
-                      skinTone === id
-                        ? "ring-1 ring-offset-2 ring-[#111827]"
-                        : "opacity-50 hover:opacity-80"
-                    }`}
-                    style={{ backgroundColor: hex }}
-                    title={label}
-                  />
-                  <span className={`text-[10px] tracking-wide ${
-                    skinTone === id ? "text-[#111827] font-medium" : "text-[#9CA3AF]"
-                  }`}>{label}</span>
-                </div>
               ))}
             </div>
           </div>
