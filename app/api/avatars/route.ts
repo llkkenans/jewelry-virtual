@@ -10,13 +10,13 @@ type AvatarRow = {
   gender: string
   skin_tone: string
   description: string | null
-  pose_count: number
+  scenes: string[] | null
 }
 
 export async function GET() {
   const { data: rows, error } = await supabaseAdmin
     .from('avatars')
-    .select('id, name, gender, skin_tone, description, pose_count')
+    .select('id, name, gender, skin_tone, description, scenes')
     .eq('is_active', true)
     .order('created_at', { ascending: true })
 
@@ -34,6 +34,7 @@ export async function GET() {
         gender: a.gender,
         skinTone: a.skin_tone,
         description: a.description,
+        scenes: a.scenes ?? ['studio'],
         previewUrl,
       }
     })

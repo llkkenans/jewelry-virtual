@@ -45,11 +45,12 @@ async function cropForCategory(imageBuffer: Buffer, category: Category): Promise
 }
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, category: Category, gender: Gender, skinTone: SkinTone, avatarId: string | undefined
+  let imageBase64: string, category: Category, gender: Gender, skinTone: SkinTone, avatarId: string | undefined, scene: string
   try {
     const body = await req.json()
     ;({ imageBase64, category } = body as { imageBase64: string; category: Category })
     avatarId = body.avatarId as string | undefined
+    scene = (body.scene as string) ?? 'studio'
     gender = (body.gender as Gender) ?? 'woman'
     skinTone = (body.skinTone as SkinTone) ?? 'medium'
   } catch {
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
   if (avatarId) {
     const { data: avatar, error: avatarError } = await supabaseAdmin
       .from('avatars')
-      .select('id, gender, skin_tone, pose_count')
+      .select('id, gender, skin_tone')
       .eq('id', avatarId)
       .eq('is_active', true)
       .single()
@@ -145,8 +146,7 @@ export async function POST(req: NextRequest) {
     effectiveGender = avatar.gender as Gender
     effectiveSkinTone = avatar.skin_tone as SkinTone
 
-    const poseIndex = Math.floor(Math.random() * avatar.pose_count) + 1
-    const avatarKey = `clothing-references/avatars/${avatarId}/${poseIndex}.png`
+    const avatarKey = `clothing-references/avatars/${avatarId}/${scene}/1.png`
 
     try {
       const avatarBuffer = await getFromR2(avatarKey)
@@ -215,6 +215,7 @@ export async function POST(req: NextRequest) {
         gender: effectiveGender,
         skin_tone: effectiveSkinTone,
         avatar_id: avatarId ?? null,
+        scene_type: avatarId ? scene : null,
         status: 'failed',
         credits_used: 0,
       })
@@ -275,6 +276,7 @@ export async function POST(req: NextRequest) {
       gender: effectiveGender,
       skin_tone: effectiveSkinTone,
       avatar_id: avatarId ?? null,
+      scene_type: avatarId ? scene : null,
       status: 'done',
       credits_used: 1,
       output_image_url: outputUrl,

@@ -28,11 +28,20 @@ type Gender    = "woman" | "man"
 type SkinTone  = "light" | "medium" | "dark"
 type ModelMode = "avatar" | "random"
 
+type Scene = "studio" | "street" | "beach"
+
 interface Avatar {
   id: string
   name: string
+  scenes: Scene[]
   previewUrl: string | null
 }
+
+const SCENES: { id: Scene; label: string }[] = [
+  { id: "studio", label: "Stüdyo" },
+  { id: "street", label: "Sokak" },
+  { id: "beach",  label: "Sahil" },
+]
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
 
@@ -180,6 +189,7 @@ export default function ClothingStudioPage() {
 
   const [avatars,        setAvatars]        = useState<Avatar[]>([])
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+  const [selectedScene,  setSelectedScene]  = useState<Scene>("studio")
   const [modelMode,      setModelMode]      = useState<ModelMode>("avatar")
 
   useEffect(() => {
@@ -246,7 +256,7 @@ export default function ClothingStudioPage() {
 
       const bodyPayload =
         modelMode === "avatar" && selectedAvatar
-          ? { imageBase64, category, avatarId: selectedAvatar }
+          ? { imageBase64, category, avatarId: selectedAvatar, scene: selectedScene }
           : { imageBase64, category, gender, skinTone }
 
       const res = await fetch("/api/clothing-tryon", {
@@ -457,9 +467,11 @@ export default function ClothingStudioPage() {
                         key={avatar.id}
                         avatar={avatar}
                         selected={selectedAvatar === avatar.id}
-                        onSelect={() =>
-                          setSelectedAvatar(selectedAvatar === avatar.id ? null : avatar.id)
-                        }
+                        onSelect={() => {
+                          const newId = selectedAvatar === avatar.id ? null : avatar.id
+                          setSelectedAvatar(newId)
+                          setSelectedScene("studio")
+                        }}
                       />
                     ))}
                     <ComingSoonCard />
@@ -470,6 +482,36 @@ export default function ClothingStudioPage() {
                     Devam etmek için bir avatar seçin.
                   </p>
                 )}
+
+                {/* Scene selector — only when an avatar is selected */}
+                {selectedAvatar && (() => {
+                  const avatar = avatars.find((a) => a.id === selectedAvatar)
+                  const availableScenes = SCENES.filter((s) => avatar?.scenes?.includes(s.id))
+                  if (availableScenes.length < 2) return null
+                  return (
+                    <div className="mt-4">
+                      <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                        Sahne
+                      </p>
+                      <div className="flex gap-2">
+                        {availableScenes.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => setSelectedScene(id)}
+                            className={`px-3 py-1.5 text-[10px] font-medium tracking-[0.15em] uppercase border transition-all cursor-pointer rounded-none ${
+                              selectedScene === id
+                                ? "border-[#111827] bg-[#111827] text-white"
+                                : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#111827] hover:text-[#111827]"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             )}
 
