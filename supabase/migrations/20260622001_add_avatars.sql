@@ -23,8 +23,8 @@ ALTER TABLE clothing_generations
 -- Seed first test avatar
 INSERT INTO avatars (id, name, gender, skin_tone, description, pose_count)
 VALUES (
-  'elif',
-  'Elif',
+  'elisa',
+  'Elisa',
   'woman',
   'light',
   'Açık tenli, uzun koyu saçlı, fashion model',
