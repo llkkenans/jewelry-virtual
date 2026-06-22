@@ -6,7 +6,9 @@ import sharp from 'sharp'
 const FORMAT_SPECS: Record<string, { width: number; height: number; padding: number }> = {
   square:     { width: 1000, height: 1000, padding: 0.12 },
   vertical:   { width: 1200, height: 1800, padding: 0.10 },
+  portrait:   { width: 1200, height: 1800, padding: 0.10 },
   horizontal: { width: 1600, height: 900,  padding: 0.10 },
+  landscape:  { width: 1600, height: 900,  padding: 0.10 },
   amazon:     { width: 2000, height: 2000, padding: 0.08 },
 }
 
