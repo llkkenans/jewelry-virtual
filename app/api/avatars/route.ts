@@ -21,6 +21,7 @@ export async function GET() {
     .order('created_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  console.log('RAW DB ROWS:', JSON.stringify(rows))
 
   const avatars = await Promise.all(
     (rows as AvatarRow[]).map(async (a) => {
