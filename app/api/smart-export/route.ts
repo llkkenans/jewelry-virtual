@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
 
+  console.log('Smart Export called:', { format, imageUrl: imageUrl?.substring(0, 80) + '...' })
+
   if (!imageUrl || !format) {
     return NextResponse.json({ error: 'Eksik parametre: imageUrl, format gerekli' }, { status: 400 })
   }
@@ -61,43 +63,37 @@ export async function POST(req: NextRequest) {
 
   let sourceBuffer: Buffer
   try {
-    // imageUrl may be an R2 key or a presigned/external URL
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       const res = await fetch(imageUrl)
-      if (!res.ok) throw new Error(`Görsel alınamadı: ${res.status}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
       sourceBuffer = Buffer.from(await res.arrayBuffer())
     } else {
       sourceBuffer = await getFromR2(imageUrl)
     }
-  } catch (err) {
+  } catch (err: unknown) {
+    console.error('Smart Export - image fetch error:', String(err))
     return NextResponse.json(
-      { error: 'Kaynak görsel alınamadı', details: String(err) },
-      { status: 502 }
+      { error: 'Kaynak görsel alınamadı. Lütfen görseli yeniden üretip tekrar deneyin.' },
+      { status: 400 }
     )
   }
 
   let outputBuffer: Buffer
   try {
-    const paddingH = Math.round(targetWidth * padding)
-    const paddingV = Math.round(targetHeight * padding)
-    const innerWidth = targetWidth - paddingH * 2
-    const innerHeight = targetHeight - paddingV * 2
+    const meta = await sharp(sourceBuffer).metadata()
+    console.log('Smart Export - source image:', meta.width, 'x', meta.height, meta.format)
 
     outputBuffer = await sharp(sourceBuffer)
-      .resize(innerWidth, innerHeight, { fit: 'contain', background: '#FFFFFF' })
-      .extend({
-        top: paddingV,
-        bottom: paddingV,
-        left: paddingH,
-        right: paddingH,
+      .resize(targetWidth, targetHeight, {
+        fit: 'contain',
         background: { r: 255, g: 255, b: 255, alpha: 1 },
       })
-      .resize(targetWidth, targetHeight)
       .jpeg({ quality: 92 })
       .toBuffer()
-  } catch (err) {
+  } catch (err: unknown) {
+    console.error('Smart Export - sharp error:', String(err))
     return NextResponse.json(
-      { error: 'Görsel işleme hatası', details: String(err) },
+      { error: 'Görsel işleme hatası: ' + String(err) },
       { status: 500 }
     )
   }
@@ -105,9 +101,10 @@ export async function POST(req: NextRequest) {
   const r2Key = `exports/${user.id}/${format}_${Date.now()}.jpg`
   try {
     await uploadToR2(outputBuffer, r2Key, 'image/jpeg')
-  } catch (err) {
+  } catch (err: unknown) {
+    console.error('Smart Export - R2 upload error:', String(err))
     return NextResponse.json(
-      { error: 'R2 yükleme hatası', details: String(err) },
+      { error: 'Dışa aktarma kaydedilemedi' },
       { status: 502 }
     )
   }
