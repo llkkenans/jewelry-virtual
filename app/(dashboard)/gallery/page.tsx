@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2, Trash2, CheckSquare, Square, X, Watch, FolderPlus } from "lucide-react"
 import { toast } from "sonner"
+import { Lightbox } from "@/components/gallery/Lightbox"
 
 type Generation = {
   id: string
@@ -163,6 +164,9 @@ export default function GalleryPage() {
   const [productHasMore, setProductHasMore]         = useState(true)
   const [productLoadingMore, setProductLoadingMore] = useState(false)
   const productLoadedRef = useRef(false)
+
+  const [lightboxOpen, setLightboxOpen]   = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -687,9 +691,12 @@ export default function GalleryPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {productItems.map((item) => (
+              {productItems.map((item, idx) => (
                 <div key={item.id} className="bg-white group">
-                  <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
+                  <div
+                    className="relative aspect-square overflow-hidden bg-[#FAFAFA] cursor-pointer"
+                    onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                  >
                     <GalleryImage src={item.output_image_url} alt={PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type} />
                   </div>
                   <div className="pt-3 pb-1">
@@ -755,9 +762,12 @@ export default function GalleryPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {clothingItems.map((item) => (
+              {clothingItems.map((item, idx) => (
                 <div key={item.id} className="bg-white group">
-                  <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
+                  <div
+                    className="relative aspect-square overflow-hidden bg-[#FAFAFA] cursor-pointer"
+                    onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                  >
                     <GalleryImage src={item.output_image_url} alt={CLOTHING_CATEGORY_LABELS[item.category] ?? item.category} />
                   </div>
                   <div className="pt-3 pb-1">
@@ -913,7 +923,7 @@ export default function GalleryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {displayed.map((item) => {
+          {displayed.map((item, idx) => {
             const type = JEWELRY_LABELS[item.jewelry_type]
             const Icon = type?.icon ?? Gem
             const isSelected = selected.has(item.id)
@@ -923,7 +933,10 @@ export default function GalleryPage() {
                 onClick={selectMode ? () => toggleSelect(item.id) : undefined}
                 className={`bg-white group transition-all ${selectMode ? "cursor-pointer" : ""} ${isSelected ? "ring-2 ring-inset ring-[#111827]" : ""}`}
               >
-                <div className="relative aspect-square overflow-hidden bg-[#FAFAFA]">
+                <div
+                  className={`relative aspect-square overflow-hidden bg-[#FAFAFA] ${!selectMode ? "cursor-pointer" : ""}`}
+                  onClick={!selectMode ? () => { setLightboxIndex(idx); setLightboxOpen(true) } : undefined}
+                >
                   <GalleryImage src={item.output_image_url} alt={type?.label ?? item.jewelry_type} />
                   {selectMode ? (
                     <div className={`absolute inset-0 transition-colors ${isSelected ? "bg-[#111827]/10" : "bg-transparent"}`}>
@@ -1020,6 +1033,34 @@ export default function GalleryPage() {
           </p>
         </div>
       )}
+
+      <Lightbox
+        images={
+          galleryType === "jewelry"
+            ? displayed.map(i => ({
+                url: i.output_image_url,
+                category: JEWELRY_LABELS[i.jewelry_type]?.label ?? i.jewelry_type,
+                date: formatDate(i.created_at),
+                id: i.id,
+              }))
+            : galleryType === "clothing"
+            ? clothingItems.map(i => ({
+                url: i.output_image_url,
+                category: CLOTHING_CATEGORY_LABELS[i.category] ?? i.category,
+                date: formatDate(i.created_at),
+                id: i.id,
+              }))
+            : productItems.map(i => ({
+                url: i.output_image_url,
+                category: PRODUCT_SCENE_LABELS[i.scene_type] ?? i.scene_type,
+                date: formatDate(i.created_at),
+                id: i.id,
+              }))
+        }
+        initialIndex={lightboxIndex}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   )
 }

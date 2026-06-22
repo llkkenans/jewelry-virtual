@@ -14,6 +14,36 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes slideFromLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideToLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-100%); opacity: 0; }
+}
+
+@utility animate-fadeIn {
+  animation: fadeIn 200ms ease-out forwards;
+}
+@utility animate-fadeOut {
+  animation: fadeOut 200ms ease-in forwards;
+}
+@utility animate-slideFromLeft {
+  animation: slideFromLeft 300ms ease-out forwards;
+}
+@utility animate-slideToLeft {
+  animation: slideToLeft 250ms ease-in forwards;
+}
+
 @layer base {
   :root {
     --background: oklch(1 0 0);
