@@ -772,9 +772,9 @@ export default function ProductStudioPage() {
         body: JSON.stringify({ imageUrl: resultUrl, format }),
       })
       if (!res.ok) throw new Error("Export başarısız")
-      const data = await res.json() as { outputUrl?: string }
-      if (data.outputUrl) {
-        setResultUrl(data.outputUrl)
+      const data = await res.json() as { exportUrl?: string }
+      if (data.exportUrl) {
+        setResultUrl(data.exportUrl)
         setActiveExportFormat(format)
         showToast(`Görsel ${EXPORT_FORMATS.find(f => f.id === format)?.label ?? format} formatına dönüştürüldü`, "success")
       }
@@ -797,10 +797,10 @@ export default function ProductStudioPage() {
           body: JSON.stringify({ imageUrl: r.url, format }),
         })
         if (res.ok) {
-          const data = await res.json() as { outputUrl?: string }
-          if (data.outputUrl) {
+          const data = await res.json() as { exportUrl?: string }
+          if (data.exportUrl) {
             const sceneId = r.scene
-            setBatchResults(prev => prev.map(br => br.scene === sceneId ? { ...br, url: data.outputUrl! } : br))
+            setBatchResults(prev => prev.map(br => br.scene === sceneId ? { ...br, url: data.exportUrl! } : br))
           }
         }
       } catch { /* continue */ }
@@ -827,9 +827,9 @@ export default function ProductStudioPage() {
           body: JSON.stringify({ imageUrl: url, format }),
         })
         if (res.ok) {
-          const data = await res.json() as { outputUrl?: string }
-          if (data.outputUrl) {
-            setMultiResults(prev => prev.map((mr, i) => i === idx ? { ...mr, outputUrl: data.outputUrl! } : mr))
+          const data = await res.json() as { exportUrl?: string }
+          if (data.exportUrl) {
+            setMultiResults(prev => prev.map((mr, i) => i === idx ? { ...mr, outputUrl: data.exportUrl! } : mr))
           }
         }
       } catch { /* continue */ }
