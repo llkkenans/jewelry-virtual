@@ -28,7 +28,7 @@ type Gender    = "woman" | "man"
 type SkinTone  = "light" | "medium" | "dark"
 type ModelMode = "avatar" | "random"
 
-type Scene = "studio" | "street" | "beach"
+type Scene = string
 
 interface Avatar {
   id: string
@@ -37,11 +37,11 @@ interface Avatar {
   previewUrl: string | null
 }
 
-const SCENES: { id: Scene; label: string }[] = [
-  { id: "studio", label: "Stüdyo" },
-  { id: "street", label: "Sokak" },
-  { id: "beach",  label: "Sahil" },
-]
+const SCENE_LABELS: Record<string, string> = {
+  studio: "STÜDYO",
+  street: "SOKAK",
+  beach:  "SAHİL",
+}
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
 
@@ -486,7 +486,7 @@ export default function ClothingStudioPage() {
                 {/* Scene selector — only when an avatar is selected */}
                 {selectedAvatar && (() => {
                   const avatar = avatars.find((a) => a.id === selectedAvatar)
-                  const availableScenes = SCENES.filter((s) => avatar?.scenes?.includes(s.id))
+                  const availableScenes = avatar?.scenes ?? []
                   if (availableScenes.length < 2) return null
                   return (
                     <div className="mt-4">
@@ -494,7 +494,7 @@ export default function ClothingStudioPage() {
                         Sahne
                       </p>
                       <div className="flex gap-2">
-                        {availableScenes.map(({ id, label }) => (
+                        {availableScenes.map((id) => (
                           <button
                             key={id}
                             type="button"
@@ -505,7 +505,7 @@ export default function ClothingStudioPage() {
                                 : "border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#111827] hover:text-[#111827]"
                             }`}
                           >
-                            {label}
+                            {SCENE_LABELS[id] ?? id.toUpperCase()}
                           </button>
                         ))}
                       </div>
