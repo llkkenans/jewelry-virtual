@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
   if (avatarId) {
     const { data: avatar, error: avatarError } = await supabaseAdmin
       .from('avatars')
-      .select('id, gender, skin_tone')
+      .select('id, gender, skin_tone, pose_count')
       .eq('id', avatarId)
       .eq('is_active', true)
       .single()
@@ -146,7 +146,8 @@ export async function POST(req: NextRequest) {
     effectiveGender = avatar.gender as Gender
     effectiveSkinTone = avatar.skin_tone as SkinTone
 
-    const avatarKey = `clothing-references/avatars/${avatarId}/${scene}/1.png`
+    const poseIndex = Math.floor(Math.random() * avatar.pose_count) + 1
+    const avatarKey = `clothing-references/avatars/${avatarId}/${scene}/${poseIndex}.png`
 
     try {
       const avatarBuffer = await getFromR2(avatarKey)
