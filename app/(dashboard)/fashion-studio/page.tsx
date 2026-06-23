@@ -187,12 +187,27 @@ export default function FashionStudioPage() {
   const [editError,      setEditError]      = useState<string | null>(null)
   const [editHint,       setEditHint]       = useState(false)
 
+  const [toolsOpen,          setToolsOpen]          = useState(false)
+  const [reframeAspect,      setReframeAspect]      = useState<"1:1" | "4:5" | "9:16" | "16:9">("1:1")
+  const [reframeResolution,  setReframeResolution]  = useState<"1k" | "2k" | "4k">("1k")
+  const [reframeResultUrl,   setReframeResultUrl]   = useState<string | null>(null)
+  const [reframeLoading,     setReframeLoading]     = useState(false)
+  const [reframeError,       setReframeError]       = useState<string | null>(null)
+  const [bgRemoveResultUrl,  setBgRemoveResultUrl]  = useState<string | null>(null)
+  const [bgRemoveLoading,    setBgRemoveLoading]    = useState(false)
+  const [bgRemoveError,      setBgRemoveError]      = useState<string | null>(null)
+
   useEffect(() => {
     fetch("/api/avatars")
       .then((res) => res.json())
       .then((data: { avatars?: Avatar[] }) => setAvatars(data.avatars ?? []))
       .catch(console.error)
   }, [])
+
+  useEffect(() => {
+    setReframeResultUrl(null)
+    setBgRemoveResultUrl(null)
+  }, [resultUrl])
 
   useEffect(() => {
     if (mode !== "kendi-modelim" || userModelsLoaded) return
@@ -485,6 +500,72 @@ export default function FashionStudioPage() {
       showToast(msg || "Düzenleme başarısız oldu", "error")
     } finally {
       setEditLoading(false)
+    }
+  }
+
+  async function handleReframe() {
+    if (!resultUrl) return
+    setReframeLoading(true)
+    setReframeError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setReframeError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+      const res = await fetch("/api/fashion-reframe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ sourceImageUrl: resultUrl, aspectRatio: reframeAspect, resolution: reframeResolution }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Format değiştirme başarısız oldu.")
+      }
+      const data = await res.json() as { outputUrl?: string; generationId?: string; fashnId?: string }
+      setReframeResultUrl(data.outputUrl ?? null)
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Format başarıyla değiştirildi!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setReframeError(msg)
+      showToast(msg || "Format değiştirme başarısız oldu", "error")
+    } finally {
+      setReframeLoading(false)
+    }
+  }
+
+  async function handleBgRemove() {
+    if (!resultUrl) return
+    setBgRemoveLoading(true)
+    setBgRemoveError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setBgRemoveError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+      const res = await fetch("/api/fashion-bg-remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ sourceImageUrl: resultUrl }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Arka plan kaldırma başarısız oldu.")
+      }
+      const data = await res.json() as { outputUrl?: string; generationId?: string; fashnId?: string }
+      setBgRemoveResultUrl(data.outputUrl ?? null)
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Arka plan başarıyla kaldırıldı!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setBgRemoveError(msg)
+      showToast(msg || "Arka plan kaldırma başarısız oldu", "error")
+    } finally {
+      setBgRemoveLoading(false)
     }
   }
 
@@ -1029,6 +1110,200 @@ export default function FashionStudioPage() {
                       {editError}
                     </p>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Araçlar bölümü */}
+          {resultUrl && !generating && (
+            <div className="mt-3 border border-[#F3F4F6]">
+              <button
+                type="button"
+                onClick={() => setToolsOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer"
+              >
+                Araçlar
+                {toolsOpen ? <ChevronUp size={13} strokeWidth={1.5} /> : <ChevronDown size={13} strokeWidth={1.5} />}
+              </button>
+
+              {toolsOpen && (
+                <div className="px-4 pb-4 space-y-5">
+
+                  {/* Tool 1: Format Değiştir */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">
+                      Format Değiştir
+                    </p>
+
+                    <div>
+                      <p className="text-[10px] tracking-wide text-[#9CA3AF] mb-1.5">En-Boy Oranı</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(["1:1", "4:5", "9:16", "16:9"] as const).map((ratio) => (
+                          <button
+                            key={ratio}
+                            type="button"
+                            onClick={() => setReframeAspect(ratio)}
+                            className={`px-3 py-1.5 text-[10px] tracking-[0.1em] font-medium transition-all border cursor-pointer ${
+                              reframeAspect === ratio
+                                ? "border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5"
+                                : "border-[#E5E7EB] text-[#9CA3AF] hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                            }`}
+                          >
+                            {ratio}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] tracking-wide text-[#9CA3AF] mb-1.5">Çözünürlük</p>
+                      <div className="flex gap-2">
+                        {(["1k", "2k", "4k"] as const).map((res) => {
+                          const creditMap = { "1k": 1, "2k": 2, "4k": 3 }
+                          return (
+                            <button
+                              key={res}
+                              type="button"
+                              onClick={() => setReframeResolution(res)}
+                              className={`px-3 py-1.5 text-[10px] tracking-[0.1em] uppercase font-medium transition-all border cursor-pointer ${
+                                reframeResolution === res
+                                  ? "border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5"
+                                  : "border-[#E5E7EB] text-[#9CA3AF] hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                              }`}
+                            >
+                              {res.toUpperCase()} · {creditMap[res]} Kredi
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleReframe}
+                      disabled={reframeLoading}
+                      className="w-full h-10 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] text-[11px] font-medium tracking-[0.2em] uppercase transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {reframeLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                          İşleniyor...
+                        </>
+                      ) : (
+                        "FORMATI DEĞİŞTİR"
+                      )}
+                    </button>
+
+                    {reframeError && (
+                      <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                        {reframeError}
+                      </p>
+                    )}
+
+                    {reframeResultUrl && (
+                      <div className="space-y-2">
+                        <img
+                          src={reframeResultUrl}
+                          alt="Format değiştirilmiş görsel"
+                          className="w-full border border-[#E5E7EB]"
+                        />
+                        <button
+                          onClick={async () => {
+                            try {
+                              const r = await fetch(reframeResultUrl)
+                              const blob = await r.blob()
+                              const blobUrl = URL.createObjectURL(blob)
+                              const a = document.createElement("a")
+                              a.href = blobUrl
+                              a.download = `fashion-reframe-${Date.now()}.jpg`
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                              URL.revokeObjectURL(blobUrl)
+                            } catch {
+                              window.open(reframeResultUrl, "_blank")
+                            }
+                          }}
+                          className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Download size={11} strokeWidth={1.5} />
+                          İndir
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#F3F4F6]" />
+
+                  {/* Tool 2: Arka Planı Kaldır */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">
+                      Arka Planı Kaldır
+                    </p>
+
+                    <button
+                      onClick={handleBgRemove}
+                      disabled={bgRemoveLoading}
+                      className="w-full h-10 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] text-[11px] font-medium tracking-[0.2em] uppercase transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {bgRemoveLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                          İşleniyor...
+                        </>
+                      ) : (
+                        "ARKA PLANI KALDIR · 1 KREDİ"
+                      )}
+                    </button>
+
+                    {bgRemoveError && (
+                      <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                        {bgRemoveError}
+                      </p>
+                    )}
+
+                    {bgRemoveResultUrl && (
+                      <div className="space-y-2">
+                        <div
+                          className="w-full border border-[#E5E7EB]"
+                          style={{
+                            backgroundImage:
+                              "linear-gradient(45deg, #D1D5DB 25%, transparent 25%), linear-gradient(-45deg, #D1D5DB 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #D1D5DB 75%), linear-gradient(-45deg, transparent 75%, #D1D5DB 75%)",
+                            backgroundSize: "16px 16px",
+                            backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                          }}
+                        >
+                          <img
+                            src={bgRemoveResultUrl}
+                            alt="Arka planı kaldırılmış görsel"
+                            className="w-full"
+                          />
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const r = await fetch(bgRemoveResultUrl)
+                              const blob = await r.blob()
+                              const blobUrl = URL.createObjectURL(blob)
+                              const a = document.createElement("a")
+                              a.href = blobUrl
+                              a.download = `fashion-bg-removed-${Date.now()}.png`
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                              URL.revokeObjectURL(blobUrl)
+                            } catch {
+                              window.open(bgRemoveResultUrl, "_blank")
+                            }
+                          }}
+                          className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Download size={11} strokeWidth={1.5} />
+                          PNG İndir
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
