@@ -35,6 +35,15 @@ const studios = [
     video:       null as string | null,
     credit:      "1–6 kredi / üretim",
   },
+  {
+    href:        "/fashion-studio",
+    badge:       "Yeni",
+    title:       "Moda Stüdyosu",
+    description: "Ürün fotoğrafını yükle — AI model seçer ve giydirir, referans görsel gerekmez",
+    gradient:    "from-[#2a1e2c] to-[#150d17]",
+    video:       null as string | null,
+    credit:      "1 kredi / üretim",
+  },
 ]
 
 type Studio = typeof studios[0]
