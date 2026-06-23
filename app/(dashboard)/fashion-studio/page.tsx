@@ -48,13 +48,20 @@ function InfoTooltip({ text }: { text: string }) {
   )
 }
 
-type ModeType = "auto" | "avatar"
+type ModeType = "auto" | "avatar" | "kendi-modelim"
 
 interface Avatar {
   id: string
   name: string
   scenes: string[]
   previewUrl: string | null
+}
+
+interface UserModel {
+  id: string
+  name: string
+  previewUrl: string | null
+  createdAt: string
 }
 
 const MAX_FILE_BYTES = 7 * 1024 * 1024
@@ -143,6 +150,7 @@ function ComingSoonCard() {
 
 export default function FashionStudioPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const userModelFileInputRef = useRef<HTMLInputElement>(null)
   const { showToast } = useToast()
 
   const [file,          setFile]          = useState<File | null>(null)
@@ -167,12 +175,28 @@ export default function FashionStudioPage() {
   const [videoLoading,    setVideoLoading]    = useState(false)
   const [videoError,      setVideoError]      = useState<string | null>(null)
 
+  const [userModels,          setUserModels]          = useState<UserModel[]>([])
+  const [selectedUserModelId, setSelectedUserModelId] = useState<string | null>(null)
+  const [userModelsLoaded,    setUserModelsLoaded]    = useState(false)
+  const [addingModel,         setAddingModel]         = useState(false)
+
   useEffect(() => {
     fetch("/api/avatars")
       .then((res) => res.json())
       .then((data: { avatars?: Avatar[] }) => setAvatars(data.avatars ?? []))
       .catch(console.error)
   }, [])
+
+  useEffect(() => {
+    if (mode !== "kendi-modelim" || userModelsLoaded) return
+    fetch("/api/user-models")
+      .then((res) => res.json())
+      .then((data: { models?: UserModel[] }) => {
+        setUserModels(data.models ?? [])
+        setUserModelsLoaded(true)
+      })
+      .catch(console.error)
+  }, [mode, userModelsLoaded])
 
   function handleFile(f: File) {
     if (!f.type.startsWith("image/")) {
@@ -209,6 +233,50 @@ export default function FashionStudioPage() {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  async function handleAddUserModel(f: File) {
+    if (!f.type.startsWith("image/")) {
+      showToast("Lütfen bir görsel dosyası seçin.", "error")
+      return
+    }
+    if (f.size > MAX_FILE_BYTES) {
+      showToast("Dosya boyutu 7 MB'ı geçemez.", "error")
+      return
+    }
+    setAddingModel(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        showToast("Oturum bulunamadı.", "error")
+        return
+      }
+      const imageBase64 = await fileToBase64(f)
+      const defaultName = `Model ${userModels.length + 1}`
+      const res = await fetch("/api/user-models", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageBase64, name: defaultName }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Model eklenemedi.")
+      }
+      const newModel = await res.json() as UserModel
+      setUserModels((prev) => [...prev, newModel])
+      setSelectedUserModelId(newModel.id)
+      showToast("Model başarıyla eklendi!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      showToast(msg, "error")
+    } finally {
+      setAddingModel(false)
+      if (userModelFileInputRef.current) userModelFileInputRef.current.value = ""
+    }
+  }
+
   async function handleGenerate() {
     if (!file) return
     setGenerating(true)
@@ -230,33 +298,45 @@ export default function FashionStudioPage() {
 
       const imageBase64 = await fileToBase64(file)
 
-      const bodyPayload: {
-        productImage: string
-        mode: ModeType
-        avatarId?: string
-        prompt?: string
-      } = {
-        productImage: imageBase64,
-        mode,
-        avatarId: mode === "avatar" && selectedAvatar ? selectedAvatar : undefined,
-        prompt: customPrompt.trim() || undefined,
-      }
+      let res: Response
 
-      const res = await fetch("/api/fashion-studio", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(bodyPayload),
-      })
+      if (mode === "kendi-modelim") {
+        res = await fetch("/api/fashion-tryon-max", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ garmentImage: imageBase64, userModelId: selectedUserModelId }),
+        })
+      } else {
+        const bodyPayload: {
+          productImage: string
+          mode: ModeType
+          avatarId?: string
+          prompt?: string
+        } = {
+          productImage: imageBase64,
+          mode,
+          avatarId: mode === "avatar" && selectedAvatar ? selectedAvatar : undefined,
+          prompt: customPrompt.trim() || undefined,
+        }
+        res = await fetch("/api/fashion-studio", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyPayload),
+        })
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error((err as { error?: string })?.error ?? "Görsel üretimi başarısız oldu.")
       }
 
-      const data = await res.json() as { outputUrl?: string; generationId?: string }
+      const data = await res.json() as { outputUrl?: string; generationId?: string; fashnId?: string }
       setResultUrl(data.outputUrl ?? null)
       setGenerationId(data.generationId ?? null)
       setSaved(false)
@@ -377,7 +457,9 @@ export default function FashionStudioPage() {
   const canGenerate =
     !!file &&
     !generating &&
-    (mode === "auto" || (mode === "avatar" && !!selectedAvatar))
+    (mode === "auto" || (mode === "avatar" && !!selectedAvatar) || (mode === "kendi-modelim" && !!selectedUserModelId))
+
+  const creditCost = mode === "kendi-modelim" ? 4 : 1
 
   return (
     <div>
@@ -482,6 +564,17 @@ export default function FashionStudioPage() {
               >
                 Avatar
               </button>
+              <button
+                type="button"
+                onClick={() => setMode("kendi-modelim")}
+                className={`pb-2.5 text-[10px] font-medium tracking-[0.15em] uppercase transition-all cursor-pointer ${
+                  mode === "kendi-modelim"
+                    ? "text-[#111827] border-b-2 border-[#C9A96E] -mb-px"
+                    : "text-[#9CA3AF] hover:text-[#6B7280]"
+                }`}
+              >
+                Kendi Modelim
+              </button>
             </div>
 
             {/* Otomatik mod */}
@@ -522,6 +615,90 @@ export default function FashionStudioPage() {
                 {mode === "avatar" && !selectedAvatar && (
                   <p className="text-[10px] text-[#C9A96E] tracking-wide mt-2">
                     Devam etmek için bir avatar seçin.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Kendi Modelim modu */}
+            {mode === "kendi-modelim" && (
+              <div>
+                <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-3">
+                  Modelini Seç
+                </p>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {userModels.map((model) => {
+                    const isSelected = selectedUserModelId === model.id
+                    return (
+                      <button
+                        key={model.id}
+                        type="button"
+                        onClick={() => setSelectedUserModelId(isSelected ? null : model.id)}
+                        className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer transition-all group ${
+                          isSelected ? "scale-[1.03]" : "opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <div
+                          className={`w-[100px] h-[136px] overflow-hidden border transition-all ${
+                            isSelected
+                              ? "border-[#C9A96E] ring-2 ring-[#C9A96E] ring-offset-1"
+                              : "border-[#E5E7EB] group-hover:border-[#C9A96E]"
+                          }`}
+                        >
+                          {model.previewUrl ? (
+                            <img
+                              src={model.previewUrl}
+                              alt={model.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-[#F3F4F6] flex items-center justify-center">
+                              <IconUserSilhouette size={32} />
+                            </div>
+                          )}
+                        </div>
+                        <span
+                          className={`text-[10px] tracking-wider uppercase font-medium transition-colors ${
+                            isSelected ? "text-[#111827]" : "text-[#9CA3AF]"
+                          }`}
+                        >
+                          {model.name}
+                        </span>
+                      </button>
+                    )
+                  })}
+
+                  {/* + Yeni Model Ekle kartı */}
+                  <button
+                    type="button"
+                    onClick={() => userModelFileInputRef.current?.click()}
+                    disabled={addingModel}
+                    className="flex-shrink-0 flex flex-col items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <div className="w-[100px] h-[136px] border border-dashed border-[#C9A96E] bg-[#F9FAFB] hover:bg-[#C9A96E]/5 transition-colors flex items-center justify-center">
+                      {addingModel ? (
+                        <span className="w-5 h-5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                      ) : (
+                        <IconPlus size={20} />
+                      )}
+                    </div>
+                    <span className="text-[10px] tracking-wider uppercase font-medium text-[#C9A96E]">
+                      {addingModel ? "Yükleniyor..." : "+ Yeni Ekle"}
+                    </span>
+                  </button>
+
+                  <input
+                    ref={userModelFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddUserModel(f) }}
+                  />
+                </div>
+
+                {!selectedUserModelId && (
+                  <p className="text-[10px] text-[#C9A96E] tracking-wide mt-2">
+                    Devam etmek için bir model seçin veya yeni ekleyin.
                   </p>
                 )}
               </div>
@@ -575,13 +752,13 @@ export default function FashionStudioPage() {
             ) : (
               <>
                 <Sparkles size={13} strokeWidth={1.5} />
-                Üret · 1 Kredi
+                Üret · {creditCost} Kredi
               </>
             )}
           </button>
 
           <p className="text-[10px] text-[#9C9588] tracking-wide text-center -mt-2">
-            1 kredi kullanılacak
+            {creditCost} kredi kullanılacak
           </p>
         </div>
 
