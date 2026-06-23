@@ -5,7 +5,10 @@ import { runFashn } from '@/lib/fashn-client'
 
 export const maxDuration = 60
 
-const VIDEO_CREDIT_COST = 6
+function calculateVideoCredits(resolution: string, duration: number): number {
+  const base = resolution === '1080p' ? 6 : resolution === '720p' ? 3 : 1
+  return duration >= 10 ? base * 2 : base
+}
 
 export async function POST(req: NextRequest) {
   // Auth
@@ -19,23 +22,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Yetkisiz' }, { status: 401 })
   }
 
-  // Credit check
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('credits')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || profile.credits < VIDEO_CREDIT_COST) {
-    return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
-  }
-
   // Parse request
-  let sourceImageUrl: string, sourceStudio: string
+  let sourceImageUrl: string, sourceStudio: string, resolution: string, duration: number
   try {
     const body = await req.json()
     sourceImageUrl = body.sourceImageUrl
     sourceStudio = body.sourceStudio ?? 'fashion'
+    resolution = body.resolution ?? '720p'
+    duration = body.duration ?? 5
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
@@ -44,10 +38,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Kaynak görsel gerekli (sourceImageUrl)' }, { status: 400 })
   }
 
+  const creditCost = calculateVideoCredits(resolution, duration)
+
+  // Credit check
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('credits')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.credits < creditCost) {
+    return NextResponse.json({ error: 'Yetersiz kredi' }, { status: 403 })
+  }
+
   // Call FASHN image-to-video
   let result
   try {
-    result = await runFashn('image-to-video', { image: sourceImageUrl })
+    result = await runFashn('image-to-video', { image: sourceImageUrl, resolution, duration })
   } catch (err) {
     console.error('FASHN image-to-video error:', err)
 
@@ -92,7 +99,7 @@ export async function POST(req: NextRequest) {
       source_studio: sourceStudio,
       video_url: videoUrl,
       status: 'done',
-      credits_used: VIDEO_CREDIT_COST,
+      credits_used: creditCost,
       fashn_id: result.id,
     })
     .select('id')
