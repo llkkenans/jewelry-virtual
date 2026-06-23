@@ -197,6 +197,16 @@ export default function FashionStudioPage() {
   const [bgRemoveLoading,    setBgRemoveLoading]    = useState(false)
   const [bgRemoveError,      setBgRemoveError]      = useState<string | null>(null)
 
+  const [variationStrength,  setVariationStrength]  = useState<"subtle" | "strong">("subtle")
+  const [variationResultUrl, setVariationResultUrl] = useState<string | null>(null)
+  const [variationLoading,   setVariationLoading]   = useState(false)
+  const [variationError,     setVariationError]     = useState<string | null>(null)
+
+  const [swapPrompt,    setSwapPrompt]    = useState("")
+  const [swapResultUrl, setSwapResultUrl] = useState<string | null>(null)
+  const [swapLoading,   setSwapLoading]   = useState(false)
+  const [swapError,     setSwapError]     = useState<string | null>(null)
+
   useEffect(() => {
     fetch("/api/avatars")
       .then((res) => res.json())
@@ -207,6 +217,8 @@ export default function FashionStudioPage() {
   useEffect(() => {
     setReframeResultUrl(null)
     setBgRemoveResultUrl(null)
+    setVariationResultUrl(null)
+    setSwapResultUrl(null)
   }, [resultUrl])
 
   useEffect(() => {
@@ -566,6 +578,72 @@ export default function FashionStudioPage() {
       showToast(msg || "Arka plan kaldırma başarısız oldu", "error")
     } finally {
       setBgRemoveLoading(false)
+    }
+  }
+
+  async function handleVariation() {
+    if (!resultUrl) return
+    setVariationLoading(true)
+    setVariationError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setVariationError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+      const res = await fetch("/api/fashion-variation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ sourceImageUrl: resultUrl, strength: variationStrength }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Versiyon oluşturma başarısız oldu.")
+      }
+      const data = await res.json() as { outputUrl?: string }
+      setVariationResultUrl(data.outputUrl ?? null)
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Versiyon başarıyla oluşturuldu!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setVariationError(msg)
+      showToast(msg || "Versiyon oluşturma başarısız oldu", "error")
+    } finally {
+      setVariationLoading(false)
+    }
+  }
+
+  async function handleModelSwap() {
+    if (!resultUrl) return
+    setSwapLoading(true)
+    setSwapError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setSwapError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+      const res = await fetch("/api/fashion-model-swap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ sourceImageUrl: resultUrl, prompt: swapPrompt.trim() || undefined }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Model değiştirme başarısız oldu.")
+      }
+      const data = await res.json() as { outputUrl?: string }
+      setSwapResultUrl(data.outputUrl ?? null)
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Model başarıyla değiştirildi!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setSwapError(msg)
+      showToast(msg || "Model değiştirme başarısız oldu", "error")
+    } finally {
+      setSwapLoading(false)
     }
   }
 
@@ -1300,6 +1378,155 @@ export default function FashionStudioPage() {
                         >
                           <Download size={11} strokeWidth={1.5} />
                           PNG İndir
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#F3F4F6]" />
+
+                  {/* Tool 3: Başka Versiyon Dene */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">
+                      Başka Versiyon Dene
+                    </p>
+
+                    <div className="flex gap-2">
+                      {(["subtle", "strong"] as const).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setVariationStrength(s)}
+                          className={`px-3 py-1.5 text-[10px] tracking-[0.1em] uppercase font-medium transition-all border cursor-pointer ${
+                            variationStrength === s
+                              ? "border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5"
+                              : "border-[#E5E7EB] text-[#9CA3AF] hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                          }`}
+                        >
+                          {s === "subtle" ? "Hafif" : "Güçlü"}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handleVariation}
+                      disabled={variationLoading}
+                      className="w-full h-10 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] text-[11px] font-medium tracking-[0.2em] uppercase transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {variationLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                          İşleniyor...
+                        </>
+                      ) : (
+                        "VERSİYON DENE · 2 KREDİ"
+                      )}
+                    </button>
+
+                    {variationError && (
+                      <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                        {variationError}
+                      </p>
+                    )}
+
+                    {variationResultUrl && (
+                      <div className="space-y-2">
+                        <img
+                          src={variationResultUrl}
+                          alt="Versiyon görseli"
+                          className="w-full border border-[#E5E7EB]"
+                        />
+                        <button
+                          onClick={async () => {
+                            try {
+                              const r = await fetch(variationResultUrl)
+                              const blob = await r.blob()
+                              const blobUrl = URL.createObjectURL(blob)
+                              const a = document.createElement("a")
+                              a.href = blobUrl
+                              a.download = `fashion-variation-${Date.now()}.jpg`
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                              URL.revokeObjectURL(blobUrl)
+                            } catch {
+                              window.open(variationResultUrl, "_blank")
+                            }
+                          }}
+                          className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Download size={11} strokeWidth={1.5} />
+                          İndir
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#F3F4F6]" />
+
+                  {/* Tool 4: Modeli Değiştir */}
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF]">
+                      Modeli Değiştir
+                    </p>
+
+                    <input
+                      type="text"
+                      value={swapPrompt}
+                      onChange={(e) => setSwapPrompt(e.target.value)}
+                      placeholder="İstediğiniz model özelliği (opsiyonel) — örn: sarışın, esmer tenli"
+                      className="w-full border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-light text-[#111827] tracking-wide placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#111827] transition-colors rounded-none"
+                    />
+
+                    <button
+                      onClick={handleModelSwap}
+                      disabled={swapLoading}
+                      className="w-full h-10 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] text-[11px] font-medium tracking-[0.2em] uppercase transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {swapLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                          İşleniyor...
+                        </>
+                      ) : (
+                        "MODELİ DEĞİŞTİR · 2 KREDİ"
+                      )}
+                    </button>
+
+                    {swapError && (
+                      <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                        {swapError}
+                      </p>
+                    )}
+
+                    {swapResultUrl && (
+                      <div className="space-y-2">
+                        <img
+                          src={swapResultUrl}
+                          alt="Model değiştirilmiş görsel"
+                          className="w-full border border-[#E5E7EB]"
+                        />
+                        <button
+                          onClick={async () => {
+                            try {
+                              const r = await fetch(swapResultUrl)
+                              const blob = await r.blob()
+                              const blobUrl = URL.createObjectURL(blob)
+                              const a = document.createElement("a")
+                              a.href = blobUrl
+                              a.download = `fashion-model-swap-${Date.now()}.jpg`
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                              URL.revokeObjectURL(blobUrl)
+                            } catch {
+                              window.open(swapResultUrl, "_blank")
+                            }
+                          }}
+                          className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Download size={11} strokeWidth={1.5} />
+                          İndir
                         </button>
                       </div>
                     )}
