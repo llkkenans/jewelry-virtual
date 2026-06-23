@@ -180,6 +180,13 @@ export default function FashionStudioPage() {
   const [userModelsLoaded,    setUserModelsLoaded]    = useState(false)
   const [addingModel,         setAddingModel]         = useState(false)
 
+  const [editOpen,       setEditOpen]       = useState(false)
+  const [editPrompt,     setEditPrompt]     = useState("")
+  const [editResolution, setEditResolution] = useState<"1k" | "2k" | "4k">("1k")
+  const [editLoading,    setEditLoading]    = useState(false)
+  const [editError,      setEditError]      = useState<string | null>(null)
+  const [editHint,       setEditHint]       = useState(false)
+
   useEffect(() => {
     fetch("/api/avatars")
       .then((res) => res.json())
@@ -433,6 +440,51 @@ export default function FashionStudioPage() {
       URL.revokeObjectURL(blobUrl)
     } catch {
       window.open(videoUrl, "_blank")
+    }
+  }
+
+  async function handleEdit() {
+    if (!resultUrl) return
+    if (!editPrompt.trim()) {
+      setEditHint(true)
+      return
+    }
+    setEditHint(false)
+    setEditLoading(true)
+    setEditError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setEditError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+      const res = await fetch("/api/fashion-edit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sourceImageUrl: resultUrl, prompt: editPrompt.trim(), resolution: editResolution }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Düzenleme başarısız oldu.")
+      }
+      const data = await res.json() as { outputUrl?: string; generationId?: string; fashnId?: string }
+      setResultUrl(data.outputUrl ?? null)
+      setGenerationId(data.generationId ?? null)
+      setVideoUrl(null)
+      setSaved(false)
+      setEditPrompt("")
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Görsel başarıyla düzenlendi!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setEditError(msg)
+      showToast(msg || "Düzenleme başarısız oldu", "error")
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -898,6 +950,85 @@ export default function FashionStudioPage() {
                     <Download size={11} strokeWidth={1.5} />
                     Videoyu İndir
                   </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Düzenle bölümü */}
+          {resultUrl && !generating && (
+            <div className="mt-3 border border-[#F3F4F6]">
+              <button
+                type="button"
+                onClick={() => setEditOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer"
+              >
+                Düzenle
+                {editOpen ? <ChevronUp size={13} strokeWidth={1.5} /> : <ChevronDown size={13} strokeWidth={1.5} />}
+              </button>
+
+              {editOpen && (
+                <div className="px-4 pb-4 space-y-3">
+                  <div>
+                    <textarea
+                      value={editPrompt}
+                      onChange={(e) => { setEditPrompt(e.target.value); setEditHint(false) }}
+                      placeholder="Ne değiştirmek istersiniz? örn: arka planı plaja çevir, modeli sola çevir, güneş gözlüğü ekle"
+                      rows={3}
+                      className="w-full border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-light text-[#111827] tracking-wide placeholder:text-[#D1D5DB] focus:outline-none focus:border-[#111827] transition-colors rounded-none resize-none"
+                    />
+                    {editHint && (
+                      <p className="text-[10px] text-[#C9A96E] tracking-wide mt-1">
+                        Lütfen bir düzenleme talimatı girin.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-2">
+                      Çözünürlük
+                    </p>
+                    <div className="flex gap-2">
+                      {(["1k", "2k", "4k"] as const).map((res) => {
+                        const creditMap = { "1k": 1, "2k": 2, "4k": 3 }
+                        return (
+                          <button
+                            key={res}
+                            type="button"
+                            onClick={() => setEditResolution(res)}
+                            className={`px-3 py-1.5 text-[10px] tracking-[0.1em] uppercase font-medium transition-all border cursor-pointer ${
+                              editResolution === res
+                                ? "border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5"
+                                : "border-[#E5E7EB] text-[#9CA3AF] hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                            }`}
+                          >
+                            {res.toUpperCase()} · {creditMap[res]} Kredi
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleEdit}
+                    disabled={editLoading}
+                    className="w-full h-10 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] text-[11px] font-medium tracking-[0.2em] uppercase transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {editLoading ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                        Düzenleniyor...
+                      </>
+                    ) : (
+                      "DÜZENLE"
+                    )}
+                  </button>
+
+                  {editError && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                      {editError}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
