@@ -162,6 +162,11 @@ export default function FashionStudioPage() {
   const [advancedOpen,   setAdvancedOpen]   = useState(false)
   const [customPrompt,   setCustomPrompt]   = useState("")
 
+  const [videoResolution, setVideoResolution] = useState<"720p" | "1080p">("720p")
+  const [videoUrl,        setVideoUrl]        = useState<string | null>(null)
+  const [videoLoading,    setVideoLoading]    = useState(false)
+  const [videoError,      setVideoError]      = useState<string | null>(null)
+
   useEffect(() => {
     fetch("/api/avatars")
       .then((res) => res.json())
@@ -209,6 +214,7 @@ export default function FashionStudioPage() {
     setGenerating(true)
     setProgressStep(0)
     setError("")
+    setVideoUrl(null)
 
     const progressInterval = setInterval(() => {
       setProgressStep((s) => (s < PROGRESS_STEPS.length - 1 ? s + 1 : s))
@@ -293,6 +299,60 @@ export default function FashionStudioPage() {
       showToast("Bir hata oluştu.", "error")
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleVideoGenerate() {
+    if (!resultUrl) return
+    setVideoLoading(true)
+    setVideoError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) {
+        setVideoError("Oturum bulunamadı. Lütfen tekrar giriş yapın.")
+        return
+      }
+      const res = await fetch("/api/fashion-video", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sourceImageUrl: resultUrl, resolution: videoResolution, duration: 5 }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error((err as { error?: string })?.error ?? "Video oluşturma başarısız oldu.")
+      }
+      const data = await res.json() as { videoUrl?: string; generationId?: string; fashnId?: string }
+      setVideoUrl(data.videoUrl ?? null)
+      window.dispatchEvent(new Event("credits-updated"))
+      showToast("Video başarıyla oluşturuldu!", "success")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu."
+      setVideoError(msg)
+      showToast(msg || "Video oluşturma başarısız oldu", "error")
+    } finally {
+      setVideoLoading(false)
+    }
+  }
+
+  async function handleDownloadVideo() {
+    if (!videoUrl) return
+    try {
+      const res = await fetch(videoUrl)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = blobUrl
+      a.download = `fashion-studio-video-${Date.now()}.mp4`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      window.open(videoUrl, "_blank")
     }
   }
 
@@ -596,6 +656,73 @@ export default function FashionStudioPage() {
                 {saved ? <Check size={11} strokeWidth={1.5} /> : <BookmarkPlus size={11} strokeWidth={1.5} />}
                 {saving ? "Kaydediliyor..." : saved ? "Kaydedildi" : "Kaydet"}
               </button>
+            </div>
+          )}
+
+          {resultUrl && !generating && (
+            <div className="mt-4 space-y-3">
+              <div>
+                <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#9CA3AF] mb-2">
+                  Video Çözünürlüğü
+                </p>
+                <div className="flex gap-2">
+                  {(["720p", "1080p"] as const).map((res) => (
+                    <button
+                      key={res}
+                      type="button"
+                      onClick={() => setVideoResolution(res)}
+                      className={`px-3 py-1.5 text-[10px] tracking-[0.1em] uppercase font-medium transition-all border cursor-pointer ${
+                        videoResolution === res
+                          ? "border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5"
+                          : "border-[#E5E7EB] text-[#9CA3AF] hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                      }`}
+                    >
+                      {res} · {res === "720p" ? "3" : "6"} Kredi
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleVideoGenerate}
+                disabled={videoLoading}
+                className="w-full h-10 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] text-[11px] font-medium tracking-[0.2em] uppercase transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {videoLoading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-[#C9A96E]/30 border-t-[#C9A96E] rounded-full animate-spin" />
+                    Video oluşturuluyor... (30-60 saniye)
+                  </>
+                ) : (
+                  <>🎬 VİDEO YAP</>
+                )}
+              </button>
+
+              {videoError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">
+                  {videoError}
+                </p>
+              )}
+
+              {videoUrl && (
+                <div className="space-y-2">
+                  <video
+                    src={videoUrl}
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    className="w-full border border-[#E5E7EB]"
+                  />
+                  <button
+                    onClick={handleDownloadVideo}
+                    className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Download size={11} strokeWidth={1.5} />
+                    Videoyu İndir
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
