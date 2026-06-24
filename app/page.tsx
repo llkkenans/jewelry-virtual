@@ -62,6 +62,14 @@ function Reveal({
   )
 }
 
+/* ─── Social Media Videos ───────────────────────────────────────────── */
+const socialVideos = [
+  "/landing/landing_videos/social_media/hf_20260624_021954_0d30f41a-3a0f-460c-b303-49dd1d2eac0a.mp4",
+  "/landing/landing_videos/social_media/hf_20260624_022754_65297412-0a9b-4b79-9439-db7681742d55.mp4",
+  "/landing/landing_videos/social_media/hf_20260624_024147_80bb619a-f838-4121-9cc3-76e9c5f472f0.mp4",
+  "/landing/landing_videos/social_media/hf_20260624_025743_9cfed9ef-72a7-485a-88a7-c44adefef3fd.mp4",
+]
+
 /* ─── Data ───────────────────────────────────────────────────────────── */
 const steps = [
   {
@@ -378,6 +386,94 @@ function DemoSimulator() {
   )
 }
 
+/* ─── Social Video Card ──────────────────────────────────────────────── */
+function SocialVideoCard({ src, index }: { src: string; index: number }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [playing, setPlaying] = useState(false)
+
+  function handleClick() {
+    const v = videoRef.current
+    if (!v) return
+    if (v.paused) {
+      v.muted = false
+      v.play().catch(() => {})
+      setPlaying(true)
+    } else {
+      v.pause()
+      setPlaying(false)
+    }
+  }
+
+  return (
+    <div
+      className="relative flex-shrink-0 w-[240px] sm:w-[280px] snap-center cursor-pointer group"
+      onClick={handleClick}
+    >
+      <div
+        className="relative rounded-[28px] overflow-hidden bg-[#111] border border-white/[0.06] transition-all duration-500 group-hover:border-[#C9A96E]/35 group-hover:shadow-[0_0_48px_rgba(201,169,110,0.13)]"
+        style={{ aspectRatio: "9/16" }}
+      >
+        <video
+          ref={videoRef}
+          src={src}
+          loop
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Karartma — sadece duruyorken */}
+        <div
+          className="absolute inset-0 bg-black/30 transition-opacity duration-400"
+          style={{ opacity: playing ? 0 : 1 }}
+        />
+
+        {/* Play butonu */}
+        <div
+          className="absolute inset-0 flex items-center justify-center transition-all duration-300"
+          style={{ opacity: playing ? 0 : 1, transform: playing ? "scale(0.75)" : "scale(1)" }}
+        >
+          <div className="w-[60px] h-[60px] rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Sıra etiketi — sol üst */}
+        <div className="absolute top-4 left-4">
+          <span
+            style={{ fontFamily: BODY, letterSpacing: "0.18em" }}
+            className="text-[10px] uppercase text-white/45 font-medium bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10"
+          >
+            {String(index + 1).padStart(2, "0")}
+          </span>
+        </div>
+
+        {/* Alt gradient */}
+        <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-black/50 to-transparent" />
+
+        {/* Ses dalgası — oynarken */}
+        {playing && (
+          <div className="absolute bottom-4 right-4 flex items-end gap-[3px]">
+            {[6, 10, 14, 10, 6].map((h, i) => (
+              <div
+                key={i}
+                className="w-[3px] rounded-full bg-[#C9A96E]"
+                style={{
+                  height: `${h}px`,
+                  animation: "soundBar 0.8s ease-in-out infinite alternate",
+                  animationDelay: `${i * 0.12}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Overline label ─────────────────────────────────────────────────── */
 function Overline({ children, light = false }: { children: string; light?: boolean }) {
   return (
@@ -676,6 +772,62 @@ export default function LandingPage() {
             </Reveal>
           </div>
           </div>
+        </section>
+
+        {/* ─────────────── SOCIAL MEDIA ─────────────── */}
+        <section className="pt-28 sm:pt-36 pb-24 bg-[#0A0A0A] overflow-hidden">
+
+          <style>{`
+            @keyframes soundBar {
+              from { transform: scaleY(0.4); }
+              to   { transform: scaleY(1.0); }
+            }
+          `}</style>
+
+          <div className="max-w-6xl mx-auto px-6 sm:px-10 mb-14">
+            <Reveal>
+              <Overline light>Sosyal Medya</Overline>
+              <h2
+                style={{ fontFamily: DISPLAY }}
+                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6 max-w-xl"
+              >
+                Paylaşmaya hazır
+                <br />
+                <em className="not-italic font-light text-white/30" style={{ fontFamily: DISPLAY }}>
+                  içerikler.
+                </em>
+              </h2>
+              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/40 font-light max-w-sm leading-[1.75]">
+                AI ile üretilen görsellerinizi sosyal medyaya hazır formatta indirin, saniyeler içinde yayınlayın.
+              </p>
+            </Reveal>
+          </div>
+
+          {/* Horizontal scroll */}
+          <div
+            className="flex gap-4 overflow-x-auto px-6 sm:px-10 pb-4 scroll-smooth snap-x snap-mandatory"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+          >
+            {socialVideos.map((src, i) => (
+              <SocialVideoCard key={src} src={src} index={i} />
+            ))}
+            <div className="flex-shrink-0 w-2 sm:w-6" />
+          </div>
+
+          {/* Kaydır ipucu */}
+          <Reveal delay={200}>
+            <div className="flex items-center gap-3 px-6 sm:px-10 mt-8">
+              <div className="flex gap-1.5">
+                {socialVideos.map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/15" />
+                ))}
+              </div>
+              <span style={{ fontFamily: BODY, letterSpacing: "0.18em" }} className="text-[10px] uppercase text-white/25">
+                Sürükle veya kaydır
+              </span>
+            </div>
+          </Reveal>
+
         </section>
 
         {/* ─────────────── CTA — Video ─────────────── */}
