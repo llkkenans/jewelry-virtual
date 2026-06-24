@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Gem, Circle, Sparkles, Watch } from "lucide-react"
+import { GlowingEffect } from "@/components/ui/glowing-effect"
 
 /* ─── Hero Videos ───────────────────────────────────────────────────── */
 const heroVideos = [
@@ -413,6 +414,14 @@ function SocialVideoCard({ src, index }: { src: string; index: number }) {
         className="relative rounded-[28px] overflow-hidden bg-[#111] border border-white/[0.06] transition-all duration-500 group-hover:border-[#C9A96E]/35 group-hover:shadow-[0_0_48px_rgba(201,169,110,0.13)]"
         style={{ aspectRatio: "9/16" }}
       >
+        <GlowingEffect
+          disabled={false}
+          spread={40}
+          proximity={80}
+          variant="gold"
+          borderWidth={2}
+          blur={0}
+        />
         <video
           ref={videoRef}
           src={src}
