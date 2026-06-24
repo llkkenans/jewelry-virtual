@@ -8,6 +8,7 @@ import { Gem, Circle, Sparkles, Watch } from "lucide-react"
 /* ─── Hero Videos ───────────────────────────────────────────────────── */
 const heroVideos = [
   "/landing/landing_videos/main.mp4",
+  "/landing/landing_videos/main2.mp4",
 ]
 
 /* ─── Fonts ─────────────────────────────────────────────────────────── */
