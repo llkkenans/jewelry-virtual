@@ -775,7 +775,15 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── SOCIAL MEDIA ─────────────── */}
-        <section className="pt-28 sm:pt-36 pb-24 bg-[#0A0A0A] overflow-hidden">
+        <section className="relative pt-28 sm:pt-36 pb-24 bg-[#0A0A0A] overflow-hidden bg-grid-white">
+
+          {/* Radial gradient fade — kenarları karartır, Aceternity tarzı */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse 80% 60% at 50% 50%, transparent 20%, #0A0A0A 75%)",
+            }}
+          />
 
           <style>{`
             @keyframes soundBar {
@@ -784,7 +792,7 @@ export default function LandingPage() {
             }
           `}</style>
 
-          <div className="max-w-6xl mx-auto px-6 sm:px-10 mb-14 text-center">
+          <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mb-14 text-center">
             <Reveal>
               <Overline light>Instagram</Overline>
               <h2
@@ -804,7 +812,7 @@ export default function LandingPage() {
           </div>
 
           {/* Ortalanmış video kartları */}
-          <div className="max-w-6xl mx-auto px-6 sm:px-10">
+          <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10">
             <Reveal delay={100}>
               <div className="flex flex-wrap justify-center gap-4">
                 {socialVideos.map((src, i) => (

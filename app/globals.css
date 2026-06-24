@@ -44,6 +44,13 @@
   animation: slideToLeft 250ms ease-in forwards;
 }
 
+@utility bg-grid-white {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
 @layer base {
   :root {
     --background: oklch(1 0 0);
