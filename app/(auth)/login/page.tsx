@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -113,9 +114,7 @@ export default function LoginPage() {
 
         {/* ── Logo ── */}
         <div className="absolute top-8 left-10 z-20 flex items-center gap-2.5">
-          <div className="w-5 h-5 rotate-45 border border-amber-300/45 flex items-center justify-center">
-            <div className="w-1 h-1 bg-amber-300/45 rotate-45" />
-          </div>
+          <Image src="/logo/lunia-logo.png" alt="Lunia Studio" width={22} height={22} className="object-contain opacity-70" />
           <span
             style={{ fontFamily: SERIF }}
             className="text-white/55 text-sm tracking-[0.28em] uppercase font-light"
@@ -178,9 +177,7 @@ export default function LoginPage() {
 
           {/* Mobil logo */}
           <div className="flex items-center gap-2.5 lg:hidden mb-10">
-            <div className="w-5 h-5 rotate-45 border-2 border-[#1C1C1C] flex items-center justify-center">
-              <div className="w-1 h-1 bg-[#1C1C1C] rotate-45" />
-            </div>
+            <Image src="/logo/lunia-logo.png" alt="Lunia Studio" width={24} height={24} className="object-contain" />
             <span style={{ fontFamily: SERIF }} className="text-[#1C1C1C] text-lg tracking-wide">
               Lunia Studio
             </span>

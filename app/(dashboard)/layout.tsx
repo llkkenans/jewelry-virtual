@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LogOut } from "lucide-react"
@@ -64,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ── MOBİL HEADER ── */}
       <div className="lg:hidden flex items-center justify-between h-14 px-4 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
         <Link href="/upload" className="flex items-center gap-2">
-          <div className="w-4 h-4 rotate-45 border border-[#111827]" />
+          <Image src="/logo/lunia-logo.png" alt="Lunia Studio" width={20} height={20} className="object-contain" />
           <span className="text-[#111827] text-[10px] font-light tracking-[0.25em] uppercase">Lunia Studio</span>
         </Link>
         <div className="flex items-center gap-4">
@@ -105,7 +106,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Logo */}
           <Link href="/upload" className="flex items-center gap-3 shrink-0">
-            <div className="w-5 h-5 rotate-45 border border-[#111827]" />
+            <Image src="/logo/lunia-logo.png" alt="Lunia Studio" width={22} height={22} className="object-contain" />
             <span className="text-[#111827] text-[11px] font-light tracking-[0.25em] uppercase">
               Lunia Studio
             </span>
