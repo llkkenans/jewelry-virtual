@@ -18,15 +18,6 @@ const studios = [
     credit:      null as string | null,
   },
   {
-    href:        "/clothing-studio",
-    badge:       "Yeni",
-    title:       "Kıyafet Stüdyosu",
-    description: "Kıyafet görsellerini gerçek model üzerinde canlandır",
-    gradient:    "from-[#2c3038] to-[#14171e]",
-    video:       "/studio_sec/kiyafet.mp4",
-    credit:      null as string | null,
-  },
-  {
     href:        "/product-studio",
     badge:       "Beta",
     title:       "Ürün Stüdyosu",
