@@ -415,7 +415,7 @@ function SocialVideoCard({ src, index }: { src: string; index: number }) {
         className="relative rounded-[28px] border border-white/[0.06] transition-all duration-500 group-hover:border-[#C9A96E]/35 group-hover:shadow-[0_0_48px_rgba(201,169,110,0.13)]"
         style={{ aspectRatio: "9/16" }}
       >
-        <GlowingEffect disabled={false} />
+        <GlowingEffect disabled={false} proximity={64} borderWidth={3} spread={30} />
 
         {/* Video içeriği ayrı bir wrapper'da overflow-hidden ile kırpılıyor */}
         <div className="absolute inset-0 rounded-[28px] overflow-hidden bg-[#111]">
