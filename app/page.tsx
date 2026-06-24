@@ -410,67 +410,72 @@ function SocialVideoCard({ src, index }: { src: string; index: number }) {
       className="relative flex-shrink-0 w-[240px] sm:w-[280px] snap-center cursor-pointer group"
       onClick={handleClick}
     >
+      {/* GlowingEffect'in border'ı dışarı taşabilmesi için overflow-hidden YOK */}
       <div
-        className="relative rounded-[28px] overflow-hidden bg-[#111] border border-white/[0.06] transition-all duration-500 group-hover:border-[#C9A96E]/35 group-hover:shadow-[0_0_48px_rgba(201,169,110,0.13)]"
+        className="relative rounded-[28px] border border-white/[0.06] transition-all duration-500 group-hover:border-[#C9A96E]/35 group-hover:shadow-[0_0_48px_rgba(201,169,110,0.13)]"
         style={{ aspectRatio: "9/16" }}
       >
         <GlowingEffect disabled={false} />
-        <video
-          ref={videoRef}
-          src={src}
-          loop
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover"
-        />
 
-        {/* Karartma — sadece duruyorken */}
-        <div
-          className="absolute inset-0 bg-black/30 transition-opacity duration-400"
-          style={{ opacity: playing ? 0 : 1 }}
-        />
+        {/* Video içeriği ayrı bir wrapper'da overflow-hidden ile kırpılıyor */}
+        <div className="absolute inset-0 rounded-[28px] overflow-hidden bg-[#111]">
+          <video
+            ref={videoRef}
+            src={src}
+            loop
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+          />
 
-        {/* Play butonu */}
-        <div
-          className="absolute inset-0 flex items-center justify-center transition-all duration-300"
-          style={{ opacity: playing ? 0 : 1, transform: playing ? "scale(0.75)" : "scale(1)" }}
-        >
-          <div className="w-[60px] h-[60px] rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        </div>
+          {/* Karartma — sadece duruyorken */}
+          <div
+            className="absolute inset-0 bg-black/30 transition-opacity duration-400"
+            style={{ opacity: playing ? 0 : 1 }}
+          />
 
-        {/* Sıra etiketi — sol üst */}
-        <div className="absolute top-4 left-4">
-          <span
-            style={{ fontFamily: BODY, letterSpacing: "0.18em" }}
-            className="text-[10px] uppercase text-white/45 font-medium bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10"
+          {/* Play butonu */}
+          <div
+            className="absolute inset-0 flex items-center justify-center transition-all duration-300"
+            style={{ opacity: playing ? 0 : 1, transform: playing ? "scale(0.75)" : "scale(1)" }}
           >
-            {String(index + 1).padStart(2, "0")}
-          </span>
-        </div>
-
-        {/* Alt gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-black/50 to-transparent" />
-
-        {/* Ses dalgası — oynarken */}
-        {playing && (
-          <div className="absolute bottom-4 right-4 flex items-end gap-[3px]">
-            {[6, 10, 14, 10, 6].map((h, i) => (
-              <div
-                key={i}
-                className="w-[3px] rounded-full bg-[#C9A96E]"
-                style={{
-                  height: `${h}px`,
-                  animation: "soundBar 0.8s ease-in-out infinite alternate",
-                  animationDelay: `${i * 0.12}s`,
-                }}
-              />
-            ))}
+            <div className="w-[60px] h-[60px] rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-2xl">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
           </div>
-        )}
+
+          {/* Sıra etiketi — sol üst */}
+          <div className="absolute top-4 left-4">
+            <span
+              style={{ fontFamily: BODY, letterSpacing: "0.18em" }}
+              className="text-[10px] uppercase text-white/45 font-medium bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10"
+            >
+              {String(index + 1).padStart(2, "0")}
+            </span>
+          </div>
+
+          {/* Alt gradient */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-black/50 to-transparent" />
+
+          {/* Ses dalgası — oynarken */}
+          {playing && (
+            <div className="absolute bottom-4 right-4 flex items-end gap-[3px]">
+              {[6, 10, 14, 10, 6].map((h, i) => (
+                <div
+                  key={i}
+                  className="w-[3px] rounded-full bg-[#C9A96E]"
+                  style={{
+                    height: `${h}px`,
+                    animation: "soundBar 0.8s ease-in-out infinite alternate",
+                    animationDelay: `${i * 0.12}s`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
