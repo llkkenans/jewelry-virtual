@@ -784,49 +784,35 @@ export default function LandingPage() {
             }
           `}</style>
 
-          <div className="max-w-6xl mx-auto px-6 sm:px-10 mb-14">
+          <div className="max-w-6xl mx-auto px-6 sm:px-10 mb-14 text-center">
             <Reveal>
-              <Overline light>Sosyal Medya</Overline>
+              <Overline light>Instagram</Overline>
               <h2
                 style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6 max-w-xl"
+                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6"
               >
-                Paylaşmaya hazır
+                Sosyal Medyada
                 <br />
                 <em className="not-italic font-light text-white/30" style={{ fontFamily: DISPLAY }}>
-                  içerikler.
+                  Lunia Studio.
                 </em>
               </h2>
-              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/40 font-light max-w-sm leading-[1.75]">
-                AI ile üretilen görsellerinizi sosyal medyaya hazır formatta indirin, saniyeler içinde yayınlayın.
+              <p style={{ fontFamily: BODY }} className="text-[14px] text-white/40 font-light leading-[1.75] mx-auto max-w-sm">
+                Lunia Studio ile üretilen görseller Instagram'da nasıl görünüyor? Gerçek çekimlerden ayırt edilemeyen AI çıktıları.
               </p>
             </Reveal>
           </div>
 
-          {/* Horizontal scroll */}
-          <div
-            className="flex gap-4 overflow-x-auto px-6 sm:px-10 pb-4 scroll-smooth snap-x snap-mandatory"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
-          >
-            {socialVideos.map((src, i) => (
-              <SocialVideoCard key={src} src={src} index={i} />
-            ))}
-            <div className="flex-shrink-0 w-2 sm:w-6" />
-          </div>
-
-          {/* Kaydır ipucu */}
-          <Reveal delay={200}>
-            <div className="flex items-center gap-3 px-6 sm:px-10 mt-8">
-              <div className="flex gap-1.5">
-                {socialVideos.map((_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/15" />
+          {/* Ortalanmış video kartları */}
+          <div className="max-w-6xl mx-auto px-6 sm:px-10">
+            <Reveal delay={100}>
+              <div className="flex flex-wrap justify-center gap-4">
+                {socialVideos.map((src, i) => (
+                  <SocialVideoCard key={src} src={src} index={i} />
                 ))}
               </div>
-              <span style={{ fontFamily: BODY, letterSpacing: "0.18em" }} className="text-[10px] uppercase text-white/25">
-                Sürükle veya kaydır
-              </span>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
 
         </section>
 
