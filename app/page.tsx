@@ -488,6 +488,7 @@ export default function LandingPage() {
         {/* ─────────────── HERO ─────────────── */}
         <section className="relative h-screen overflow-hidden">
           <video
+            key={videoIndex}
             src={heroVideos[videoIndex]}
             autoPlay muted loop playsInline
             className="absolute inset-0 w-full h-full object-cover"
