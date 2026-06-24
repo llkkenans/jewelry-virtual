@@ -392,13 +392,14 @@ function Overline({ children, light = false }: { children: string; light?: boole
 
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 export default function LandingPage() {
-  const [videoIndex] = useState(() => {
-    if (typeof window === 'undefined') return 0
+  const [videoIndex, setVideoIndex] = useState(0)
+
+  useEffect(() => {
     const current = parseInt(sessionStorage.getItem('heroVideoIndex') || '0')
     const next = (current + 1) % heroVideos.length
     sessionStorage.setItem('heroVideoIndex', String(next))
-    return current
-  })
+    setVideoIndex(current)
+  }, [])
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
