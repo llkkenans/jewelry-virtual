@@ -88,7 +88,20 @@ export default function StatsPage() {
   const cMax = Math.max(...cCategories.map(c => c.count), 1)
 
   return (
-    <div className="dark min-h-screen bg-[#0A0A0A] px-4 py-8 lg:px-0 lg:py-10">
+    <div
+      className="dark min-h-screen bg-[#0A0A0A] px-4 py-8 lg:px-0 lg:py-10"
+      style={{
+        "--card": "oklch(0.13 0 0)",
+        "--card-foreground": "oklch(0.985 0 0)",
+        "--muted": "oklch(0.18 0 0)",
+        "--muted-foreground": "oklch(0.6 0 0)",
+        "--border": "oklch(1 0 0 / 8%)",
+        "--popover": "oklch(0.13 0 0)",
+        "--popover-foreground": "oklch(0.985 0 0)",
+        "--primary": "oklch(0.922 0 0)",
+        "--primary-foreground": "oklch(0.13 0 0)",
+      } as React.CSSProperties}
+    >
       <div className="max-w-4xl mx-auto space-y-5">
 
         {/* Başlık */}
