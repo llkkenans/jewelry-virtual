@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { Camera, Coins, Wallet, Diamond } from "lucide-react"
+import { Camera, Coins, Wallet, Diamond, Gem, Shirt } from "lucide-react"
+import { HealthStatCard } from "@/components/ui/health-stat-card"
 
 interface DailyEntry { date: string; count: number }
 interface StatsData {
@@ -195,43 +196,81 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* Kategori Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#111827] mb-4">Takı kategorileri</h2>
-            <div className="space-y-3">
-              {jCategories.map(({ label, count }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <span className="text-[11px] text-[#6B7280] w-20 shrink-0">{label}</span>
-                  <div className="flex-1 h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#C9A96E] rounded-full transition-all"
-                      style={{ width: `${(count / jMax) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-[#111827] font-medium w-6 text-right">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Kategori Breakdown — HealthStatCards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <HealthStatCard
+            headerIcon={<Gem size={20} strokeWidth={1.5} />}
+            title="Takı Kategorileri"
+            stats={[
+              { title: "Toplam", value: data.jewelry.total },
+              { title: "Yüzük", value: data.jewelry.byCategory.ring },
+              { title: "Kolye", value: data.jewelry.byCategory.necklace },
+            ]}
+            graphData={[
+              {
+                label: "Yüzük",
+                value: jMax > 0 ? Math.round((data.jewelry.byCategory.ring / jMax) * 100) : 0,
+                color: "#C9A96E",
+                description: `${data.jewelry.byCategory.ring} üretim`,
+              },
+              {
+                label: "Kolye",
+                value: jMax > 0 ? Math.round((data.jewelry.byCategory.necklace / jMax) * 100) : 0,
+                color: "#A37C4A",
+                description: `${data.jewelry.byCategory.necklace} üretim`,
+              },
+              {
+                label: "Küpe",
+                value: jMax > 0 ? Math.round((data.jewelry.byCategory.earring / jMax) * 100) : 0,
+                color: "#D4B896",
+                description: `${data.jewelry.byCategory.earring} üretim`,
+              },
+              {
+                label: "Saat",
+                value: jMax > 0 ? Math.round((data.jewelry.byCategory.watch / jMax) * 100) : 0,
+                color: "#6B7280",
+                description: `${data.jewelry.byCategory.watch} üretim`,
+              },
+            ]}
+            graphHeight={110}
+            legendTitle="Kategori Dağılımı"
+            legendFormat={(item) => `${item.label}`}
+            className="max-w-none border-[#E5E7EB]"
+          />
 
-          <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#111827] mb-4">Kıyafet kategorileri</h2>
-            <div className="space-y-3">
-              {cCategories.map(({ label, count }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <span className="text-[11px] text-[#6B7280] w-20 shrink-0">{label}</span>
-                  <div className="flex-1 h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#111827] rounded-full transition-all"
-                      style={{ width: `${(count / cMax) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-[#111827] font-medium w-6 text-right">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <HealthStatCard
+            headerIcon={<Shirt size={20} strokeWidth={1.5} />}
+            title="Kıyafet Kategorileri"
+            stats={[
+              { title: "Toplam", value: data.clothing.total },
+              { title: "Üst Giyim", value: data.clothing.byCategory.tops },
+              { title: "Alt Giyim", value: data.clothing.byCategory.bottoms },
+            ]}
+            graphData={[
+              {
+                label: "Üst Giyim",
+                value: cMax > 0 ? Math.round((data.clothing.byCategory.tops / cMax) * 100) : 0,
+                color: "#111827",
+                description: `${data.clothing.byCategory.tops} üretim`,
+              },
+              {
+                label: "Alt Giyim",
+                value: cMax > 0 ? Math.round((data.clothing.byCategory.bottoms / cMax) * 100) : 0,
+                color: "#374151",
+                description: `${data.clothing.byCategory.bottoms} üretim`,
+              },
+              {
+                label: "Tek Parça",
+                value: cMax > 0 ? Math.round((data.clothing.byCategory.onepiece / cMax) * 100) : 0,
+                color: "#6B7280",
+                description: `${data.clothing.byCategory.onepiece} üretim`,
+              },
+            ]}
+            graphHeight={110}
+            legendTitle="Kategori Dağılımı"
+            legendFormat={(item) => `${item.label}`}
+            className="max-w-none border-[#E5E7EB]"
+          />
         </div>
 
         {/* ROI Banner */}
