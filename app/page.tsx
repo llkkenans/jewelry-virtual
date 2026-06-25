@@ -175,15 +175,15 @@ function DemoSimulator() {
 
       {/* ── Üst-seviye Tab Switcher ── */}
       <div className="flex justify-center mb-6">
-        <div className="flex gap-1 bg-[#F8F6F2] rounded-full p-1 border border-black/[0.06]">
+        <div className="flex gap-1 bg-[#1A1A1A] rounded-full p-1 border border-white/[0.06]">
           {(['jewelry', 'clothing'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
               className={`px-5 py-2 rounded-full transition-all duration-200 cursor-pointer ${
                 studioTab === tab
-                  ? "bg-white shadow-sm text-[#111827]"
-                  : "text-[#9CA3AF] hover:text-[#6B7280]"
+                  ? "bg-[#2A2A2A] shadow-sm text-white"
+                  : "text-[#9CA3AF] hover:text-[#D1D5DB]"
               }`}
               style={{ fontFamily: BODY, fontSize: "11px", fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase" }}
             >
@@ -208,7 +208,7 @@ function DemoSimulator() {
                     onClick={() => handleSelect(i)}
                     className={`relative flex-1 aspect-square rounded-xl overflow-hidden transition-all duration-200 cursor-pointer ${
                       selected === i
-                        ? "ring-2 ring-[#0A0A0A]/50 scale-[1.02]"
+                        ? "ring-2 ring-white/50 scale-[1.02]"
                         : "opacity-45 hover:opacity-70"
                     }`}
                   >
@@ -226,7 +226,7 @@ function DemoSimulator() {
               </div>
 
               {/* Seçili takı büyük görsel */}
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white">
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#1A1A1A]">
                 <img
                   key={item.id}
                   src={item.before}
@@ -251,8 +251,8 @@ function DemoSimulator() {
                     onClick={() => setClothingType(btn.id)}
                     className={`flex-1 py-2 rounded-xl border transition-all duration-200 cursor-pointer ${
                       clothingType === btn.id
-                        ? "border-[#0A0A0A]/40 bg-white text-[#0A0A0A]"
-                        : "border-black/[0.08] bg-white/50 text-[#9CA3AF] hover:text-[#6B7280]"
+                        ? "border-white/40 bg-[#2A2A2A] text-white"
+                        : "border-white/[0.08] bg-[#1A1A1A] text-[#9CA3AF] hover:text-[#D1D5DB]"
                     }`}
                     style={{ fontFamily: BODY, fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600 }}
                   >
@@ -262,10 +262,10 @@ function DemoSimulator() {
               </div>
 
               {/* Kıyafet için placeholder */}
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center border border-dashed border-black/[0.1]">
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center border border-dashed border-white/[0.1]">
                 <div className="flex flex-col items-center gap-3 px-6 text-center">
-                  <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/40" />
-                  <p style={{ fontFamily: BODY, fontSize: "12px", letterSpacing: "0.02em" }} className="text-black/25 font-light leading-relaxed">
+                  <Sparkles size={22} strokeWidth={1.2} className="text-white/20" />
+                  <p style={{ fontFamily: BODY, fontSize: "12px", letterSpacing: "0.02em" }} className="text-white/25 font-light leading-relaxed">
                     Kıyafet görseli<br />yükleyin
                   </p>
                 </div>
@@ -280,13 +280,13 @@ function DemoSimulator() {
           {studioTab === 'jewelry' ? (
             <>
               {/* Çıktı alanı — takı */}
-              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center">
 
                 {/* IDLE */}
                 {phase === "idle" && (
                   <div className="flex flex-col items-center gap-4 px-6 text-center">
-                    <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/70" />
-                    <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-black/35 font-light leading-relaxed">
+                    <Sparkles size={22} strokeWidth={1.2} className="text-white/40" />
+                    <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-white/35 font-light leading-relaxed">
                       Görseli oluşturmak için<br />aşağıdaki butona tıklayın
                     </p>
                   </div>
@@ -296,12 +296,12 @@ function DemoSimulator() {
                 {phase === "loading" && (
                   <div className="flex flex-col items-center gap-5 px-6 text-center">
                     <div className="flex items-center gap-3">
-                      <Gem size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
-                      <Circle size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
-                      <Sparkles size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
-                      <Watch size={26} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
+                      <Gem size={26} strokeWidth={1.2} className="text-white/70 animate-pulse" style={{ animationDelay: '0ms' }} />
+                      <Circle size={26} strokeWidth={1.2} className="text-white/70 animate-pulse" style={{ animationDelay: '200ms' }} />
+                      <Sparkles size={26} strokeWidth={1.2} className="text-white/70 animate-pulse" style={{ animationDelay: '400ms' }} />
+                      <Watch size={26} strokeWidth={1.2} className="text-white/70 animate-pulse" style={{ animationDelay: '600ms' }} />
                     </div>
-                    <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-black/35 font-light">
+                    <p style={{ fontFamily: BODY, fontSize: "12.5px", letterSpacing: "0.02em" }} className="text-white/35 font-light">
                       AI görsel oluşturuyor...
                     </p>
                   </div>
@@ -339,10 +339,10 @@ function DemoSimulator() {
                 disabled={phase === "loading"}
                 className={`w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 cursor-pointer ${
                   phase === "loading"
-                    ? "bg-black/5 text-black/25 cursor-not-allowed"
+                    ? "bg-white/5 text-white/25 cursor-not-allowed"
                     : phase === "done"
-                    ? "bg-black/5 text-black/40 hover:bg-black/8 border border-black/[0.08]"
-                    : "bg-[#0A0A0A] text-white hover:bg-[#1F1F1F]"
+                    ? "bg-white/5 text-white/40 hover:bg-white/8 border border-white/[0.08]"
+                    : "bg-white text-[#0A0A0A] hover:bg-white/90"
                 }`}
               >
                 {phase === "loading" ? "Oluşturuluyor..." : phase === "done" ? "Farklı Ürün Dene" : "Modele Giydir →"}
@@ -351,10 +351,10 @@ function DemoSimulator() {
           ) : (
             <>
               {/* Kıyafet — yakında mesajı */}
-              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 px-8 text-center">
-                  <Sparkles size={22} strokeWidth={1.2} className="text-[#C9A96E]/40" />
-                  <p style={{ fontFamily: BODY, fontSize: "13px", letterSpacing: "0.01em" }} className="text-black/30 font-light leading-[1.7]">
+                  <Sparkles size={22} strokeWidth={1.2} className="text-white/20" />
+                  <p style={{ fontFamily: BODY, fontSize: "13px", letterSpacing: "0.01em" }} className="text-white/30 font-light leading-[1.7]">
                     Yakında — Kıyafet stüdyosu<br />demo görselleri ekleniyor
                   </p>
                 </div>
@@ -363,7 +363,7 @@ function DemoSimulator() {
               {/* Disabled buton — kıyafet */}
               <button
                 disabled
-                className="w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] bg-black/5 text-black/25 cursor-not-allowed opacity-50"
+                className="w-full h-12 rounded-full text-[12px] font-semibold uppercase tracking-[0.15em] bg-white/5 text-white/25 cursor-not-allowed opacity-50"
                 style={{ fontFamily: BODY }}
               >
                 Modele Giydir →
@@ -412,7 +412,7 @@ function SocialVideoCard({ src, index }: { src: string; index: number }) {
     >
       {/* GlowingEffect'in border'ı dışarı taşabilmesi için overflow-hidden YOK */}
       <div
-        className="relative rounded-[28px] border border-white/[0.06] transition-all duration-500 group-hover:border-[#C9A96E]/35 group-hover:shadow-[0_0_48px_rgba(201,169,110,0.13)]"
+        className="relative rounded-[28px] border border-white/[0.06] transition-all duration-500 group-hover:border-white/20 group-hover:shadow-[0_0_48px_rgba(255,255,255,0.05)]"
         style={{ aspectRatio: "9/16" }}
       >
         <GlowingEffect disabled={false} proximity={64} borderWidth={3} spread={30} />
@@ -465,7 +465,7 @@ function SocialVideoCard({ src, index }: { src: string; index: number }) {
               {[6, 10, 14, 10, 6].map((h, i) => (
                 <div
                   key={i}
-                  className="w-[3px] rounded-full bg-[#C9A96E]"
+                  className="w-[3px] rounded-full bg-white/70"
                   style={{
                     height: `${h}px`,
                     animation: "soundBar 0.8s ease-in-out infinite alternate",
@@ -486,7 +486,7 @@ function Overline({ children, light = false }: { children: string; light?: boole
   return (
     <p
       style={{ fontFamily: BODY }}
-      className={`text-[11px] tracking-[0.28em] uppercase font-medium mb-5 ${light ? "text-white/35" : "text-black/35"}`}
+      className={`text-[11px] tracking-[0.28em] uppercase font-medium mb-5 ${light ? "text-white/35" : "text-white/35"}`}
     >
       {children}
     </p>
@@ -512,13 +512,13 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div style={{ fontFamily: BODY }} className="min-h-screen bg-white text-[#0A0A0A]">
+    <div style={{ fontFamily: BODY }} className="min-h-screen bg-[#0A0A0A] text-[#F5F5F5]">
 
       {/* ─────────────── NAVBAR ─────────────── */}
       <header
         className={`fixed top-3 inset-x-4 z-50 rounded-2xl transition-all duration-500 backdrop-blur-xl ${
           scrolled
-            ? "bg-white/88 border border-black/[0.08] shadow-sm"
+            ? "bg-[#111]/90 border border-white/[0.08] shadow-sm"
             : "bg-black/[0.06]"
         }`}
       >
@@ -529,7 +529,7 @@ export default function LandingPage() {
             <span
               style={{ fontFamily: DISPLAY }}
               className={`text-[12px] font-light tracking-[0.22em] uppercase transition-colors duration-400 ${
-                scrolled ? "text-[#0A0A0A]" : "text-white"
+                scrolled ? "text-white" : "text-white"
               }`}
             >
               Lunia Studio
@@ -548,7 +548,7 @@ export default function LandingPage() {
                 href={href}
                 className={`text-[13px] font-medium transition-colors duration-300 cursor-pointer ${
                   scrolled
-                    ? "text-[#0A0A0A]/55 hover:text-[#0A0A0A]"
+                    ? "text-white/55 hover:text-white"
                     : "text-white/65 hover:text-white"
                 }`}
               >
@@ -564,7 +564,7 @@ export default function LandingPage() {
                 variant="ghost"
                 className={`h-9 px-4 text-[13px] font-medium rounded-full cursor-pointer transition-all duration-300 ${
                   scrolled
-                    ? "text-[#0A0A0A]/60 hover:text-[#0A0A0A] hover:bg-black/[0.05]"
+                    ? "text-white/60 hover:text-white hover:bg-white/[0.05]"
                     : "text-white/75 hover:text-white hover:bg-white/10"
                 }`}
               >
@@ -575,7 +575,7 @@ export default function LandingPage() {
               <Button
                 className={`h-9 px-5 text-[13px] font-semibold rounded-full cursor-pointer transition-all duration-300 ${
                   scrolled
-                    ? "bg-[#0A0A0A] text-white hover:bg-[#222] border-0"
+                    ? "bg-white text-[#0A0A0A] hover:bg-white/90 border-0"
                     : "bg-white/[0.15] text-white hover:bg-white/25 border border-white/40 backdrop-blur-sm"
                 }`}
               >
@@ -639,20 +639,20 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── STATS STRIP ─────────────── */}
-        <section className="bg-white border-b border-black/[0.07]">
+        <section className="bg-[#0A0A0A] border-b border-white/[0.07]">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
-            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-black/[0.07]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-white/[0.07]">
               {stats.map(({ value, label }, i) => (
                 <Reveal key={label} delay={i * 90} className="py-10 px-6 text-center">
                   <div
                     style={{ fontFamily: DISPLAY }}
-                    className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-[-0.03em] text-[#0A0A0A] leading-none mb-2.5"
+                    className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-[-0.03em] text-white leading-none mb-2.5"
                   >
                     {value}
                   </div>
                   <div
                     style={{ fontFamily: BODY }}
-                    className="text-[11px] text-[#0A0A0A]/38 uppercase tracking-[0.18em] font-medium"
+                    className="text-[11px] text-white/38 uppercase tracking-[0.18em] font-medium"
                   >
                     {label}
                   </div>
@@ -662,19 +662,19 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─────────────── HOW IT WORKS — White ─────────────── */}
-        <section id="nasil-calisir" className="bg-white py-28 sm:py-36">
+        {/* ─────────────── HOW IT WORKS ─────────────── */}
+        <section id="nasil-calisir" className="bg-[#0A0A0A] py-28 sm:py-36">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
 
             <Reveal>
               <Overline>Nasıl Çalışır</Overline>
               <h2
                 style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#0A0A0A] leading-[1.0] mb-20 max-w-xl"
+                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-20 max-w-xl"
               >
                 Üç Adımda
                 <br />
-                <em className="not-italic font-light text-black/30" style={{ fontFamily: DISPLAY }}>
+                <em className="not-italic font-light text-white/20" style={{ fontFamily: DISPLAY }}>
                   Profesyonel Görsel.
                 </em>
               </h2>
@@ -684,7 +684,7 @@ export default function LandingPage() {
               {steps.map(({ n, img, title, desc }, i) => (
                 <Reveal key={n} delay={i * 110}>
                   <div className="group cursor-default">
-                    <div className="aspect-[4/5] rounded-2xl overflow-hidden mb-7 bg-[#F4F4F2]">
+                    <div className="aspect-[4/5] rounded-2xl overflow-hidden mb-7 bg-[#1A1A1A]">
                       <img
                         src={img}
                         alt={title}
@@ -693,19 +693,19 @@ export default function LandingPage() {
                     </div>
                     <span
                       style={{ fontFamily: DISPLAY }}
-                      className="block text-[11px] font-semibold tracking-[0.25em] uppercase text-black/28 mb-3"
+                      className="block text-[11px] font-semibold tracking-[0.25em] uppercase text-white/20 mb-3"
                     >
                       {n}
                     </span>
                     <h3
                       style={{ fontFamily: DISPLAY }}
-                      className="text-[1.2rem] font-bold text-[#0A0A0A] tracking-[-0.02em] mb-2.5 leading-[1.2]"
+                      className="text-[1.2rem] font-bold text-white tracking-[-0.02em] mb-2.5 leading-[1.2]"
                     >
                       {title}
                     </h3>
                     <p
                       style={{ fontFamily: BODY }}
-                      className="text-[14px] text-[#0A0A0A]/48 leading-[1.7] font-light"
+                      className="text-[14px] text-[#9CA3AF] leading-[1.7] font-light"
                     >
                       {desc}
                     </p>
@@ -716,7 +716,7 @@ export default function LandingPage() {
 
             <Reveal delay={180} className="mt-16">
               <Link href="/register">
-                <Button className="h-11 px-8 text-[13px] font-semibold rounded-full cursor-pointer bg-[#0A0A0A] text-white hover:bg-[#1F1F1F] transition-all duration-300">
+                <Button className="h-11 px-8 text-[13px] font-semibold rounded-full cursor-pointer bg-white text-[#0A0A0A] hover:bg-white/90 transition-all duration-300">
                   Hemen Başla
                 </Button>
               </Link>
@@ -725,10 +725,10 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── RESULTS — Before/After ─────────────── */}
-        <section id="sonuclar" className="py-28 sm:py-36" style={{ backgroundColor: "#F8F6F2" }}>
+        <section id="sonuclar" className="py-28 sm:py-36" style={{ backgroundColor: "#0A0A0A" }}>
 
-          {/* Blob 1 — altın, sol üst */}
-          <div className="absolute pointer-events-none" style={{ width:"700px", height:"700px", borderRadius:"50%", background:"radial-gradient(circle, rgba(201,169,110,0.11) 0%, transparent 65%)", top:"-200px", left:"-180px", filter:"blur(60px)", animation:"blobDrift1 20s ease-in-out infinite" }} />
+          {/* Blob 1 — subtle white, sol üst */}
+          <div className="absolute pointer-events-none" style={{ width:"700px", height:"700px", borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 65%)", top:"-200px", left:"-180px", filter:"blur(60px)", animation:"blobDrift1 20s ease-in-out infinite" }} />
 
           {/* Blob 2 — mor, sağ orta */}
           <div className="absolute pointer-events-none" style={{ width:"600px", height:"600px", borderRadius:"50%", background:"radial-gradient(circle, rgba(120,80,200,0.10) 0%, transparent 65%)", top:"10%", right:"-150px", filter:"blur(70px)", animation:"blobDrift2 25s ease-in-out infinite" }} />
@@ -736,17 +736,17 @@ export default function LandingPage() {
           {/* Blob 3 — mavi, sol alt */}
           <div className="absolute pointer-events-none" style={{ width:"500px", height:"500px", borderRadius:"50%", background:"radial-gradient(circle, rgba(60,100,220,0.08) 0%, transparent 65%)", bottom:"-100px", left:"20%", filter:"blur(55px)", animation:"blobDrift3 22s ease-in-out infinite" }} />
 
-          {/* Blob 4 — altın, sağ alt */}
-          <div className="absolute pointer-events-none" style={{ width:"350px", height:"350px", borderRadius:"50%", background:"radial-gradient(circle, rgba(220,160,90,0.09) 0%, transparent 65%)", bottom:"5%", right:"10%", filter:"blur(45px)", animation:"blobDrift1 18s ease-in-out 4s infinite" }} />
+          {/* Blob 4 — subtle white, sağ alt */}
+          <div className="absolute pointer-events-none" style={{ width:"350px", height:"350px", borderRadius:"50%", background:"radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 65%)", bottom:"5%", right:"10%", filter:"blur(45px)", animation:"blobDrift1 18s ease-in-out 4s infinite" }} />
 
           {/* Işık huzmesi 1 */}
-          <div className="absolute pointer-events-none" style={{ width:"1px", height:"55%", background:"linear-gradient(to top, rgba(201,169,110,0.18), transparent)", left:"28%", bottom:0, filter:"blur(8px)", transform:"scaleX(18)", transformOrigin:"center bottom", animation:"rayPulse1 6s ease-in-out infinite" }} />
+          <div className="absolute pointer-events-none" style={{ width:"1px", height:"55%", background:"linear-gradient(to top, rgba(255,255,255,0.05), transparent)", left:"28%", bottom:0, filter:"blur(8px)", transform:"scaleX(18)", transformOrigin:"center bottom", animation:"rayPulse1 6s ease-in-out infinite" }} />
 
           {/* Işık huzmesi 2 */}
           <div className="absolute pointer-events-none" style={{ width:"1px", height:"45%", background:"linear-gradient(to top, rgba(120,80,200,0.14), transparent)", right:"25%", bottom:0, filter:"blur(10px)", transform:"scaleX(22)", transformOrigin:"center bottom", animation:"rayPulse2 8s ease-in-out infinite" }} />
 
           {/* Işık huzmesi 3 */}
-          <div className="absolute pointer-events-none" style={{ width:"1px", height:"35%", background:"linear-gradient(to top, rgba(255,220,130,0.10), transparent)", left:"52%", bottom:0, filter:"blur(6px)", transform:"scaleX(10)", transformOrigin:"center bottom", animation:"rayPulse1 10s ease-in-out 2s infinite" }} />
+          <div className="absolute pointer-events-none" style={{ width:"1px", height:"35%", background:"linear-gradient(to top, rgba(255,255,255,0.03), transparent)", left:"52%", bottom:0, filter:"blur(6px)", transform:"scaleX(10)", transformOrigin:"center bottom", animation:"rayPulse1 10s ease-in-out 2s infinite" }} />
 
           <div className="relative z-10">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
@@ -755,15 +755,15 @@ export default function LandingPage() {
               <Overline>Sonuçlar</Overline>
               <h2
                 style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#0A0A0A] leading-[1.0] mb-6 max-w-xl"
+                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6 max-w-xl"
               >
                 Ürün fotoğrafından
                 <br />
-                <em className="not-italic font-light text-black/30" style={{ fontFamily: DISPLAY }}>
+                <em className="not-italic font-light text-white/20" style={{ fontFamily: DISPLAY }}>
                   model görseline.
                 </em>
               </h2>
-              <p style={{ fontFamily: BODY }} className="text-[14px] text-[#0A0A0A]/45 font-light mb-16 max-w-sm leading-[1.75]">
+              <p style={{ fontFamily: BODY }} className="text-[14px] text-[#9CA3AF] font-light mb-16 max-w-sm leading-[1.75]">
                 Takı veya kıyafet fotoğrafınızı yükleyin, modele giydirin — saniyeler içinde stüdyo kalitesi.
               </p>
             </Reveal>
@@ -879,14 +879,14 @@ export default function LandingPage() {
       </main>
 
       {/* ─────────────── FOOTER ─────────────── */}
-      <footer className="bg-white border-t border-black/[0.07]">
+      <footer className="bg-[#0A0A0A] border-t border-white/[0.07]">
         <div className="max-w-6xl mx-auto px-6 sm:px-10 py-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
 
             {/* Brand */}
             <span
               style={{ fontFamily: DISPLAY }}
-              className="text-[11px] font-light text-[#0A0A0A]/38 tracking-[0.22em] uppercase"
+              className="text-[11px] font-light text-white/38 tracking-[0.22em] uppercase"
             >
               Lunia Studio
             </span>
@@ -904,7 +904,7 @@ export default function LandingPage() {
                   key={label}
                   href={href}
                   style={{ fontFamily: BODY }}
-                  className="text-[13px] text-[#0A0A0A]/38 hover:text-[#0A0A0A]/70 transition-colors font-medium"
+                  className="text-[13px] text-white/38 hover:text-white/70 transition-colors font-medium"
                 >
                   {label}
                 </Link>
@@ -914,7 +914,7 @@ export default function LandingPage() {
             {/* Copyright */}
             <p
               style={{ fontFamily: BODY }}
-              className="text-[12px] text-[#0A0A0A]/28 font-light"
+              className="text-[12px] text-white/28 font-light"
             >
               © 2026 Lunia Studio
             </p>
