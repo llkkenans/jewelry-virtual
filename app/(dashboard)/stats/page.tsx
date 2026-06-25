@@ -210,32 +210,32 @@ export default function StatsPage() {
               {
                 label: "Yüzük",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.ring / jMax) * 100) : 0,
-                color: "#C9A96E",
+                color: "#3B82F6",
                 description: `${data.jewelry.byCategory.ring} üretim`,
               },
               {
                 label: "Kolye",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.necklace / jMax) * 100) : 0,
-                color: "#A37C4A",
+                color: "#22C55E",
                 description: `${data.jewelry.byCategory.necklace} üretim`,
               },
               {
                 label: "Küpe",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.earring / jMax) * 100) : 0,
-                color: "#D4B896",
+                color: "#F59E0B",
                 description: `${data.jewelry.byCategory.earring} üretim`,
               },
               {
                 label: "Saat",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.watch / jMax) * 100) : 0,
-                color: "#6B7280",
+                color: "#EF4444",
                 description: `${data.jewelry.byCategory.watch} üretim`,
               },
             ]}
             graphHeight={110}
             legendTitle="Kategori Dağılımı"
             legendFormat={(item) => `${item.label}`}
-            className="max-w-none border-[#E5E7EB]"
+            className="max-w-none"
           />
 
           <HealthStatCard
@@ -250,26 +250,26 @@ export default function StatsPage() {
               {
                 label: "Üst Giyim",
                 value: cMax > 0 ? Math.round((data.clothing.byCategory.tops / cMax) * 100) : 0,
-                color: "#111827",
+                color: "#8B5CF6",
                 description: `${data.clothing.byCategory.tops} üretim`,
               },
               {
                 label: "Alt Giyim",
                 value: cMax > 0 ? Math.round((data.clothing.byCategory.bottoms / cMax) * 100) : 0,
-                color: "#374151",
+                color: "#06B6D4",
                 description: `${data.clothing.byCategory.bottoms} üretim`,
               },
               {
                 label: "Tek Parça",
                 value: cMax > 0 ? Math.round((data.clothing.byCategory.onepiece / cMax) * 100) : 0,
-                color: "#6B7280",
+                color: "#F97316",
                 description: `${data.clothing.byCategory.onepiece} üretim`,
               },
             ]}
             graphHeight={110}
             legendTitle="Kategori Dağılımı"
             legendFormat={(item) => `${item.label}`}
-            className="max-w-none border-[#E5E7EB]"
+            className="max-w-none"
           />
         </div>
 
