@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { Camera, Coins, Wallet, Diamond, Gem, Shirt } from "lucide-react"
+import { Camera, Coins, Wallet, Layers, Gem, Shirt } from "lucide-react"
 import { HealthStatCard } from "@/components/ui/health-stat-card"
 
 interface DailyEntry { date: string; count: number }
@@ -49,12 +49,13 @@ export default function StatsPage() {
 
   if (loading) return <LoadingSkeleton />
   if (error || !data) return (
-    <div className="text-center py-20 text-[#9CA3AF] text-sm">{error ?? 'Veri bulunamadı'}</div>
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+      <p className="text-[#6B7280] text-sm">{error ?? 'Veri bulunamadı'}</p>
+    </div>
   )
 
   const totalProduced = data.jewelry.total + data.clothing.total
 
-  // Chart data
   const getChartData = () => {
     const jDaily = data.jewelry.daily
     const cDaily = data.clothing.daily
@@ -72,14 +73,13 @@ export default function StatsPage() {
   const chartData = getChartData()
   const maxVal = Math.max(...chartData.map(d => d.j + d.c), 1)
 
-  // Category breakdowns
-  const jCategories: { label: string; count: number }[] = [
+  const jCategories = [
     { label: "Yüzük", count: data.jewelry.byCategory.ring },
     { label: "Kolye", count: data.jewelry.byCategory.necklace },
     { label: "Küpe", count: data.jewelry.byCategory.earring },
     { label: "Saat", count: data.jewelry.byCategory.watch },
   ]
-  const cCategories: { label: string; count: number }[] = [
+  const cCategories = [
     { label: "Üst Giyim", count: data.clothing.byCategory.tops },
     { label: "Alt Giyim", count: data.clothing.byCategory.bottoms },
     { label: "Tek Parça", count: data.clothing.byCategory.onepiece },
@@ -88,51 +88,27 @@ export default function StatsPage() {
   const cMax = Math.max(...cCategories.map(c => c.count), 1)
 
   return (
-    <div className="min-h-screen bg-[#F8F6F2] px-4 py-8 lg:px-0 lg:py-10">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="dark min-h-screen bg-[#0A0A0A] px-4 py-8 lg:px-0 lg:py-10">
+      <div className="max-w-4xl mx-auto space-y-5">
 
         {/* Başlık */}
         <div>
-          <h1 className="font-cormorant text-2xl font-semibold text-[#111827]">Kullanım Özeti</h1>
-          <p className="text-[11px] uppercase tracking-widest text-[#9CA3AF] mt-1">Son 30 Gün</p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight">Kullanım Özeti</h1>
+          <p className="text-[11px] uppercase tracking-widest text-[#4B5563] mt-1">Son 30 Gün</p>
         </div>
 
         {/* 4 Stat Kartı */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard
-            iconBg="bg-[#FDF6EC]"
-            iconColor="text-[#C9A96E]"
-            Icon={Camera}
-            value={String(totalProduced)}
-            label="TOPLAM ÜRETİM"
-          />
-          <StatCard
-            iconBg="bg-[#F0F7ED]"
-            iconColor="text-green-700"
-            Icon={Coins}
-            value={String(totalProduced)}
-            label="HARCANAN KREDİ"
-          />
-          <StatCard
-            iconBg="bg-[#EEF4FB]"
-            iconColor="text-blue-700"
-            Icon={Wallet}
-            value={String(data.credits)}
-            label="KALAN KREDİ"
-          />
-          <StatCard
-            iconBg="bg-[#FDF6EC]"
-            iconColor="text-[#C9A96E]"
-            Icon={Diamond}
-            value={`${data.jewelry.total} / ${data.clothing.total}`}
-            label="TAKI / KİYAFET"
-          />
+          <DarkStatCard icon={<Camera size={14} strokeWidth={1.5} />} value={String(totalProduced)} label="Toplam Üretim" />
+          <DarkStatCard icon={<Coins size={14} strokeWidth={1.5} />} value={String(totalProduced)} label="Harcanan Kredi" />
+          <DarkStatCard icon={<Wallet size={14} strokeWidth={1.5} />} value={String(data.credits)} label="Kalan Kredi" />
+          <DarkStatCard icon={<Layers size={14} strokeWidth={1.5} />} value={`${data.jewelry.total}/${data.clothing.total}`} label="Takı / Kıyafet" />
         </div>
 
         {/* Günlük Üretim Chart */}
-        <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
+        <div className="bg-[#111827] rounded-xl border border-white/5 p-5">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#111827]">Günlük üretim</h2>
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.15em] text-white/60">Günlük Üretim</h2>
             <div className="flex items-center gap-1">
               {([7, 30, "all"] as const).map(r => (
                 <button
@@ -140,8 +116,8 @@ export default function StatsPage() {
                   onClick={() => setRange(r)}
                   className={`px-3 py-1 rounded-full text-[10px] tracking-wide transition-colors cursor-pointer ${
                     range === r
-                      ? "bg-[#111827] text-white"
-                      : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+                      ? "bg-white text-[#0A0A0A]"
+                      : "bg-white/5 text-white/40 hover:bg-white/10"
                   }`}
                 >
                   {r === "all" ? "Tümü" : `${r} Gün`}
@@ -159,25 +135,17 @@ export default function StatsPage() {
                 <div key={i} className="flex flex-col items-center gap-0.5 flex-1 min-w-[18px]">
                   <div className="flex flex-col justify-end w-full gap-0.5" style={{ height: 80 }}>
                     {d.j > 0 && (
-                      <div
-                        className="w-full rounded-t-sm bg-[#C9A96E]"
-                        style={{ height: jH }}
-                        title={`Takı: ${d.j}`}
-                      />
+                      <div className="w-full rounded-t-sm bg-white/80" style={{ height: jH }} title={`Takı: ${d.j}`} />
                     )}
                     {d.c > 0 && (
-                      <div
-                        className="w-full rounded-t-sm bg-[#111827]"
-                        style={{ height: cH }}
-                        title={`Kıyafet: ${d.c}`}
-                      />
+                      <div className="w-full rounded-t-sm bg-white/30" style={{ height: cH }} title={`Kıyafet: ${d.c}`} />
                     )}
                     {d.j === 0 && d.c === 0 && (
-                      <div className="w-full rounded-t-sm bg-[#F3F4F6]" style={{ height: 4 }} />
+                      <div className="w-full rounded-t-sm bg-white/5" style={{ height: 4 }} />
                     )}
                   </div>
                   {chartData.length <= 14 && (
-                    <span className="text-[8px] text-[#9CA3AF] leading-none">{dayLabel}</span>
+                    <span className="text-[8px] text-white/20 leading-none">{dayLabel}</span>
                   )}
                 </div>
               )
@@ -186,20 +154,20 @@ export default function StatsPage() {
 
           <div className="flex items-center gap-4 mt-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm bg-[#C9A96E]" />
-              <span className="text-[10px] text-[#6B7280]">Takı</span>
+              <div className="w-2 h-2 rounded-sm bg-white/80" />
+              <span className="text-[10px] text-white/40">Takı</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm bg-[#111827]" />
-              <span className="text-[10px] text-[#6B7280]">Kıyafet</span>
+              <div className="w-2 h-2 rounded-sm bg-white/30" />
+              <span className="text-[10px] text-white/40">Kıyafet</span>
             </div>
           </div>
         </div>
 
-        {/* Kategori Breakdown — HealthStatCards */}
+        {/* Kategori HealthStatCards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <HealthStatCard
-            headerIcon={<Gem size={20} strokeWidth={1.5} />}
+            headerIcon={<Gem size={16} strokeWidth={1.5} />}
             title="Takı Kategorileri"
             stats={[
               { title: "Toplam", value: data.jewelry.total },
@@ -210,79 +178,79 @@ export default function StatsPage() {
               {
                 label: "Yüzük",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.ring / jMax) * 100) : 0,
-                color: "#3B82F6",
+                color: "#60A5FA",
                 description: `${data.jewelry.byCategory.ring} üretim`,
               },
               {
                 label: "Kolye",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.necklace / jMax) * 100) : 0,
-                color: "#22C55E",
+                color: "#34D399",
                 description: `${data.jewelry.byCategory.necklace} üretim`,
               },
               {
                 label: "Küpe",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.earring / jMax) * 100) : 0,
-                color: "#F59E0B",
+                color: "#FBBF24",
                 description: `${data.jewelry.byCategory.earring} üretim`,
               },
               {
                 label: "Saat",
                 value: jMax > 0 ? Math.round((data.jewelry.byCategory.watch / jMax) * 100) : 0,
-                color: "#EF4444",
+                color: "#F87171",
                 description: `${data.jewelry.byCategory.watch} üretim`,
               },
             ]}
-            graphHeight={110}
+            graphHeight={70}
             legendTitle="Kategori Dağılımı"
-            legendFormat={(item) => `${item.label}`}
+            legendFormat={(item) => item.label}
             className="max-w-none"
           />
 
           <HealthStatCard
-            headerIcon={<Shirt size={20} strokeWidth={1.5} />}
+            headerIcon={<Shirt size={16} strokeWidth={1.5} />}
             title="Kıyafet Kategorileri"
             stats={[
               { title: "Toplam", value: data.clothing.total },
-              { title: "Üst Giyim", value: data.clothing.byCategory.tops },
-              { title: "Alt Giyim", value: data.clothing.byCategory.bottoms },
+              { title: "Üst", value: data.clothing.byCategory.tops },
+              { title: "Alt", value: data.clothing.byCategory.bottoms },
             ]}
             graphData={[
               {
                 label: "Üst Giyim",
                 value: cMax > 0 ? Math.round((data.clothing.byCategory.tops / cMax) * 100) : 0,
-                color: "#8B5CF6",
+                color: "#A78BFA",
                 description: `${data.clothing.byCategory.tops} üretim`,
               },
               {
                 label: "Alt Giyim",
                 value: cMax > 0 ? Math.round((data.clothing.byCategory.bottoms / cMax) * 100) : 0,
-                color: "#06B6D4",
+                color: "#22D3EE",
                 description: `${data.clothing.byCategory.bottoms} üretim`,
               },
               {
                 label: "Tek Parça",
                 value: cMax > 0 ? Math.round((data.clothing.byCategory.onepiece / cMax) * 100) : 0,
-                color: "#F97316",
+                color: "#FB923C",
                 description: `${data.clothing.byCategory.onepiece} üretim`,
               },
             ]}
-            graphHeight={110}
+            graphHeight={70}
             legendTitle="Kategori Dağılımı"
-            legendFormat={(item) => `${item.label}`}
+            legendFormat={(item) => item.label}
             className="max-w-none"
           />
         </div>
 
         {/* ROI Banner */}
-        <div className="bg-[#111827] rounded-lg p-6 flex items-center justify-between border-t-2 border-[#C9A96E]">
+        <div className="bg-[#111827] rounded-xl border border-white/5 p-6 flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#9CA3AF]">Bu ay tasarrufunuz</p>
-            <p className="text-white text-sm mt-1">
+            <p className="text-[10px] uppercase tracking-widest text-white/30">Bu ay tasarrufunuz</p>
+            <p className="text-white/70 text-sm mt-1">
               {totalProduced} üretim × ortalama stüdyo çekimi
             </p>
           </div>
           <div className="text-right shrink-0 ml-4">
-            <p className="font-cormorant text-2xl font-semibold text-[#C9A96E]">
+            <p className="text-2xl font-semibold text-white">
               ~{(totalProduced * 300).toLocaleString('tr-TR')} ₺
             </p>
           </div>
@@ -293,27 +261,23 @@ export default function StatsPage() {
   )
 }
 
-function StatCard({
-  iconBg,
-  iconColor,
-  Icon,
+function DarkStatCard({
+  icon,
   value,
   label,
 }: {
-  iconBg: string
-  iconColor: string
-  Icon: React.ElementType
+  icon: React.ReactNode
   value: string
   label: string
 }) {
   return (
-    <div className="bg-white rounded-lg border border-[#E5E7EB] p-4 flex flex-col gap-3">
-      <div className={`w-8 h-8 rounded-md ${iconBg} ${iconColor} flex items-center justify-center`}>
-        <Icon size={15} strokeWidth={1.5} />
+    <div className="bg-[#111827] rounded-xl border border-white/5 p-4 flex flex-col gap-3">
+      <div className="w-8 h-8 rounded-lg bg-white/5 text-white/50 flex items-center justify-center">
+        {icon}
       </div>
       <div>
-        <p className="font-cormorant text-3xl font-semibold text-[#111827]">{value}</p>
-        <p className="text-[9px] uppercase tracking-widest text-[#9CA3AF] mt-0.5">{label}</p>
+        <p className="text-2xl font-semibold text-white">{value}</p>
+        <p className="text-[9px] uppercase tracking-widest text-white/30 mt-0.5">{label}</p>
       </div>
     </div>
   )
@@ -321,27 +285,27 @@ function StatCard({
 
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F8F6F2] px-4 py-8 lg:px-0 lg:py-10">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="dark min-h-screen bg-[#0A0A0A] px-4 py-8 lg:px-0 lg:py-10">
+      <div className="max-w-4xl mx-auto space-y-5">
         <div className="animate-pulse">
-          <div className="h-7 w-48 bg-[#E5E7EB] rounded mb-2" />
-          <div className="h-3 w-24 bg-[#E5E7EB] rounded" />
+          <div className="h-7 w-48 bg-white/5 rounded mb-2" />
+          <div className="h-3 w-24 bg-white/5 rounded" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1,2,3,4].map(i => (
-            <div key={i} className="bg-white rounded-lg border border-[#E5E7EB] p-4 animate-pulse">
-              <div className="w-8 h-8 bg-[#E5E7EB] rounded-md mb-3" />
-              <div className="h-6 w-16 bg-[#E5E7EB] rounded mb-1" />
-              <div className="h-2 w-20 bg-[#E5E7EB] rounded" />
+            <div key={i} className="bg-[#111827] rounded-xl border border-white/5 p-4 animate-pulse">
+              <div className="w-8 h-8 bg-white/5 rounded-lg mb-3" />
+              <div className="h-6 w-16 bg-white/5 rounded mb-1" />
+              <div className="h-2 w-20 bg-white/5 rounded" />
             </div>
           ))}
         </div>
-        <div className="bg-white rounded-lg border border-[#E5E7EB] p-5 animate-pulse h-48" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div className="bg-white rounded-lg border border-[#E5E7EB] p-5 animate-pulse h-40" />
-          <div className="bg-white rounded-lg border border-[#E5E7EB] p-5 animate-pulse h-40" />
+        <div className="bg-[#111827] rounded-xl border border-white/5 p-5 animate-pulse h-48" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-[#111827] rounded-xl border border-white/5 p-5 animate-pulse h-52" />
+          <div className="bg-[#111827] rounded-xl border border-white/5 p-5 animate-pulse h-52" />
         </div>
-        <div className="bg-[#E5E7EB] rounded-lg h-20 animate-pulse" />
+        <div className="bg-[#111827] rounded-xl border border-white/5 h-20 animate-pulse" />
       </div>
     </div>
   )

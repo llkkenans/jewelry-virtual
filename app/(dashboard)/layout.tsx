@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isStudio = pathname === "/studio"
 
   return (
-    <div className={`min-h-screen ${isStudio ? "bg-[#F8F6F2]" : pathname === "/gallery" ? "bg-[#0A0A0A]" : "bg-white"}`}>
+    <div className={`min-h-screen ${isStudio ? "bg-[#F8F6F2]" : (pathname === "/gallery" || pathname === "/stats") ? "bg-[#0A0A0A]" : "bg-white"}`}>
 
       {/* ── MOBİL HEADER ── */}
       <div className="lg:hidden flex items-center justify-between h-14 px-4 border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
