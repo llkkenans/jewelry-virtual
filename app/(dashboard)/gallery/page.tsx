@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2, Trash2, CheckSquare, Square, X, Watch, FolderPlus } from "lucide-react"
+import { Download, ImageOff, Sparkles, Gem, Link2, Heart, Share2, Trash2, CheckSquare, Square, X, Watch, FolderPlus, Check } from "lucide-react"
 import { toast } from "sonner"
 import { Lightbox } from "@/components/gallery/Lightbox"
 
@@ -72,6 +72,11 @@ function formatDate(iso: string) {
   })
 }
 
+function formatDateShort(iso: string) {
+  const d = new Date(iso)
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`
+}
+
 async function handleShare(url: string) {
   if (navigator.share) {
     await navigator.share({ title: "Lunia Studio", text: "Takılarımı AI ile fotoğrafladım!", url })
@@ -109,12 +114,12 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
   return (
     <>
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#FAFAFA]">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#1A1A1A]">
           <div className="grid grid-cols-2 gap-2">
-            <Gem size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
-            <Link2 size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '150ms' }} />
-            <Sparkles size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '300ms' }} />
-            <Watch size={16} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '450ms' }} />
+            <Gem size={16} strokeWidth={1.2} className="text-white/30 animate-pulse" style={{ animationDelay: '0ms' }} />
+            <Link2 size={16} strokeWidth={1.2} className="text-white/30 animate-pulse" style={{ animationDelay: '150ms' }} />
+            <Sparkles size={16} strokeWidth={1.2} className="text-white/30 animate-pulse" style={{ animationDelay: '300ms' }} />
+            <Watch size={16} strokeWidth={1.2} className="text-white/30 animate-pulse" style={{ animationDelay: '450ms' }} />
           </div>
         </div>
       )}
@@ -124,18 +129,30 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
         alt={alt}
         crossOrigin="anonymous"
         onLoad={() => setLoaded(true)}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105 transition-transform duration-500`}
+        className={`w-full h-full object-cover transition-all duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-[1.04]`}
+        style={{ transition: 'opacity 0.5s, transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)' }}
       />
     </>
+  )
+}
+
+/* ── Skeleton row for loading states ── */
+function GridSkeleton({ count = 10 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-[2px]">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="aspect-[4/5] bg-[#1A1A1A] animate-pulse" />
+      ))}
+    </div>
   )
 }
 
 export default function GalleryPage() {
   const [items, setItems]                   = useState<Generation[]>([])
   const [loading, setLoading]               = useState(true)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage]                     = useState(1)
+  const [hasMore, setHasMore]               = useState(true)
+  const [loadingMore, setLoadingMore]       = useState(false)
   const [tab, setTab]                       = useState<"all" | "favorites" | "collections">("all")
   const [zipping, setZipping]               = useState(false)
   const [selectMode, setSelectMode]         = useState(false)
@@ -443,166 +460,224 @@ export default function GalleryPage() {
     toast("Koleksiyon silindi.")
   }
 
+  /* ── Studio type filter options ── */
+  const studioFilters = [
+    { key: "jewelry" as const,  label: "Mücevher Stüdyosu" },
+    { key: "clothing" as const, label: "Kıyafet Stüdyosu"  },
+    { key: "product" as const,  label: "Ürün Stüdyosu"     },
+  ]
+
+  /* ── Jewelry sub-tab options ── */
+  const jewelryTabs = [
+    { key: "all" as const,         label: `Tümü (${items.length})`                              },
+    { key: "favorites" as const,   label: `Favoriler (${items.filter(i => i.is_favorite).length})` },
+    { key: "collections" as const, label: "Koleksiyonlar"                                        },
+  ]
+
   return (
-    <div className="space-y-8">
+    /* Escape dashboard's px-6 py-10 padding to go dark full-bleed */
+    <div className="-mx-6 -my-10 min-h-screen bg-[#0A0A0A] text-[#F5F5F5]">
 
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-1">
-            Jewelry Virtual Studio
-          </p>
-          <h1 className="text-2xl font-light tracking-wide text-[#111827]">
-            Koleksiyon
-          </h1>
-          <div className="w-8 h-px bg-[#111827] mt-3" />
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center border border-[#E5E7EB]">
-            <button
-              onClick={() => setGalleryType("jewelry")}
-              className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
-                galleryType === "jewelry" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-              }`}
+      {/* ── PAGE HEADER ── */}
+      <div className="px-6 pt-8 pb-5">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-white/25 mb-1">
+              Lunia Studio
+            </p>
+            <h1
+              style={{ fontFamily: "'Cormorant Garamond', serif" }}
+              className="text-3xl font-light tracking-wide text-white"
             >
-              Takı
-            </button>
-            <button
-              onClick={() => { setGalleryType("clothing"); if (!clothingLoadedRef.current) loadClothing() }}
-              className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
-                galleryType === "clothing" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-              }`}
-            >
-              Kıyafet
-            </button>
-            <button
-              onClick={() => { setGalleryType("product"); if (!productLoadedRef.current) loadProduct() }}
-              className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
-                galleryType === "product" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-              }`}
-            >
-              Ürün
-            </button>
+              Galeri
+            </h1>
           </div>
 
-          {galleryType === "jewelry" && !loading && items.length > 0 && (
+          {/* Actions (Select / Download All) — shown only for jewelry non-collections */}
+          {galleryType === "jewelry" && !loading && items.length > 0 && tab !== "collections" && (
             <div className="flex items-center gap-3">
               {!selectMode ? (
                 <>
-                  <div className="flex items-center border border-[#E5E7EB]">
-                    <button
-                      onClick={() => setTab("all")}
-                      className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer ${
-                        tab === "all" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-                      }`}
-                    >
-                      Tümü <span className="ml-1 opacity-60">({items.length})</span>
-                    </button>
-                    <button
-                      onClick={() => setTab("favorites")}
-                      className={`px-4 py-2 text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer flex items-center gap-1.5 ${
-                        tab === "favorites" ? "bg-[#111827] text-white" : "bg-white text-[#9CA3AF] hover:text-[#111827]"
-                      }`}
-                    >
-                      <Heart size={10} className={tab === "favorites" ? "fill-white" : ""} />
-                      Favoriler <span className="opacity-60">({items.filter(i => i.is_favorite).length})</span>
-                    </button>
-                  </div>
                   <button
-                    onClick={() => setTab("collections")}
-                    className={`pb-3 text-[11px] tracking-[0.15em] uppercase font-light transition-colors relative cursor-pointer ${
-                      tab === "collections" ? "text-[#111827]" : "text-[#9CA3AF] hover:text-[#111827]"
-                    }`}
+                    onClick={() => setSelectMode(true)}
+                    className="text-[10px] tracking-[0.12em] uppercase font-light text-white/40 hover:text-white/80 transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    Koleksiyonlar
-                    {tab === "collections" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-px bg-[#111827]" />
-                    )}
+                    <CheckSquare size={12} strokeWidth={1.5} /> Seç
                   </button>
-                  <div className="w-px h-5 bg-[#E5E7EB]" />
-                  <button onClick={() => setSelectMode(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
-                    <CheckSquare size={12} strokeWidth={1.5} />Seç
-                  </button>
-                  <button onClick={handleDownloadAll} disabled={zipping} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-40">
-                    <Download size={12} strokeWidth={1.5} />{zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
+                  <div className="w-px h-4 bg-white/10" />
+                  <button
+                    onClick={handleDownloadAll}
+                    disabled={zipping}
+                    className="text-[10px] tracking-[0.12em] uppercase font-light text-white/40 hover:text-white/80 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-30"
+                  >
+                    <Download size={12} strokeWidth={1.5} /> {zipping ? "Hazırlanıyor..." : "Tümünü İndir"}
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={toggleSelectAll} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
-                    {selected.size === displayed.length ? <CheckSquare size={12} strokeWidth={1.5} className="text-[#111827]" /> : <Square size={12} strokeWidth={1.5} />}
+                  <button
+                    onClick={toggleSelectAll}
+                    className="text-[10px] tracking-[0.12em] uppercase font-light text-white/50 hover:text-white/80 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    {selected.size === displayed.length
+                      ? <CheckSquare size={12} strokeWidth={1.5} className="text-white" />
+                      : <Square size={12} strokeWidth={1.5} />}
                     {selected.size === displayed.length ? "Seçimi Kaldır" : "Tümünü Seç"}
                   </button>
                   {selected.size > 0 && (
-                    <button onClick={() => setBulkConfirm(true)} className="text-[10px] tracking-[0.15em] uppercase font-light text-red-500 hover:text-red-700 transition-colors cursor-pointer flex items-center gap-1.5">
-                      <Trash2 size={12} strokeWidth={1.5} />Sil ({selected.size})
-                    </button>
+                    <>
+                      <div className="w-px h-4 bg-white/10" />
+                      <button
+                        onClick={() => setBulkConfirm(true)}
+                        className="text-[10px] tracking-[0.12em] uppercase font-light text-red-400 hover:text-red-300 transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Trash2 size={12} strokeWidth={1.5} /> Sil ({selected.size})
+                      </button>
+                    </>
                   )}
-                  <div className="w-px h-5 bg-[#E5E7EB]" />
-                  <button onClick={exitSelectMode} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer flex items-center gap-1.5">
-                    <X size={12} strokeWidth={1.5} />İptal
+                  <div className="w-px h-4 bg-white/10" />
+                  <button
+                    onClick={exitSelectMode}
+                    className="text-[10px] tracking-[0.12em] uppercase font-light text-white/40 hover:text-white/80 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <X size={12} strokeWidth={1.5} /> İptal
                   </button>
                 </>
               )}
             </div>
           )}
         </div>
+
+        {/* Studio type filter pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {studioFilters.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => {
+                setGalleryType(key)
+                if (key === "clothing" && !clothingLoadedRef.current) loadClothing()
+                if (key === "product" && !productLoadedRef.current) loadProduct()
+              }}
+              className={`px-4 py-1.5 text-[10px] tracking-[0.14em] uppercase font-medium transition-all duration-200 cursor-pointer border ${
+                galleryType === key
+                  ? "bg-white text-[#0A0A0A] border-white"
+                  : "bg-transparent text-white/40 border-white/10 hover:text-white/70 hover:border-white/25"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Jewelry sub-tabs (All / Favorites / Collections) */}
+        {galleryType === "jewelry" && !loading && items.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-3">
+            {jewelryTabs.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`px-3 py-1 text-[9px] tracking-[0.14em] uppercase font-medium transition-all duration-200 cursor-pointer border ${
+                  tab === key
+                    ? "bg-white/10 text-white border-white/20"
+                    : "bg-transparent text-white/30 border-white/[0.06] hover:text-white/55 hover:border-white/15"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+            {tab === "collections" && (
+              <button
+                onClick={() => setShowNewCollection(true)}
+                className="ml-auto text-[9px] tracking-[0.14em] uppercase font-light text-white/30 hover:text-white/60 transition-colors cursor-pointer border-b border-white/20 pb-px"
+              >
+                + Yeni Koleksiyon
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* ── MODALS ── */}
+
+      {/* Delete single confirm */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-8 w-full max-w-sm mx-4 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111] border border-white/[0.08] p-8 w-full max-w-sm mx-4 space-y-6">
             <div>
-              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-2">Onay Gerekli</p>
-              <p className="text-base font-light text-[#111827] tracking-wide">Bu görsel kalıcı olarak silinecek.</p>
-              <div className="w-8 h-px bg-[#111827] mt-3" />
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30 mb-2">Onay Gerekli</p>
+              <p className="text-base font-light text-white tracking-wide">Bu görsel kalıcı olarak silinecek.</p>
+              <div className="w-8 h-px bg-white/20 mt-3" />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 h-10 border border-[#E5E7EB] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:border-[#111827] hover:text-[#111827] transition-colors cursor-pointer">İptal</button>
-              <button onClick={() => deleteOne(deleteConfirm)} disabled={deleting} className="flex-1 h-10 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer disabled:opacity-40">{deleting ? "Siliniyor..." : "Sil"}</button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 h-10 border border-white/[0.08] text-[10px] tracking-[0.15em] uppercase font-light text-white/40 hover:border-white/25 hover:text-white/70 transition-colors cursor-pointer"
+              >
+                İptal
+              </button>
+              <button
+                onClick={() => deleteOne(deleteConfirm)}
+                disabled={deleting}
+                className="flex-1 h-10 bg-white text-[#0A0A0A] text-[10px] tracking-[0.15em] uppercase font-medium hover:bg-white/90 transition-colors cursor-pointer disabled:opacity-40"
+              >
+                {deleting ? "Siliniyor..." : "Sil"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Bulk delete confirm */}
       {bulkConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-8 w-full max-w-sm mx-4 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111] border border-white/[0.08] p-8 w-full max-w-sm mx-4 space-y-6">
             <div>
-              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#9CA3AF] mb-2">Onay Gerekli</p>
-              <p className="text-base font-light text-[#111827] tracking-wide">{selected.size} görsel kalıcı olarak silinecek.</p>
-              <div className="w-8 h-px bg-[#111827] mt-3" />
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30 mb-2">Onay Gerekli</p>
+              <p className="text-base font-light text-white tracking-wide">{selected.size} görsel kalıcı olarak silinecek.</p>
+              <div className="w-8 h-px bg-white/20 mt-3" />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setBulkConfirm(false)} className="flex-1 h-10 border border-[#E5E7EB] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:border-[#111827] hover:text-[#111827] transition-colors cursor-pointer">İptal</button>
-              <button onClick={deleteSelected} disabled={deleting} className="flex-1 h-10 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.15em] uppercase font-light transition-colors cursor-pointer disabled:opacity-40">{deleting ? "Siliniyor..." : `${selected.size} Görseli Sil`}</button>
+              <button
+                onClick={() => setBulkConfirm(false)}
+                className="flex-1 h-10 border border-white/[0.08] text-[10px] tracking-[0.15em] uppercase font-light text-white/40 hover:border-white/25 hover:text-white/70 transition-colors cursor-pointer"
+              >
+                İptal
+              </button>
+              <button
+                onClick={deleteSelected}
+                disabled={deleting}
+                className="flex-1 h-10 bg-white text-[#0A0A0A] text-[10px] tracking-[0.15em] uppercase font-medium hover:bg-white/90 transition-colors cursor-pointer disabled:opacity-40"
+              >
+                {deleting ? "Siliniyor..." : `${selected.size} Görseli Sil`}
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Add to collection modal */}
       {showAddToCollection && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setShowAddToCollection(null)}
         >
           <div
-            className="bg-white border border-[#E5E7EB] w-full max-w-sm p-6"
+            className="bg-[#111] border border-white/[0.08] w-full max-w-sm p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
               <div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light mb-1">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-white/25 font-light mb-1">
                   Lunia Studio
                 </p>
-                <h2 className="text-base font-light tracking-wide text-[#111827]">
+                <h2 className="text-base font-light tracking-wide text-white">
                   Koleksiyona Ekle
                 </h2>
-                <div className="w-6 h-px bg-[#111827] mt-2" />
+                <div className="w-6 h-px bg-white/20 mt-2" />
               </div>
               <button
                 onClick={() => setShowAddToCollection(null)}
-                className="text-[#9CA3AF] hover:text-[#111827] transition-colors cursor-pointer"
+                className="text-white/30 hover:text-white/70 transition-colors cursor-pointer"
               >
                 <X size={16} strokeWidth={1.5} />
               </button>
@@ -614,12 +689,12 @@ export default function GalleryPage() {
                   <button
                     key={col.id}
                     onClick={() => addToCollection(col.id, showAddToCollection)}
-                    className="w-full flex items-center justify-between p-3 border border-[#E5E7EB] hover:border-[#111827] transition-all cursor-pointer group"
+                    className="w-full flex items-center justify-between p-3 border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer"
                   >
-                    <span className="text-[11px] tracking-[0.1em] uppercase font-light text-[#111827]">
+                    <span className="text-[11px] tracking-[0.1em] uppercase font-light text-white/80">
                       {col.name}
                     </span>
-                    <span className="text-[10px] text-[#9CA3AF] font-light">
+                    <span className="text-[10px] text-white/30 font-light">
                       {col.collection_items?.[0]?.count ?? 0} görsel
                     </span>
                   </button>
@@ -635,19 +710,19 @@ export default function GalleryPage() {
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && createCollection()}
-                  className="w-full h-10 border border-[#E5E7EB] px-3 text-sm font-light text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#111827] transition-colors"
+                  className="w-full h-10 border border-white/[0.08] bg-transparent px-3 text-sm font-light text-white placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-colors"
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={createCollection}
                     disabled={creatingCollection || !newCollectionName.trim()}
-                    className="flex-1 h-10 bg-[#111827] text-white text-[11px] tracking-[0.15em] uppercase font-light hover:bg-black transition-colors disabled:opacity-40 cursor-pointer"
+                    className="flex-1 h-10 bg-white text-[#0A0A0A] text-[11px] tracking-[0.15em] uppercase font-medium hover:bg-white/90 transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     {creatingCollection ? "Oluşturuluyor..." : "Oluştur"}
                   </button>
                   <button
                     onClick={() => { setShowNewCollection(false); setNewCollectionName("") }}
-                    className="h-10 px-4 border border-[#E5E7EB] text-[11px] tracking-[0.1em] uppercase font-light text-[#9CA3AF] hover:border-[#111827] hover:text-[#111827] transition-all cursor-pointer"
+                    className="h-10 px-4 border border-white/[0.08] text-[11px] tracking-[0.1em] uppercase font-light text-white/30 hover:border-white/20 hover:text-white/60 transition-all cursor-pointer"
                   >
                     İptal
                   </button>
@@ -656,7 +731,7 @@ export default function GalleryPage() {
             ) : (
               <button
                 onClick={() => setShowNewCollection(true)}
-                className="w-full h-10 border border-dashed border-[#E5E7EB] hover:border-[#111827] text-[11px] tracking-[0.1em] uppercase font-light text-[#9CA3AF] hover:text-[#111827] transition-all cursor-pointer"
+                className="w-full h-10 border border-dashed border-white/[0.08] hover:border-white/20 text-[11px] tracking-[0.1em] uppercase font-light text-white/25 hover:text-white/55 transition-all cursor-pointer"
               >
                 + Yeni Koleksiyon Oluştur
               </button>
@@ -665,375 +740,289 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {galleryType === "product" ? (
-        productLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white p-4 space-y-3">
-                <Skeleton className="w-full aspect-square rounded-none" />
-                <Skeleton className="h-3 w-1/2 rounded-none" />
-              </div>
-            ))}
-          </div>
-        ) : productItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 border border-dashed border-[#E5E7EB]">
-            <div className="w-px h-16 bg-[#E5E7EB]" />
-            <div className="text-center space-y-2">
-              <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
-              <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz Üretim Yok</p>
-              <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk ürününüzü yükleyin, saniyeler içinde profesyonel stüdyo görünümü elde edin.</p>
-            </div>
-            <Link href="/studio" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
-              <Sparkles size={11} strokeWidth={1.5} />Üretime Başla
-            </Link>
-            <div className="w-px h-16 bg-[#E5E7EB]" />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {productItems.map((item, idx) => (
-                <div key={item.id} className="bg-white group">
-                  <div
-                    className="relative aspect-square overflow-hidden bg-[#FAFAFA] cursor-pointer"
-                    onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
-                  >
-                    <GalleryImage src={item.output_image_url} alt={PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type} />
-                  </div>
-                  <div className="pt-3 pb-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] tracking-[0.15em] uppercase font-light text-[#111827]">
-                        {PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type}
-                      </span>
-                      <span className="text-[10px] text-[#9CA3AF] font-light">
-                        {formatDate(item.created_at)}
-                      </span>
-                    </div>
-                    <div className="w-6 h-px bg-[#111827] mb-3" />
-                    <button
-                      onClick={() => handleDownload(item.output_image_url)}
-                      className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Download size={11} strokeWidth={1.5} />
-                      İndir
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {productHasMore && (
-              <div className="flex flex-col items-center gap-4 pt-6">
-                <button
-                  onClick={loadMoreProduct}
-                  disabled={productLoadingMore}
-                  className="h-10 px-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
-                >
-                  {productLoadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
-                </button>
-                <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light">
-                  {productItems.length} görsel · Lunia Studio
-                </p>
-              </div>
-            )}
-          </>
-        )
-      ) : galleryType === "clothing" ? (
-        clothingLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white p-4 space-y-3">
-                <Skeleton className="w-full aspect-square rounded-none" />
-                <Skeleton className="h-3 w-1/2 rounded-none" />
-              </div>
-            ))}
-          </div>
-        ) : clothingItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 border border-dashed border-[#E5E7EB]">
-            <div className="w-px h-16 bg-[#E5E7EB]" />
-            <div className="text-center space-y-2">
-              <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
-              <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz Üretim Yok</p>
-              <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk kıyafetinizi yükleyin, saniyeler içinde modelin üzerinde görün.</p>
-            </div>
-            <Link href="/clothing-studio" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
-              <Sparkles size={11} strokeWidth={1.5} />Üretime Başla
-            </Link>
-            <div className="w-px h-16 bg-[#E5E7EB]" />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {clothingItems.map((item, idx) => (
-                <div key={item.id} className="bg-white group">
-                  <div
-                    className="relative aspect-square overflow-hidden bg-[#FAFAFA] cursor-pointer"
-                    onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
-                  >
-                    <GalleryImage src={item.output_image_url} alt={CLOTHING_CATEGORY_LABELS[item.category] ?? item.category} />
-                  </div>
-                  <div className="pt-3 pb-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] tracking-[0.15em] uppercase font-light text-[#111827]">
-                        {CLOTHING_CATEGORY_LABELS[item.category] ?? item.category}
-                      </span>
-                      <span className="text-[10px] text-[#9CA3AF] font-light">
-                        {formatDate(item.created_at)}
-                      </span>
-                    </div>
-                    <div className="w-6 h-px bg-[#111827] mb-3" />
-                    <button
-                      onClick={() => handleDownload(item.output_image_url)}
-                      className="w-full h-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Download size={11} strokeWidth={1.5} />
-                      İndir
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {clothingHasMore && (
-              <div className="flex flex-col items-center gap-4 pt-6">
-                <button
-                  onClick={loadMoreClothing}
-                  disabled={clothingLoadingMore}
-                  className="h-10 px-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
-                >
-                  {clothingLoadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
-                </button>
-                <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light">
-                  {clothingItems.length} görsel · Lunia Studio
-                </p>
-              </div>
-            )}
-          </>
-        )
-      ) : loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white p-4 space-y-3">
-              <Skeleton className="w-full aspect-square rounded-none" />
-              <Skeleton className="h-3 w-1/2 rounded-none" />
-            </div>
-          ))}
-        </div>
-      ) : tab === "collections" ? (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-[11px] tracking-[0.1em] uppercase font-light text-[#9CA3AF]">
-              {collections.length} koleksiyon
-            </p>
-            <button
-              onClick={() => setShowNewCollection(true)}
-              className="text-[11px] tracking-[0.1em] uppercase font-light text-[#111827] border-b border-[#111827] pb-px hover:opacity-60 transition-opacity cursor-pointer"
-            >
-              + Yeni Koleksiyon
-            </button>
-          </div>
+      {/* ── GRID CONTENT ── */}
 
-          {collectionsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="border border-[#E5E7EB]">
-                  <Skeleton className="aspect-[3/4] rounded-none" />
-                  <div className="p-3 space-y-2">
-                    <Skeleton className="h-3 w-24 rounded-none" />
-                  </div>
+      {/* Product studio grid */}
+      {galleryType === "product" && (
+        productLoading ? <GridSkeleton /> :
+        productItems.length === 0 ? (
+          <EmptyState
+            icon={<ImageOff size={20} strokeWidth={1} className="text-white/20 mx-auto mb-4" />}
+            title="Henüz Üretim Yok"
+            desc="İlk ürününüzü yükleyin, saniyeler içinde profesyonel stüdyo görünümü elde edin."
+            ctaHref="/studio"
+            ctaLabel="Üretime Başla"
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-[2px]">
+              {productItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="relative aspect-[4/5] overflow-hidden group cursor-pointer bg-[#1A1A1A]"
+                  onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                >
+                  <GalleryImage src={item.output_image_url} alt={PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type} />
+                  <HoverOverlay
+                    label={PRODUCT_SCENE_LABELS[item.scene_type] ?? item.scene_type}
+                    date={formatDateShort(item.created_at)}
+                    onDownload={(e) => { e.stopPropagation(); handleDownload(item.output_image_url) }}
+                  />
                 </div>
               ))}
             </div>
-          ) : collections.length === 0 ? (
-            <div className="flex flex-col items-center gap-4 py-24 text-center">
-              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
-              <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
-                Koleksiyon Yok
-              </p>
-              <p className="text-[10px] tracking-wide text-[#D1D5DB]">
-                Görsellerinizi koleksiyonlarda düzenleyin, kolayca erişin.
-              </p>
-              <button
-                onClick={() => setShowNewCollection(true)}
-                className="text-[10px] tracking-[0.1em] uppercase font-light text-[#111827] border-b border-[#111827] pb-px hover:opacity-60 transition-opacity cursor-pointer"
-              >
-                Koleksiyon Oluştur
-              </button>
-              <div className="w-px h-12 bg-[#E5E7EB] mx-auto" />
+            <LoadMoreBar
+              hasMore={productHasMore}
+              loading={productLoadingMore}
+              count={productItems.length}
+              onLoadMore={loadMoreProduct}
+            />
+          </>
+        )
+      )}
+
+      {/* Clothing studio grid */}
+      {galleryType === "clothing" && (
+        clothingLoading ? <GridSkeleton /> :
+        clothingItems.length === 0 ? (
+          <EmptyState
+            icon={<ImageOff size={20} strokeWidth={1} className="text-white/20 mx-auto mb-4" />}
+            title="Henüz Üretim Yok"
+            desc="İlk kıyafetinizi yükleyin, saniyeler içinde modelin üzerinde görün."
+            ctaHref="/clothing-studio"
+            ctaLabel="Üretime Başla"
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-[2px]">
+              {clothingItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="relative aspect-[4/5] overflow-hidden group cursor-pointer bg-[#1A1A1A]"
+                  onClick={() => { setLightboxIndex(idx); setLightboxOpen(true) }}
+                >
+                  <GalleryImage src={item.output_image_url} alt={CLOTHING_CATEGORY_LABELS[item.category] ?? item.category} />
+                  <HoverOverlay
+                    label={CLOTHING_CATEGORY_LABELS[item.category] ?? item.category}
+                    date={formatDateShort(item.created_at)}
+                    onDownload={(e) => { e.stopPropagation(); handleDownload(item.output_image_url) }}
+                  />
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {collections.map((col) => (
-                <div key={col.id} className="group border border-[#E5E7EB] hover:border-[#9CA3AF] transition-all">
-                  <div className="relative aspect-[3/4] bg-[#F9FAFB] overflow-hidden">
+            <LoadMoreBar
+              hasMore={clothingHasMore}
+              loading={clothingLoadingMore}
+              count={clothingItems.length}
+              onLoadMore={loadMoreClothing}
+            />
+          </>
+        )
+      )}
+
+      {/* Jewelry studio */}
+      {galleryType === "jewelry" && (
+        loading ? <GridSkeleton /> :
+        tab === "collections" ? (
+          /* ── Collections view ── */
+          <div className="px-6 pb-10">
+            {collectionsLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="aspect-[3/4] bg-[#1A1A1A] animate-pulse" />
+                ))}
+              </div>
+            ) : collections.length === 0 ? (
+              <div className="flex flex-col items-center gap-4 py-24 text-center">
+                <div className="w-px h-12 bg-white/10 mx-auto" />
+                <p className="text-[11px] tracking-[0.15em] uppercase font-light text-white/30">Koleksiyon Yok</p>
+                <p className="text-[10px] tracking-wide text-white/15">
+                  Görsellerinizi koleksiyonlarda düzenleyin, kolayca erişin.
+                </p>
+                <button
+                  onClick={() => setShowNewCollection(true)}
+                  className="text-[10px] tracking-[0.1em] uppercase font-light text-white/40 border-b border-white/20 pb-px hover:opacity-60 transition-opacity cursor-pointer"
+                >
+                  Koleksiyon Oluştur
+                </button>
+                <div className="w-px h-12 bg-white/10 mx-auto" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
+                {collections.map((col) => (
+                  <div key={col.id} className="relative group aspect-[3/4] overflow-hidden bg-[#1A1A1A] cursor-pointer">
                     {col.cover_image_url ? (
                       <img
                         src={col.cover_image_url}
                         alt={col.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <div className="w-px h-8 bg-[#E5E7EB]" />
+                        <div className="w-px h-8 bg-white/10" />
                       </div>
                     )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 pointer-events-none">
+                      <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="inline-block bg-white/90 text-[#0A0A0A] text-[9px] font-medium tracking-[0.1em] uppercase px-2.5 py-1">
+                          {col.name}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Delete button */}
                     <button
                       onClick={() => deleteCollection(col.id)}
-                      className="absolute top-2 right-2 w-7 h-7 bg-white border border-[#E5E7EB] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:border-[#111827]"
+                      className="absolute top-2.5 right-2.5 w-7 h-7 bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/70 pointer-events-auto"
                     >
-                      <Trash2 size={11} strokeWidth={1.5} className="text-[#9CA3AF]" />
+                      <Trash2 size={11} strokeWidth={1.5} className="text-white/50" />
                     </button>
+                    {/* Count badge */}
+                    <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <span className="text-[9px] text-white/40 font-light">
+                        {col.collection_items?.[0]?.count ?? 0} görsel
+                      </span>
+                    </div>
                   </div>
-                  <div className="pt-3 pb-2 px-0">
-                    <p className="text-[11px] tracking-[0.1em] uppercase font-light text-[#111827] mb-1">
-                      {col.name}
-                    </p>
-                    <div className="w-6 h-px bg-[#111827] mb-2" />
-                    <p className="text-[10px] text-[#9CA3AF] font-light">
-                      {col.collection_items?.[0]?.count ?? 0} görsel
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={<ImageOff size={20} strokeWidth={1} className="text-white/20 mx-auto mb-4" />}
+            title="Henüz Üretim Yok"
+            desc="İlk takınızı yükleyin, saniyeler içinde modelin üzerinde görün."
+            ctaHref="/upload"
+            ctaLabel="Üretime Başla"
+          />
+        ) : displayed.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[360px] gap-5">
+            <div className="w-px h-12 bg-white/10" />
+            <div className="text-center space-y-2">
+              <Heart size={20} strokeWidth={1} className="text-white/15 mx-auto mb-4" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-white/25 font-light">Favori Yok</p>
+              <p className="text-[10px] tracking-wide text-white/15">
+                Beğendiğiniz görselleri favorileyin, en sevdiklerinizi burada bulun.
+              </p>
             </div>
-          )}
-        </div>
-      ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 border border-dashed border-[#E5E7EB]">
-          <div className="w-px h-16 bg-[#E5E7EB]" />
-          <div className="text-center space-y-2">
-            <ImageOff size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
-            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Henüz Üretim Yok</p>
-            <p className="text-[10px] tracking-wide text-[#D1D5DB]">İlk takınızı yükleyin, saniyeler içinde modelin üzerinde görün.</p>
+            <button
+              onClick={() => setTab("all")}
+              className="text-[10px] tracking-[0.15em] uppercase font-light text-white/30 hover:text-white/60 transition-colors cursor-pointer underline underline-offset-4"
+            >
+              Tüm görsellere dön
+            </button>
+            <div className="w-px h-12 bg-white/10" />
           </div>
-          <Link href="/upload" className="flex items-center gap-2 h-10 px-6 bg-[#111827] hover:bg-black text-white text-[10px] tracking-[0.2em] uppercase font-light transition-colors">
-            <Sparkles size={11} strokeWidth={1.5} />Üretime Başla
-          </Link>
-          <div className="w-px h-16 bg-[#E5E7EB]" />
-        </div>
-      ) : displayed.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-[360px] gap-6 border border-dashed border-[#E5E7EB]">
-          <div className="w-px h-12 bg-[#E5E7EB]" />
-          <div className="text-center space-y-2">
-            <Heart size={20} strokeWidth={1} className="text-[#D1D5DB] mx-auto mb-4" />
-            <p className="text-[11px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">Favori Yok</p>
-            <p className="text-[10px] tracking-wide text-[#D1D5DB]">Beğendiğiniz görselleri favorileyin, en sevdiklerinizi burada bulun.</p>
-          </div>
-          <button onClick={() => setTab("all")} className="text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer underline underline-offset-4">
-            Tüm görsellere dön
-          </button>
-          <div className="w-px h-12 bg-[#E5E7EB]" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-          {displayed.map((item, idx) => {
-            const type = JEWELRY_LABELS[item.jewelry_type]
-            const Icon = type?.icon ?? Gem
-            const isSelected = selected.has(item.id)
-            return (
-              <div
-                key={item.id}
-                onClick={selectMode ? () => toggleSelect(item.id) : undefined}
-                className={`bg-white group transition-all ${selectMode ? "cursor-pointer" : ""} ${isSelected ? "ring-2 ring-inset ring-[#111827]" : ""}`}
-              >
-                <div
-                  className={`relative aspect-square overflow-hidden bg-[#FAFAFA] ${!selectMode ? "cursor-pointer" : ""}`}
-                  onClick={!selectMode ? () => { setLightboxIndex(idx); setLightboxOpen(true) } : undefined}
-                >
-                  <GalleryImage src={item.output_image_url} alt={type?.label ?? item.jewelry_type} />
-                  {selectMode ? (
-                    <div className={`absolute inset-0 transition-colors ${isSelected ? "bg-[#111827]/10" : "bg-transparent"}`}>
-                      <div className="absolute top-3 left-3 w-5 h-5 border bg-white flex items-center justify-center">
-                        {isSelected ? <CheckSquare size={14} strokeWidth={1.5} className="text-[#111827]" /> : <Square size={14} strokeWidth={1} className="text-[#D1D5DB]" />}
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-[2px]">
+              {displayed.map((item, idx) => {
+                const type = JEWELRY_LABELS[item.jewelry_type]
+                const isSelected = selected.has(item.id)
+                return (
+                  <div
+                    key={item.id}
+                    onClick={selectMode ? () => toggleSelect(item.id) : undefined}
+                    className={`relative aspect-[4/5] overflow-hidden group bg-[#1A1A1A] ${selectMode ? "cursor-pointer" : ""}`}
+                  >
+                    {/* Image */}
+                    <div
+                      className={!selectMode ? "cursor-pointer w-full h-full" : "w-full h-full"}
+                      onClick={!selectMode ? () => { setLightboxIndex(idx); setLightboxOpen(true) } : undefined}
+                    >
+                      <GalleryImage src={item.output_image_url} alt={type?.label ?? item.jewelry_type} />
+                    </div>
+
+                    {/* Select mode overlay */}
+                    {selectMode ? (
+                      <div className={`absolute inset-0 transition-colors pointer-events-none ${isSelected ? "bg-white/10" : "bg-transparent"}`}>
+                        <div className="absolute top-2.5 left-2.5 w-5 h-5 border border-white/50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                          {isSelected && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setShowAddToCollection(item.id)
-                          loadCollections()
-                        }}
-                        className="absolute top-2 left-2 w-7 h-7 bg-white border border-[#E5E7EB] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:border-[#111827]"
-                        title="Koleksiyona ekle"
-                      >
-                        <FolderPlus size={12} strokeWidth={1.5} className="text-[#9CA3AF]" />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id, item.is_favorite) }} className="absolute top-3 right-3 w-7 h-7 bg-white/0 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer" aria-label="Favori">
-                        <Heart size={12} strokeWidth={1.5} className={item.is_favorite ? "fill-[#111827] text-[#111827]" : "text-[#6B7280]"} />
-                      </button>
-                    </div>
-                  )}
-                  {!selectMode && item.is_favorite && (
-                    <div className="absolute top-3 right-3 w-5 h-5 bg-[#111827] flex items-center justify-center group-hover:opacity-0 transition-opacity">
-                      <Heart size={10} strokeWidth={1.5} className="fill-white text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="pt-3 pb-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] tracking-[0.15em] uppercase font-light text-[#111827]">
-                      {JEWELRY_LABELS[item.jewelry_type]?.label ?? item.jewelry_type}
-                    </span>
-                    <span className="text-[10px] text-[#9CA3AF] font-light">
-                      {formatDate(item.created_at)}
-                    </span>
-                  </div>
-                  <div className="w-6 h-px bg-[#111827] mb-3" />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url) }}
-                      className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827]
-                        text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280]
-                        hover:text-[#111827] transition-all flex items-center justify-center
-                        gap-1.5 cursor-pointer"
-                    >
-                      <Download size={11} strokeWidth={1.5} />
-                      İndir
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleShare(item.output_image_url) }}
-                      className="flex-1 h-8 border border-[#E5E7EB] hover:border-[#111827]
-                        text-[10px] tracking-[0.1em] uppercase font-light text-[#6B7280]
-                        hover:text-[#111827] transition-all flex items-center justify-center
-                        gap-1.5 cursor-pointer"
-                    >
-                      <Share2 size={11} strokeWidth={1.5} />
-                      Paylaş
-                    </button>
-                    {!selectMode && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item.id) }}
-                        className="w-8 h-8 border border-[#E5E7EB] hover:border-[#111827]
-                          text-[#9CA3AF] hover:text-[#111827] transition-all
-                          flex items-center justify-center cursor-pointer"
-                      >
-                        <Trash2 size={11} strokeWidth={1.5} />
-                      </button>
+                    ) : (
+                      /* Hover overlay with actions */
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 pointer-events-none">
+
+                        {/* Metadata badge — bottom left */}
+                        <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                          <span className="inline-block bg-white/90 text-[#0A0A0A] text-[9px] font-medium tracking-[0.1em] uppercase px-2.5 py-1">
+                            {type?.label ?? item.jewelry_type} · {formatDateShort(item.created_at)}
+                          </span>
+                        </div>
+
+                        {/* Action icons — top right */}
+                        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id, item.is_favorite) }}
+                            className="w-7 h-7 bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                            aria-label="Favori"
+                          >
+                            <Heart
+                              size={12}
+                              strokeWidth={1.5}
+                              className={item.is_favorite ? "fill-white text-white" : "text-white/70"}
+                            />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDownload(item.output_image_url) }}
+                            className="w-7 h-7 bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                          >
+                            <Download size={12} strokeWidth={1.5} className="text-white/70" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleShare(item.output_image_url) }}
+                            className="w-7 h-7 bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                          >
+                            <Share2 size={12} strokeWidth={1.5} className="text-white/70" />
+                          </button>
+                        </div>
+
+                        {/* Add to collection — top left */}
+                        <div className="absolute top-2.5 left-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setShowAddToCollection(item.id); loadCollections() }}
+                            className="w-7 h-7 bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                            title="Koleksiyona ekle"
+                          >
+                            <FolderPlus size={12} strokeWidth={1.5} className="text-white/70" />
+                          </button>
+                        </div>
+
+                        {/* Delete — bottom right */}
+                        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirm(item.id) }}
+                            className="w-7 h-7 bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={12} strokeWidth={1.5} className="text-white/40 hover:text-red-400 transition-colors" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Favorite indicator — visible when not hovering */}
+                    {!selectMode && item.is_favorite && (
+                      <div className="absolute top-2.5 right-2.5 pointer-events-none group-hover:opacity-0 transition-opacity">
+                        <Heart size={11} strokeWidth={1.5} className="fill-white text-white drop-shadow-sm" />
+                      </div>
                     )}
                   </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                )
+              })}
+            </div>
+            <LoadMoreBar
+              hasMore={hasMore && tab === "all"}
+              loading={loadingMore}
+              count={displayed.length}
+              onLoadMore={loadMore}
+            />
+          </>
+        )
       )}
 
-      {galleryType === "jewelry" && !loading && tab !== "collections" && displayed.length > 0 && (
-        <div className="flex flex-col items-center gap-4 pt-6">
-          {hasMore && tab === "all" && (
-            <button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="h-10 px-8 border border-[#E5E7EB] hover:border-[#111827] text-[10px] tracking-[0.15em] uppercase font-light text-[#6B7280] hover:text-[#111827] transition-all cursor-pointer disabled:opacity-40"
-            >
-              {loadingMore ? "Yükleniyor..." : "Daha Fazla Göster"}
-            </button>
-          )}
-          <p className="text-center text-[9px] tracking-[0.15em] uppercase text-[#D1D5DB] font-light">
-            {displayed.length} görsel · Lunia Studio
-          </p>
-        </div>
-      )}
-
+      {/* ── LIGHTBOX ── */}
       <Lightbox
         images={
           galleryType === "jewelry"
@@ -1061,6 +1050,99 @@ export default function GalleryPage() {
         isOpen={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
       />
+    </div>
+  )
+}
+
+/* ── Small helper components (render-only, no logic) ── */
+
+function HoverOverlay({
+  label,
+  date,
+  onDownload,
+}: {
+  label: string
+  date: string
+  onDownload: (e: React.MouseEvent) => void
+}) {
+  return (
+    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 pointer-events-none">
+      {/* Metadata badge */}
+      <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <span className="inline-block bg-white/90 text-[#0A0A0A] text-[9px] font-medium tracking-[0.1em] uppercase px-2.5 py-1">
+          {label} · {date}
+        </span>
+      </div>
+      {/* Download icon */}
+      <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
+        <button
+          onClick={onDownload}
+          className="w-7 h-7 bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-black/60 transition-colors cursor-pointer"
+        >
+          <Download size={12} strokeWidth={1.5} className="text-white/70" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({
+  icon,
+  title,
+  desc,
+  ctaHref,
+  ctaLabel,
+}: {
+  icon: React.ReactNode
+  title: string
+  desc: string
+  ctaHref: string
+  ctaLabel: string
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[480px] gap-6 px-6">
+      <div className="w-px h-16 bg-white/10" />
+      <div className="text-center space-y-2">
+        {icon}
+        <p className="text-[11px] tracking-[0.2em] uppercase text-white/25 font-light">{title}</p>
+        <p className="text-[10px] tracking-wide text-white/15 max-w-xs">{desc}</p>
+      </div>
+      <Link
+        href={ctaHref}
+        className="flex items-center gap-2 h-10 px-6 bg-white text-[#0A0A0A] text-[10px] tracking-[0.2em] uppercase font-medium hover:bg-white/90 transition-colors"
+      >
+        <Sparkles size={11} strokeWidth={1.5} /> {ctaLabel}
+      </Link>
+      <div className="w-px h-16 bg-white/10" />
+    </div>
+  )
+}
+
+function LoadMoreBar({
+  hasMore,
+  loading,
+  count,
+  onLoadMore,
+}: {
+  hasMore: boolean
+  loading: boolean
+  count: number
+  onLoadMore: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-8 px-6">
+      {hasMore && (
+        <button
+          onClick={onLoadMore}
+          disabled={loading}
+          className="h-10 px-8 border border-white/10 hover:border-white/25 text-[10px] tracking-[0.15em] uppercase font-light text-white/30 hover:text-white/60 transition-all cursor-pointer disabled:opacity-30"
+        >
+          {loading ? "Yükleniyor..." : "Daha Fazla Göster"}
+        </button>
+      )}
+      <p className="text-center text-[9px] tracking-[0.15em] uppercase text-white/15 font-light">
+        {count} görsel · Lunia Studio
+      </p>
     </div>
   )
 }
