@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Gem, Circle, Sparkles, Watch } from "lucide-react"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
+import PricingSection from "@/components/ui/pricing-section"
 
 /* ─── Hero Videos ───────────────────────────────────────────────────── */
 const heroVideos = [
@@ -830,6 +831,9 @@ export default function LandingPage() {
           </div>
 
         </section>
+
+        {/* ─────────────── PRICING ─────────────── */}
+        <PricingSection />
 
         {/* ─────────────── CTA — Video ─────────────── */}
         <section className="relative min-h-[88vh] overflow-hidden flex items-end">
