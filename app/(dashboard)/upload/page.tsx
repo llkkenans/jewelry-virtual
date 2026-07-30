@@ -42,49 +42,22 @@ const R2_URL =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-1c98cbbb496648eaa0b68f90cd1f1e97.r2.dev"
 
-function ResultImage({ url, index, generationId, onDownload, showIndex, onToast }: {
+function ResultImage({ url, index, generationId, onDownload, onSave, saving, saved, showIndex }: {
   url: string
   index: number
   generationId: string | null
   onDownload: (url: string, index: number) => void
+  onSave: (index: number, url: string, generationId: string | null) => void
+  saving: boolean
+  saved: boolean
   showIndex: boolean
-  onToast: (message: string, type: "success" | "error" | "info") => void
 }) {
   const [loaded, setLoaded] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
     if (imgRef.current?.complete) setLoaded(true)
   }, [url])
-
-  async function handleSave() {
-    if (!generationId || saving || saved) return
-    setSaving(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const res = await fetch('/api/save-to-gallery', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ generationId, imageUrl: url }),
-      })
-      if (res.ok) {
-        setSaved(true)
-        onToast("Galeriye kaydedildi!", "success")
-      } else {
-        onToast("Kaydetme başarısız", "error")
-      }
-    } catch {
-      onToast("Kaydetme başarısız", "error")
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <div className="flex flex-col border border-[#E5E7EB] bg-white">
@@ -117,8 +90,8 @@ function ResultImage({ url, index, generationId, onDownload, showIndex, onToast 
           İndir
         </button>
         <button
-          onClick={handleSave}
-          disabled={saving || saved || !loaded}
+          onClick={() => onSave(index, url, generationId)}
+          disabled={saving || saved || !loaded || !generationId}
           className={`flex-1 flex items-center justify-center gap-2 h-10 text-[10px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${
             saved
               ? "bg-[#C9A96E] text-white"
@@ -147,7 +120,37 @@ export default function UploadPage() {
   const [generating, setGenerating]     = useState(false)
   const [progressStep, setProgressStep] = useState(0)
   const [results, setResults]           = useState<{ url: string; id: string | null }[]>([])
+  const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set())
+  const [savingIndices, setSavingIndices] = useState<Set<number>>(new Set())
   const [error, setError]               = useState("")
+
+  async function handleSaveToGallery(index: number, imageUrl: string, generationId: string | null) {
+    if (!generationId) return
+    if (savingIndices.has(index) || savedIndices.has(index)) return
+    setSavingIndices((prev) => { const n = new Set(prev); n.add(index); return n })
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch('/api/save-to-gallery', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ generationId, imageUrl }),
+      })
+      if (res.ok) {
+        setSavedIndices((prev) => { const n = new Set(prev); n.add(index); return n })
+        showToast("Galeriye kaydedildi!", "success")
+      } else {
+        showToast("Kaydetme başarısız", "error")
+      }
+    } catch {
+      showToast("Kaydetme başarısız", "error")
+    } finally {
+      setSavingIndices((prev) => { const n = new Set(prev); n.delete(index); return n })
+    }
+  }
 
   function getPreviewUrl(): string | null {
     if (!gender || !skinTone || !jewelryType) return null
@@ -162,6 +165,8 @@ export default function UploadPage() {
     setFile(f)
     setPreview(URL.createObjectURL(f))
     setResults([])
+    setSavedIndices(new Set())
+    setSavingIndices(new Set())
     setError("")
   }
 
@@ -179,6 +184,8 @@ export default function UploadPage() {
     setFile(null)
     setPreview(null)
     setResults([])
+    setSavedIndices(new Set())
+    setSavingIndices(new Set())
     setError("")
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
@@ -246,6 +253,8 @@ export default function UploadPage() {
       const tryOnData = await tryOnRes.json() as { outputUrls?: { url: string; id: string | null }[] }
 
       setResults(tryOnData.outputUrls ?? [])
+      setSavedIndices(new Set())
+      setSavingIndices(new Set())
       window.dispatchEvent(new Event('credits-updated'))
       showToast("Görsel başarıyla üretildi!", "success")
     } catch (err: unknown) {
@@ -482,7 +491,7 @@ export default function UploadPage() {
         {results.length > 0 && !generating ? (
           <div className={`grid gap-3 ${results.length > 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
             {results.map((result, i) => (
-              <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} onToast={showToast} />
+              <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} onSave={handleSaveToGallery} saving={savingIndices.has(i)} saved={savedIndices.has(i)} showIndex={results.length > 1} />
             ))}
           </div>
         ) : (
