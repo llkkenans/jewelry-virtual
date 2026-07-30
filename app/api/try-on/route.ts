@@ -28,8 +28,8 @@ const LIGHTING_VARIATIONS = [
   "abundant natural daylight filling the room, luminous and fresh, very soft shadows, bright overall exposure",
   "clean frontal daylight from a wide window, bright and even, subtle shaping on the collarbones",
   "airy daylight bouncing off a white wall, bright and open, soft shadow edges",
-  "generous window light slightly from above, fresh and clear, no murkiness",
-  "crisp natural daylight, high key and bright, neutral white balance, gentle contrast",
+  "gentle late-afternoon daylight through a window, softly warm and inviting, still neutral skin tones, no orange cast",
+  "mild warm indoor daylight in the late afternoon, cosy and alive, soft warmth on the skin without any heavy golden grading",
 ]
 
 const MOOD_VARIATIONS = [
@@ -240,7 +240,6 @@ export async function POST(req: NextRequest) {
 
   const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL!
 
-  let modelImageUrl: string
   // Her kombinasyon için mevcut görsel sayısı
   const REFERENCE_COUNTS: Record<string, number> = {
     'necklace/woman/ivory': 8,
@@ -287,34 +286,39 @@ export async function POST(req: NextRequest) {
 
   const countKey = `${jewelryType}/${displayType}/${skinTone}`
   const totalRefs = REFERENCE_COUNTS[countKey] ?? 1
-  const randomIndex = Math.floor(Math.random() * totalRefs) + 1
-  const r2Key = `references/${jewelryType}/${displayType}/${skinTone}/${randomIndex}.png`
-  try {
-    const modelImageBuffer = await getFromR2(r2Key)
-    const modelBlob = new Blob([modelImageBuffer], { type: 'image/png' })
-    modelImageUrl = await fal.storage.upload(modelBlob)
-  } catch (err) {
-    console.error('R2 model fetch failed for key:', r2Key, err)
 
-    // Fallback: cilt tonu bulunamazsa ivory dene
-    if (skinTone !== 'ivory') {
-      const fallbackKey = jewelryType === 'ring' && displayType === 'woman'
-        ? `references/ring/woman/ivory/1.png`
-        : `references/${jewelryType}/${displayType}/ivory/1.png`
-      try {
-        const fallbackBuffer = await getFromR2(fallbackKey)
-        const fallbackBlob = new Blob([fallbackBuffer], { type: 'image/png' })
-        modelImageUrl = await fal.storage.upload(fallbackBlob)
-      } catch (fallbackErr) {
-        console.error('Fallback also failed:', fallbackKey, fallbackErr)
-        return NextResponse.json({
-          error: 'Üretim sırasında bir sorun oluştu. Lütfen tekrar deneyin.'
-        }, { status: 500 })
+  // Her varyant için farklı bir referans indeksi seç (mevcut sayıya kadar tekrarsız).
+  const variantIndices: number[] = []
+  if (quantity <= totalRefs) {
+    const pool = Array.from({ length: totalRefs }, (_, i) => i + 1)
+    for (let i = 0; i < quantity; i++) {
+      const j = i + Math.floor(Math.random() * (pool.length - i))
+      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+      variantIndices.push(pool[i])
+    }
+  } else {
+    for (let i = 0; i < quantity; i++) {
+      variantIndices.push(Math.floor(Math.random() * totalRefs) + 1)
+    }
+  }
+
+  async function uploadModelReference(index: number): Promise<string> {
+    const key = `references/${jewelryType}/${displayType}/${skinTone}/${index}.png`
+    try {
+      const buf = await getFromR2(key)
+      const blob = new Blob([buf], { type: 'image/png' })
+      return await fal.storage.upload(blob)
+    } catch (err) {
+      console.error('R2 model fetch failed for key:', key, err)
+      if (skinTone !== 'ivory') {
+        const fallbackKey = jewelryType === 'ring' && displayType === 'woman'
+          ? `references/ring/woman/ivory/1.png`
+          : `references/${jewelryType}/${displayType}/ivory/1.png`
+        const fbBuf = await getFromR2(fallbackKey)
+        const fbBlob = new Blob([fbBuf], { type: 'image/png' })
+        return await fal.storage.upload(fbBlob)
       }
-    } else {
-      return NextResponse.json({
-        error: `Referans görsel bulunamadı: ${r2Key}. Lütfen bu görselin R2'ye yüklendiğinden emin olun.`
-      }, { status: 500 })
+      throw err
     }
   }
 
@@ -326,7 +330,8 @@ export async function POST(req: NextRequest) {
   const uploadedImageUrl = await fal.storage.upload(imageBlob)
 
   const results = await Promise.allSettled(
-    Array.from({ length: quantity }, (_, i) => {
+    variantIndices.map(async (refIndex) => {
+      const modelImageUrl = await uploadModelReference(refIndex)
       const composition = pickRandom(COMPOSITION_VARIATIONS)
       const lighting = pickRandom(LIGHTING_VARIATIONS)
       const mood = pickRandom(MOOD_VARIATIONS)
