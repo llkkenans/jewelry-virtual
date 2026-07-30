@@ -41,6 +41,23 @@ const MOOD_VARIATIONS = [
   "ordinary phone photo taken at home, effortless and real",
 ]
 
+const SKIN_TONE_DESCRIPTIONS: Record<string, string> = {
+  ivory: "very fair porcelain skin",
+  sand: "light wheat-toned Mediterranean skin",
+  honey: "warm honey-toned olive skin",
+  caramel: "medium-deep caramel brown skin",
+  espresso: "deep espresso brown skin",
+}
+
+const PERSON_POSES = [
+  "one hand raised gently to the side of her head, fingers in her hair, face turned toward the camera",
+  "both hands holding the collar of an open shirt, chin lifted slightly, relaxed shoulders",
+  "head tilted back, eyes softly closed, one hand resting on the opposite shoulder",
+  "standing straight facing the camera, arms relaxed at her sides, calm direct gaze",
+  "turned three-quarters away, looking back over her shoulder toward the camera",
+  "one hand resting lightly on her collarbone, head slightly tilted, soft neutral expression",
+]
+
 const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Visible natural skin texture with pores and fine imperfections, matte skin, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
 
 function pickRandom<T>(arr: T[]): T {
@@ -171,7 +188,7 @@ async function upscaleImage(imageUrl: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man', skinTone: SkinTone, background: Background, nailStyle: NailStyle
+  let imageBase64: string, jewelryType: JewelryType, quantity: number, displayType: 'woman' | 'man', skinTone: SkinTone, background: Background, nailStyle: NailStyle, noRef: boolean
   try {
     const body = await req.json()
     ;({ imageBase64, jewelryType } = body as { imageBase64: string; jewelryType: JewelryType })
@@ -180,6 +197,7 @@ export async function POST(req: NextRequest) {
     skinTone    = (body.skinTone    as SkinTone)   ?? 'sand'
     background  = (body.background  as Background) ?? 'pure_white'
     nailStyle   = (body.nailStyle   as NailStyle)  ?? 'natural'
+    noRef       = Boolean(body.noRef)
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
@@ -329,9 +347,24 @@ export async function POST(req: NextRequest) {
   const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
   const uploadedImageUrl = await fal.storage.upload(imageBlob)
 
+  // noRef mod: her varyant için farklı bir poz seç (mevcut poz sayısına kadar tekrarsız).
+  const variantPoses: string[] = []
+  if (noRef) {
+    const totalPoses = PERSON_POSES.length
+    if (quantity <= totalPoses) {
+      const pool = [...PERSON_POSES]
+      for (let i = 0; i < quantity; i++) {
+        const j = i + Math.floor(Math.random() * (pool.length - i))
+        ;[pool[i], pool[j]] = [pool[j], pool[i]]
+        variantPoses.push(pool[i])
+      }
+    } else {
+      for (let i = 0; i < quantity; i++) variantPoses.push(pickRandom(PERSON_POSES))
+    }
+  }
+
   const results = await Promise.allSettled(
-    variantIndices.map(async (refIndex) => {
-      const modelImageUrl = await uploadModelReference(refIndex)
+    variantIndices.map(async (refIndex, i) => {
       const composition = pickRandom(COMPOSITION_VARIATIONS)
       const lighting = pickRandom(LIGHTING_VARIATIONS)
       const mood = pickRandom(MOOD_VARIATIONS)
@@ -339,6 +372,24 @@ export async function POST(req: NextRequest) {
       const watchCritical = jewelryType === 'watch'
         ? 'CRITICAL: Reproduce the watch with 100% photographic accuracy. The dial face must display IDENTICAL hour/minute hands, indices, sub-dials, and any text exactly as in the reference — do NOT invent or hallucinate any watch brand name, numeral, or dial text. The case shape, crown, bezel, and lug design must be identical. The complete band/strap/bracelet must wrap fully around the wrist with all links, clasp, and material details faithfully reproduced. Do not simplify, crop, or omit any element.'
         : 'CRITICAL: The jewelry piece must be reproduced with 100% identical design, shape, and details to the reference — do not alter, simplify, or reinterpret it in any way.'
+
+      if (noRef) {
+        const skinDesc = SKIN_TONE_DESCRIPTIONS[skinTone] ?? SKIN_TONE_DESCRIPTIONS.sand
+        const pose = variantPoses[i]
+        const personBlock = displayType === 'woman'
+          ? `A Turkish / Mediterranean European woman in her twenties with ${skinDesc}, natural everyday makeup, dark or chestnut hair, ${pose}. Wearing a simple plain top.`
+          : `A Turkish / Mediterranean European man in his twenties with ${skinDesc}, dark or chestnut hair, short natural haircut, ${pose}. Wearing a simple plain top.`
+        const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
+        return fal.subscribe('fal-ai/nano-banana-pro/edit', {
+          input: {
+            image_urls: [uploadedImageUrl],
+            prompt: variantPrompt,
+            aspect_ratio: "3:4",
+          },
+        })
+      }
+
+      const modelImageUrl = await uploadModelReference(refIndex)
       const variantPrompt = `${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
       return fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
