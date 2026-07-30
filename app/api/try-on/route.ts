@@ -24,12 +24,12 @@ const COMPOSITION_VARIATIONS = [
 ]
 
 const LIGHTING_VARIATIONS = [
-  "soft diffused daylight from a large window, flat and even across the face, no hard shadows",
-  "bright overcast daylight, neutral white balance, very gentle shadows",
-  "direct on-camera phone flash, slightly harsh and flat, small hard shadow on the wall behind the subject",
-  "plain even indoor daylight, subject facing the light source, low shadow contrast",
-  "natural afternoon light through a sheer curtain, soft and frontal",
-  "ordinary room daylight, neutral color temperature, no warm cast",
+  "bright soft daylight from a large window just off to one side, airy and clean, gentle falloff, well exposed",
+  "abundant natural daylight filling the room, luminous and fresh, very soft shadows, bright overall exposure",
+  "clean frontal daylight from a wide window, bright and even, subtle shaping on the collarbones",
+  "airy daylight bouncing off a white wall, bright and open, soft shadow edges",
+  "generous window light slightly from above, fresh and clear, no murkiness",
+  "crisp natural daylight, high key and bright, neutral white balance, gentle contrast",
 ]
 
 const MOOD_VARIATIONS = [
@@ -41,7 +41,7 @@ const MOOD_VARIATIONS = [
   "ordinary phone photo taken at home, effortless and real",
 ]
 
-const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Visible natural skin texture with pores and fine imperfections, matte skin, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain white or light grey wall background. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign."
+const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Visible natural skin texture with pores and fine imperfections, matte skin, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]

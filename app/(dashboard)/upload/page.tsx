@@ -87,8 +87,8 @@ function ResultImage({ url, index, generationId, onDownload, showIndex, onToast 
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="relative flex-1 min-h-0 bg-white flex items-center justify-center overflow-hidden">
+    <div className="flex flex-col border border-[#E5E7EB] bg-white">
+      <div className="relative w-full aspect-[3/4] bg-white overflow-hidden">
         {!loaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
             <div className="grid grid-cols-2 gap-3">
@@ -103,12 +103,12 @@ function ResultImage({ url, index, generationId, onDownload, showIndex, onToast 
           ref={imgRef}
           src={url}
           alt={`Sonuç ${index + 1}`}
-          className={`w-full h-full object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
           crossOrigin="anonymous"
           onLoad={() => setLoaded(true)}
         />
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1 p-1">
         <button
           onClick={() => onDownload(url, index)}
           className={`flex-1 flex items-center justify-center gap-2 h-10 bg-[#111827] hover:bg-[#000000] text-white text-[10px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${!loaded ? "opacity-30 pointer-events-none" : ""}`}
@@ -479,73 +479,72 @@ export default function UploadPage() {
           Önizleme &amp; Sonuç
         </p>
 
-        <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[360px] lg:min-h-[520px] flex flex-col rounded-none">
+        {results.length > 0 && !generating ? (
+          <div className={`grid gap-3 ${results.length > 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+            {results.map((result, i) => (
+              <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} onToast={showToast} />
+            ))}
+          </div>
+        ) : (
+          <div className="relative border border-[#E5E7EB] bg-white overflow-hidden min-h-[360px] lg:min-h-[520px] flex flex-col rounded-none">
 
-          {/* Canlı önizleme — filtreler seçilince silik manken */}
-          {previewUrl && !results.length && !generating && (
-            <img
-              src={previewUrl}
-              alt="Önizleme"
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ opacity: 0.35 }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-            />
-          )}
+            {/* Canlı önizleme — filtreler seçilince silik manken */}
+            {previewUrl && !generating && (
+              <img
+                src={previewUrl}
+                alt="Önizleme"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ opacity: 0.35 }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+              />
+            )}
 
-          {/* Generating — skeleton */}
-          {generating && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
-              <div className="flex flex-col items-center gap-6">
-                <div className="grid grid-cols-2 gap-5">
-                  <Gem size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
-                  <Circle size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
-                  <Sparkles size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
-                  <Watch size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
+            {/* Generating — skeleton */}
+            {generating && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB]">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="grid grid-cols-2 gap-5">
+                    <Gem size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '0ms' }} />
+                    <Circle size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '200ms' }} />
+                    <Sparkles size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '400ms' }} />
+                    <Watch size={28} strokeWidth={1.2} className="text-[#C9A96E] animate-pulse" style={{ animationDelay: '600ms' }} />
+                  </div>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">
+                    {PROGRESS_STEPS[progressStep]}
+                  </p>
                 </div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#9CA3AF] font-light">
-                  {PROGRESS_STEPS[progressStep]}
-                </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Sonuç görseller */}
-          {results.length > 0 && !generating && (
-            <div className={`absolute inset-0 flex flex-col ${results.length > 1 ? "grid grid-cols-1 sm:grid-cols-2" : ""}`}>
-              {results.map((result, i) => (
-                <ResultImage key={i} url={result.url} index={i} generationId={result.id} onDownload={handleDownload} showIndex={results.length > 1} onToast={showToast} />
-              ))}
-            </div>
-          )}
+            {/* Placeholder — filtre seçilmemiş */}
+            {!getPreviewUrl() && !generating && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+                <div className="w-px h-12 bg-[#E5E7EB]" />
+                <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
+                  Önizleme Hazır
+                </p>
+                <p className="text-[10px] tracking-wide text-[#D1D5DB]">
+                  Seçimlerinizi yapın, önizleme burada belirsin.
+                </p>
+                <div className="w-px h-12 bg-[#E5E7EB]" />
+              </div>
+            )}
 
-          {/* Placeholder — filtre seçilmemiş */}
-          {!getPreviewUrl() && !generating && !results.length && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
-              <div className="w-px h-12 bg-[#E5E7EB]" />
-              <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
-                Önizleme Hazır
-              </p>
-              <p className="text-[10px] tracking-wide text-[#D1D5DB]">
-                Seçimlerinizi yapın, önizleme burada belirsin.
-              </p>
-              <div className="w-px h-12 bg-[#E5E7EB]" />
-            </div>
-          )}
-
-          {/* Placeholder — filtreler seçili, görsel yüklenmemiş */}
-          {getPreviewUrl() && !file && !generating && !results.length && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
-              <div className="w-px h-12 bg-[#E5E7EB]" />
-              <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
-                Son Bir Adım
-              </p>
-              <p className="text-[10px] tracking-wide text-[#D1D5DB]">
-                Takı fotoğrafınızı yükleyin, üretime hazır olun.
-              </p>
-              <div className="w-px h-12 bg-[#E5E7EB]" />
-            </div>
-          )}
-        </div>
+            {/* Placeholder — filtreler seçili, görsel yüklenmemiş */}
+            {getPreviewUrl() && !file && !generating && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+                <div className="w-px h-12 bg-[#E5E7EB]" />
+                <p className="text-[11px] tracking-[0.15em] uppercase font-light text-[#9CA3AF]">
+                  Son Bir Adım
+                </p>
+                <p className="text-[10px] tracking-wide text-[#D1D5DB]">
+                  Takı fotoğrafınızı yükleyin, üretime hazır olun.
+                </p>
+                <div className="w-px h-12 bg-[#E5E7EB]" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
