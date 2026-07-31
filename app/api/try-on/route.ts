@@ -87,6 +87,44 @@ const SKIN_TONE_DESCRIPTIONS: Record<string, string> = {
   espresso: "deep espresso brown skin",
 }
 
+const FACE_TYPES_WOMAN = [
+  "sculpted high cheekbones, sharp defined jawline, strong bold eyebrows, large almond eyes, full lips",
+  "soft rounded features, delicate refined nose, softly arched eyebrows, wide doe eyes, small heart-shaped mouth",
+  "striking angular bone structure, prominent straight nose, thick straight eyebrows, deep-set intense eyes",
+  "classic oval face, balanced harmonious features, softly arched brows, warm expressive eyes, natural full mouth",
+  "long elegant face, high forehead, fine narrow nose, softly tapered eyebrows, calm almond eyes",
+  "youthful fresh features, subtle freckles across the nose and cheeks, light natural eyebrows, bright open eyes",
+]
+
+const HAIR_STYLES_WOMAN = [
+  "long straight dark brown hair worn loose",
+  "warm chestnut hair pulled back into a sleek low bun",
+  "shoulder-length wavy black hair",
+  "honey blonde hair tied in a soft ponytail",
+  "dark hair in a centre part, tucked behind the ears",
+  "light brown hair with loose natural waves falling over one shoulder",
+  "deep black hair slicked back away from the face",
+  "auburn hair in a relaxed messy updo with loose strands",
+]
+
+const FACE_TYPES_MAN = [
+  "sharply chiselled jawline, sculpted high cheekbones, strong thick eyebrows, deep-set intense eyes, straight defined nose",
+  "square masculine jaw, broad forehead, straight heavy brows, calm steady eyes, full defined lips",
+  "long oval face, high cheekbones, softly tapered brows, expressive dark eyes, refined straight nose",
+  "angular striking features, prominent aquiline nose, thick natural brows, hooded piercing eyes",
+  "youthful clean-cut features, softer jawline, light natural eyebrows, bright open eyes, subtle freckles across the nose",
+  "rugged mature features, defined cheekbones, strong bold brows, weathered warm eyes, wide relaxed mouth",
+]
+
+const HAIR_STYLES_MAN = [
+  "short cropped dark brown hair with a clean fade, clean-shaven",
+  "textured medium-length black hair swept to one side, light stubble on the jaw",
+  "slicked-back chestnut hair with defined part, clean-shaven",
+  "loose natural curls in dark brown hair, short trimmed beard",
+  "buzz-cut deep black hair, clean-shaven with sharp jawline visible",
+  "modern taper with longer top, light brown hair styled naturally, light stubble",
+]
+
 const PERSON_POSES = [
   "both forearms crossed and resting in front of her, chin lowered onto her arms, looking straight into the camera with a calm intense gaze",
   "head tilted back, chin lifted high, eyes softly closed, neck elongated, shoulders relaxed",
@@ -102,6 +140,21 @@ const COMMERCIAL_REALISM = "Professional commercial product photography for an e
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function sampleDistinct<T>(arr: T[], n: number): T[] {
+  const out: T[] = []
+  if (n <= arr.length) {
+    const pool = [...arr]
+    for (let i = 0; i < n; i++) {
+      const j = i + Math.floor(Math.random() * (pool.length - i))
+      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+      out.push(pool[i])
+    }
+  } else {
+    for (let i = 0; i < n; i++) out.push(pickRandom(arr))
+  }
+  return out
 }
 
 const PROMPTS: Record<string, string> = {
@@ -387,21 +440,12 @@ export async function POST(req: NextRequest) {
   const imageBlob = new Blob([imageBuffer], { type: 'image/jpeg' })
   const uploadedImageUrl = await fal.storage.upload(imageBlob)
 
-  // noRef mod: her varyant için farklı bir poz seç (mevcut poz sayısına kadar tekrarsız).
-  const variantPoses: string[] = []
-  if (noRef) {
-    const totalPoses = PERSON_POSES.length
-    if (quantity <= totalPoses) {
-      const pool = [...PERSON_POSES]
-      for (let i = 0; i < quantity; i++) {
-        const j = i + Math.floor(Math.random() * (pool.length - i))
-        ;[pool[i], pool[j]] = [pool[j], pool[i]]
-        variantPoses.push(pool[i])
-      }
-    } else {
-      for (let i = 0; i < quantity; i++) variantPoses.push(pickRandom(PERSON_POSES))
-    }
-  }
+  // noRef mod: her varyant için bağımsız ve tekrarsız poz / yüz / saç seç.
+  const variantPoses: string[] = noRef ? sampleDistinct(PERSON_POSES, quantity) : []
+  const faceTypesPool = displayType === 'woman' ? FACE_TYPES_WOMAN : FACE_TYPES_MAN
+  const hairStylesPool = displayType === 'woman' ? HAIR_STYLES_WOMAN : HAIR_STYLES_MAN
+  const variantFaces: string[] = noRef ? sampleDistinct(faceTypesPool, quantity) : []
+  const variantHair: string[]  = noRef ? sampleDistinct(hairStylesPool, quantity) : []
 
   const results = await Promise.allSettled(
     variantIndices.map(async (refIndex, i) => {
@@ -416,9 +460,11 @@ export async function POST(req: NextRequest) {
       if (noRef) {
         const skinDesc = SKIN_TONE_DESCRIPTIONS[skinTone] ?? SKIN_TONE_DESCRIPTIONS.sand
         const pose = variantPoses[i]
+        const faceType = variantFaces[i]
+        const hairStyle = variantHair[i]
         const personBlock = displayType === 'woman'
-          ? `A top international high-fashion runway model, Turkish / Mediterranean European, early twenties, magazine cover face — sculpted high cheekbones, sharp defined jawline, strong well-defined natural eyebrows, large expressive eyes, full lips, long slender elegant neck, graceful collarbones, perfectly symmetrical striking features, flawless clear ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair, tall slim runway model physique. She looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
-          : `A top international high-fashion male model, Turkish / Mediterranean European, early twenties, magazine cover face — sharply chiselled jawline, sculpted high cheekbones, strong well-defined natural eyebrows, deep expressive eyes, perfectly symmetrical striking features, flawless clear ${skinDesc}, glossy healthy dark or chestnut hair with a short natural haircut, tall athletic runway model physique with broad shoulders. He looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
+          ? `A top international high-fashion runway model, Turkish / Mediterranean European, early twenties, ${faceType}, long slender elegant neck, graceful collarbones, flawless clear ${skinDesc}, subtle natural makeup, ${hairStyle}, tall slim runway model physique. She looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
+          : `A top international high-fashion male model, Turkish / Mediterranean European, early twenties, ${faceType}, long defined neck, broad shoulders, flawless clear ${skinDesc}, ${hairStyle}, tall athletic runway model physique. He looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
         const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${COMMERCIAL_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
         return fal.subscribe('fal-ai/nano-banana-pro/edit', {
           input: {
