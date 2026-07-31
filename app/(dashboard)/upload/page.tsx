@@ -91,7 +91,7 @@ function ResultImage({ url, index, generationId, onDownload, onSave, saving, sav
         </button>
         <button
           onClick={() => onSave(index, url, generationId)}
-          disabled={saving || saved || !loaded || !generationId}
+          disabled={saving || saved || !loaded}
           className={`flex-1 flex items-center justify-center gap-2 h-10 text-[10px] font-medium tracking-[0.15em] uppercase transition-colors cursor-pointer ${
             saved
               ? "bg-[#C9A96E] text-white"
@@ -125,12 +125,18 @@ export default function UploadPage() {
   const [error, setError]               = useState("")
 
   async function handleSaveToGallery(index: number, imageUrl: string, generationId: string | null) {
-    if (!generationId) return
     if (savingIndices.has(index) || savedIndices.has(index)) return
+    if (!generationId) {
+      showToast(`Görsel ${index + 1} kaydedilemedi: üretim kaydı bulunamadı`, "error")
+      return
+    }
     setSavingIndices((prev) => { const n = new Set(prev); n.add(index); return n })
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        showToast("Oturum bulunamadı, tekrar giriş yapın", "error")
+        return
+      }
       const res = await fetch('/api/save-to-gallery', {
         method: 'POST',
         headers: {
@@ -139,14 +145,22 @@ export default function UploadPage() {
         },
         body: JSON.stringify({ generationId, imageUrl }),
       })
+      const body = await res.json().catch(() => ({})) as { error?: string; saved?: boolean }
       if (res.ok) {
         setSavedIndices((prev) => { const n = new Set(prev); n.add(index); return n })
-        showToast("Galeriye kaydedildi!", "success")
-      } else {
-        showToast("Kaydetme başarısız", "error")
+        showToast(`Görsel ${index + 1} galeriye kaydedildi`, "success")
+        return
       }
-    } catch {
-      showToast("Kaydetme başarısız", "error")
+      // Idempotent: server rejects "Zaten kaydedildi" for already-saved rows → treat as success
+      if (res.status === 400 && (body.error ?? "").toLowerCase().includes("zaten")) {
+        setSavedIndices((prev) => { const n = new Set(prev); n.add(index); return n })
+        showToast(`Görsel ${index + 1} zaten kayıtlı`, "info")
+        return
+      }
+      showToast(`Görsel ${index + 1} kaydedilemedi: ${body.error ?? `HTTP ${res.status}`}`, "error")
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "bilinmeyen hata"
+      showToast(`Görsel ${index + 1} kaydedilemedi: ${msg}`, "error")
     } finally {
       setSavingIndices((prev) => { const n = new Set(prev); n.delete(index); return n })
     }
