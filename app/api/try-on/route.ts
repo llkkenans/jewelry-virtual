@@ -61,9 +61,9 @@ function pickComposition(type: JewelryType): string {
 
 const LIGHTING_VARIATIONS = [
   "bright soft daylight from a large window just off to one side, airy and clean, gentle falloff, well exposed",
-  "abundant natural daylight filling the room, luminous and fresh, very soft shadows, bright overall exposure",
+  "large diffused key light from one side giving soft sculpted shadows, bright and clean",
   "clean frontal daylight from a wide window, bright and even, subtle shaping on the collarbones",
-  "airy daylight bouncing off a white wall, bright and open, soft shadow edges",
+  "broad soft frontal light with a gentle falloff toward the edges of the frame, luminous and dimensional",
   "gentle late-afternoon daylight through a window, softly warm and inviting, still neutral skin tones, no orange cast",
   "mild warm indoor daylight in the late afternoon, cosy and alive, soft warmth on the skin without any heavy golden grading",
   "clear directional daylight from one side, casting a soft-edged but clearly defined shadow on the plain wall behind her, bright and sculpted",
@@ -72,10 +72,10 @@ const LIGHTING_VARIATIONS = [
 
 const MOOD_VARIATIONS = [
   "relaxed confident expression, natural and self-assured",
-  "plain marketplace product listing photo, honest and unstyled",
-  "casual snapshot feeling, subject calm and natural",
+  "clean commercial listing photo, honest and professionally shot",
+  "composed and professional, relaxed natural expression",
   "simple catalogue photo, straightforward and elegant",
-  "natural unposed moment, soft neutral expression",
+  "naturally posed, quietly confident, soft neutral expression",
   "clean commercial catalogue photo, effortless and composed",
 ]
 
@@ -98,7 +98,7 @@ const PERSON_POSES = [
   "seen from a low three-quarter angle, chin slightly raised, gaze directed just past the camera",
 ]
 
-const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Natural skin texture with visible pores, but clear healthy flawless complexion with no blemishes, no acne, no dark spots, no under-eye circles, no wrinkles, healthy luminous dewy skin with a natural sheen on the cheekbones, collarbones and shoulders — glowing but never greasy or plastic, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
+const COMMERCIAL_REALISM = "Professional commercial product photography for an e-commerce marketplace listing, shot on a modern full-frame camera with a standard prime lens. Crisp, well exposed and retail-ready. Moderate depth of field: the subject is tack sharp and the plain background stays softly readable — no extreme creamy bokeh, no heavy lens compression. Shaped directional light that gives real dimension to the neck, collarbones and jawline, with soft-edged shadows. Natural skin texture with visible pores and a clear healthy flawless complexion — luminous dewy sheen on the cheekbones and collarbones, never greasy, waxy or plastic. No beauty retouching, no airbrushing, no skin smoothing. Plain uncluttered wall or seamless backdrop. Neutral to very slightly warm white balance — no heavy golden or amber grading. Do NOT make it look like a casual phone snapshot, a selfie, or an amateur photo: no sensor noise, no harsh on-camera flash, no flat lifeless lighting. Equally, do NOT make it a fashion or perfume campaign: no rim light, no backlight, no coloured gel lighting, no gradient studio backdrop, no dramatic art direction. This is a clean, honest, professionally shot marketplace listing image."
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -419,7 +419,7 @@ export async function POST(req: NextRequest) {
         const personBlock = displayType === 'woman'
           ? `A top international high-fashion runway model, Turkish / Mediterranean European, early twenties, magazine cover face — sculpted high cheekbones, sharp defined jawline, strong well-defined natural eyebrows, large expressive eyes, full lips, long slender elegant neck, graceful collarbones, perfectly symmetrical striking features, flawless clear ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair, tall slim runway model physique. She looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
           : `A top international high-fashion male model, Turkish / Mediterranean European, early twenties, magazine cover face — sharply chiselled jawline, sculpted high cheekbones, strong well-defined natural eyebrows, deep expressive eyes, perfectly symmetrical striking features, flawless clear ${skinDesc}, glossy healthy dark or chestnut hair with a short natural haircut, tall athletic runway model physique with broad shoulders. He looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
-        const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
+        const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${COMMERCIAL_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
         return fal.subscribe('fal-ai/nano-banana-pro/edit', {
           input: {
             image_urls: [uploadedImageUrl],
@@ -430,7 +430,7 @@ export async function POST(req: NextRequest) {
       }
 
       const modelImageUrl = await uploadModelReference(refIndex)
-      const variantPrompt = `${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
+      const variantPrompt = `${basePrompt} ${watchCritical} ${COMMERCIAL_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
       return fal.subscribe('fal-ai/nano-banana-pro/edit', {
         input: {
           image_urls: [modelImageUrl, uploadedImageUrl],
