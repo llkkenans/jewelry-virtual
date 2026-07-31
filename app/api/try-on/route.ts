@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
     skinTone    = (body.skinTone    as SkinTone)   ?? 'sand'
     background  = (body.background  as Background) ?? 'pure_white'
     nailStyle   = (body.nailStyle   as NailStyle)  ?? 'natural'
-    noRef       = Boolean(body.noRef)
+    noRef       = body.noRef !== false
   } catch {
     return NextResponse.json({ error: 'Geçersiz JSON gövdesi' }, { status: 400 })
   }
