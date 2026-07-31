@@ -15,13 +15,49 @@ type PromptKey   = `${JewelryType}/${string}/${SkinTone}`
 const VALID_JEWELRY_TYPES: JewelryType[] = ['ring', 'necklace', 'earring', 'watch']
 
 const COMPOSITION_VARIATIONS = [
-  "vertical 3:4 framing, subject facing the camera straight on, the jewelry centered and large in the frame, plenty of headroom",
-  "upper chest and neck crop, frontal angle, the piece filling the middle of the frame, everything in sharp focus including the nd wall",
-  "head and shoulders, slight three-quarter turn toward the camera, the piece clearly readable and unobstructed",
-  "casual handheld phone shot, camera slightly below eye level, the jewelry sharp and centered",
-  "simple frontal portrait crop, arms relaxed and down, the piece unobstructed against plain skin",
-  "close but not extreme crop, the jewelry occupying roughly a third of the frame height, natural perspective",
+  "vertical 3:4 framing, tightly cropped on the neck, collarbones and upper chest, the jewellery large and centered, occupying a significant part of the frame",
+  "close crop from the chin down to the mid-chest, the piece clearly readable and dominant in the composition",
+  "upper chest and neck crop, frontal angle, the piece filling the middle of the frame, everything in sharp focus including the background wall",
+  "the jewellery is the primary subject and fills a large portion of the frame, the face partially visible at the top",
+  "cropped so the piece sits at the visual centre of the image, shoulders and neck framing it, minimal empty space",
+  "close but not extreme crop, the jewellery occupying roughly half of the frame height, natural perspective",
 ]
+
+const COMPOSITION_VARIATIONS_RING = [
+  "vertical 3:4 framing, tight crop on the hand and fingers, the ring large and centered, occupying a significant part of the frame, face out of frame",
+  "close crop on the hand raised near the collarbone, the ring dominant and clearly readable, face optional and partially visible",
+  "hand-only close-up against a plain wall, fingers gracefully arranged, the ring at the visual centre of the frame",
+  "the ring is the primary subject and fills a large portion of the frame, hand elegantly posed, minimal empty space",
+  "cropped so the hand and ring sit at the visual centre, wrist and forearm framing it, no face in frame",
+  "close but not extreme crop on the hand, the ring occupying roughly half of the frame height, natural perspective",
+]
+
+const COMPOSITION_VARIATIONS_WATCH = [
+  "vertical 3:4 framing, tight crop on the wrist and forearm, the watch dial large and centered, occupying a significant part of the frame, face out of frame",
+  "close crop on the wrist held up near the chest, the watch dominant and clearly readable",
+  "wrist-only close-up against a plain wall, the watch at the visual centre of the frame, dial fully visible",
+  "the watch is the primary subject and fills a large portion of the frame, hand relaxed, minimal empty space",
+  "cropped so the wrist and watch sit at the visual centre, forearm framing it, no face in frame",
+  "close but not extreme crop on the wrist, the watch occupying roughly half of the frame height, natural perspective",
+]
+
+const COMPOSITION_VARIATIONS_EARRING = [
+  "vertical 3:4 framing, tightly cropped on the side of the face and ear, the earring large and centered, occupying a significant part of the frame",
+  "close crop on the profile from cheekbone to jawline, the earring clearly readable and dominant in the composition",
+  "side-of-face and neck crop, three-quarter angle, the earring filling the middle of the frame, everything in sharp focus including the background wall",
+  "the earring is the primary subject and fills a large portion of the frame, only part of the face visible",
+  "cropped so the ear and earring sit at the visual centre of the image, jawline and hair framing it, minimal empty space",
+  "close but not extreme crop on the ear, the earring occupying roughly half of the frame height, natural perspective",
+]
+
+function pickComposition(type: JewelryType): string {
+  switch (type) {
+    case 'ring':    return pickRandom(COMPOSITION_VARIATIONS_RING)
+    case 'watch':   return pickRandom(COMPOSITION_VARIATIONS_WATCH)
+    case 'earring': return pickRandom(COMPOSITION_VARIATIONS_EARRING)
+    default:        return pickRandom(COMPOSITION_VARIATIONS)
+  }
+}
 
 const LIGHTING_VARIATIONS = [
   "bright soft daylight from a large window just off to one side, airy and clean, gentle falloff, well exposed",
@@ -369,7 +405,7 @@ export async function POST(req: NextRequest) {
 
   const results = await Promise.allSettled(
     variantIndices.map(async (refIndex, i) => {
-      const composition = pickRandom(COMPOSITION_VARIATIONS)
+      const composition = pickComposition(jewelryType)
       const lighting = pickRandom(LIGHTING_VARIATIONS)
       const mood = pickRandom(MOOD_VARIATIONS)
       const seed = Math.floor(Math.random() * 999999)
@@ -381,8 +417,8 @@ export async function POST(req: NextRequest) {
         const skinDesc = SKIN_TONE_DESCRIPTIONS[skinTone] ?? SKIN_TONE_DESCRIPTIONS.sand
         const pose = variantPoses[i]
         const personBlock = displayType === 'woman'
-          ? `A strikingly beautiful Turkish / Mediterranean European fashion model in her early twenties, professional model with high defined cheekbones, strong well-defined natural eyebrows, a slim elegant neck and long graceful collarbones, symmetrical refined features, flawless ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair neatly styled, slim toned model physique. ${pose}. Wearing a simple plain well-fitted top.`
-          : `A strikingly handsome Turkish / Mediterranean European male fashion model in his early twenties, professional model with a sharply defined jawline, high cheekbones, strong well-defined natural eyebrows, symmetrical refined features, flawless ${skinDesc} and clear healthy complexion, glossy dark or chestnut hair neatly styled with a short natural haircut, athletic toned model physique with broad shoulders. ${pose}. Wearing a simple plain well-fitted top.`
+          ? `A top international high-fashion runway model, Turkish / Mediterranean European, early twenties, magazine cover face — sculpted high cheekbones, sharp defined jawline, strong well-defined natural eyebrows, large expressive eyes, full lips, long slender elegant neck, graceful collarbones, perfectly symmetrical striking features, flawless clear ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair, tall slim runway model physique. She looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
+          : `A top international high-fashion male model, Turkish / Mediterranean European, early twenties, magazine cover face — sharply chiselled jawline, sculpted high cheekbones, strong well-defined natural eyebrows, deep expressive eyes, perfectly symmetrical striking features, flawless clear ${skinDesc}, glossy healthy dark or chestnut hair with a short natural haircut, tall athletic runway model physique with broad shoulders. He looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
         const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
         return fal.subscribe('fal-ai/nano-banana-pro/edit', {
           input: {
