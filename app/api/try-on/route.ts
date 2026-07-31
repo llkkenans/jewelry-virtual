@@ -87,6 +87,40 @@ const SKIN_TONE_DESCRIPTIONS: Record<string, string> = {
   espresso: "deep espresso brown skin",
 }
 
+const AGE_RANGES_WOMAN = [
+  "in her early twenties",
+  "in her mid twenties",
+  "in her late twenties",
+  "around thirty",
+  "in her early thirties",
+]
+
+const AGE_RANGES_MAN = [
+  "in his early twenties",
+  "in his mid twenties",
+  "in his late twenties",
+  "around thirty",
+  "in his early thirties",
+]
+
+const ORIGINS_WOMAN = [
+  "Turkish",
+  "Mediterranean European",
+  "Balkan European",
+  "Levantine",
+  "Southern European",
+  "Central European",
+]
+
+const ORIGINS_MAN = [
+  "Turkish",
+  "Mediterranean European",
+  "Balkan European",
+  "Levantine",
+  "Southern European",
+  "Central European",
+]
+
 const FACE_TYPES_WOMAN = [
   "sculpted high cheekbones, sharp defined jawline, strong bold eyebrows, large almond eyes, full lips",
   "soft rounded features, delicate refined nose, softly arched eyebrows, wide doe eyes, small heart-shaped mouth",
@@ -446,6 +480,10 @@ export async function POST(req: NextRequest) {
   const hairStylesPool = displayType === 'woman' ? HAIR_STYLES_WOMAN : HAIR_STYLES_MAN
   const variantFaces: string[] = noRef ? sampleDistinct(faceTypesPool, quantity) : []
   const variantHair: string[]  = noRef ? sampleDistinct(hairStylesPool, quantity) : []
+  const agesPool = displayType === 'woman' ? AGE_RANGES_WOMAN : AGE_RANGES_MAN
+  const originsPool = displayType === 'woman' ? ORIGINS_WOMAN : ORIGINS_MAN
+  const variantAges: string[]    = noRef ? sampleDistinct(agesPool, quantity) : []
+  const variantOrigins: string[] = noRef ? sampleDistinct(originsPool, quantity) : []
 
   const results = await Promise.allSettled(
     variantIndices.map(async (refIndex, i) => {
@@ -462,9 +500,11 @@ export async function POST(req: NextRequest) {
         const pose = variantPoses[i]
         const faceType = variantFaces[i]
         const hairStyle = variantHair[i]
+        const age = variantAges[i]
+        const origin = variantOrigins[i]
         const personBlock = displayType === 'woman'
-          ? `A top international high-fashion runway model, Turkish / Mediterranean European, early twenties, ${faceType}, long slender elegant neck, graceful collarbones, flawless clear ${skinDesc}, subtle natural makeup, ${hairStyle}, tall slim runway model physique. She looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
-          : `A top international high-fashion male model, Turkish / Mediterranean European, early twenties, ${faceType}, long defined neck, broad shoulders, flawless clear ${skinDesc}, ${hairStyle}, tall athletic runway model physique. He looks like the face of a national jewellery brand television campaign. ${pose}. Wearing a simple plain well-fitted top.`
+          ? `A professional fashion model, ${origin}, ${age}, ${faceType}, elegant neck and collarbones, clear healthy ${skinDesc}, subtle natural makeup, ${hairStyle}, slim model physique. ${pose}. Wearing a simple plain well-fitted top.`
+          : `A professional fashion model, ${origin}, ${age}, ${faceType}, defined neck and broad shoulders, clear healthy ${skinDesc}, ${hairStyle}, athletic model physique. ${pose}. Wearing a simple plain well-fitted top.`
         const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${COMMERCIAL_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
         return fal.subscribe('fal-ai/nano-banana-pro/edit', {
           input: {
