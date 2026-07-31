@@ -33,12 +33,12 @@ const LIGHTING_VARIATIONS = [
 ]
 
 const MOOD_VARIATIONS = [
-  "candid everyday photo, relaxed neutral expression, no posing",
+  "relaxed confident expression, natural and self-assured",
   "plain marketplace product listing photo, honest and unstyled",
   "casual snapshot feeling, subject calm and natural",
-  "simple catalogue photo, straightforward and unglamorous",
+  "simple catalogue photo, straightforward and elegant",
   "natural unposed moment, soft neutral expression",
-  "ordinary phone photo taken at home, effortless and real",
+  "clean commercial catalogue photo, effortless and composed",
 ]
 
 const SKIN_TONE_DESCRIPTIONS: Record<string, string> = {
@@ -58,7 +58,7 @@ const PERSON_POSES = [
   "one hand resting lightly on her collarbone, head slightly tilted, soft neutral expression",
 ]
 
-const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Visible natural skin texture with pores and fine imperfections, matte skin, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
+const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Natural skin texture with visible pores, but clear healthy flawless complexion with no blemishes, no acne, no dark spots, no under-eye circles, no wrinkles, matte skin, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -377,8 +377,8 @@ export async function POST(req: NextRequest) {
         const skinDesc = SKIN_TONE_DESCRIPTIONS[skinTone] ?? SKIN_TONE_DESCRIPTIONS.sand
         const pose = variantPoses[i]
         const personBlock = displayType === 'woman'
-          ? `A Turkish / Mediterranean European woman in her twenties with ${skinDesc}, natural everyday makeup, dark or chestnut hair, ${pose}. Wearing a simple plain top.`
-          : `A Turkish / Mediterranean European man in his twenties with ${skinDesc}, dark or chestnut hair, short natural haircut, ${pose}. Wearing a simple plain top.`
+          ? `A strikingly beautiful Turkish / Mediterranean European fashion model in her early twenties, professional model with high defined cheekbones, a slim elegant neck and long graceful collarbones, symmetrical refined features, flawless ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair neatly styled, slim toned model physique. ${pose}. Wearing a simple plain well-fitted top.`
+          : `A strikingly handsome Turkish / Mediterranean European male fashion model in his early twenties, professional model with a sharply defined jawline, high cheekbones, symmetrical refined features, flawless ${skinDesc} and clear healthy complexion, glossy dark or chestnut hair neatly styled with a short natural haircut, athletic toned model physique with broad shoulders. ${pose}. Wearing a simple plain well-fitted top.`
         const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
         return fal.subscribe('fal-ai/nano-banana-pro/edit', {
           input: {
