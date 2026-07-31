@@ -30,6 +30,8 @@ const LIGHTING_VARIATIONS = [
   "airy daylight bouncing off a white wall, bright and open, soft shadow edges",
   "gentle late-afternoon daylight through a window, softly warm and inviting, still neutral skin tones, no orange cast",
   "mild warm indoor daylight in the late afternoon, cosy and alive, soft warmth on the skin without any heavy golden grading",
+  "clear directional daylight from one side, casting a soft-edged but clearly defined shadow on the plain wall behind her, bright and sculpted",
+  "single strong window light from the side, defined shadow shapes, luminous highlights on the cheekbones and collarbones, still neutral in colour",
 ]
 
 const MOOD_VARIATIONS = [
@@ -50,15 +52,17 @@ const SKIN_TONE_DESCRIPTIONS: Record<string, string> = {
 }
 
 const PERSON_POSES = [
-  "one hand raised gently to the side of her head, fingers in her hair, face turned toward the camera",
-  "both hands holding the collar of an open shirt, chin lifted slightly, relaxed shoulders",
-  "head tilted back, eyes softly closed, one hand resting on the opposite shoulder",
-  "standing straight facing the camera, arms relaxed at her sides, calm direct gaze",
+  "both forearms crossed and resting in front of her, chin lowered onto her arms, looking straight into the camera with a calm intense gaze",
+  "head tilted back, chin lifted high, eyes softly closed, neck elongated, shoulders relaxed",
+  "cropped so the face is completely out of frame — only the neck, collarbones and upper chest are visible, shoulders square to the camera",
+  "one hand raised to the side of her head, fingers resting in her hair, face turned toward the camera",
+  "both hands holding the open collar of a shirt, chin lifted slightly, relaxed shoulders",
   "turned three-quarters away, looking back over her shoulder toward the camera",
   "one hand resting lightly on her collarbone, head slightly tilted, soft neutral expression",
+  "seen from a low three-quarter angle, chin slightly raised, gaze directed just past the camera",
 ]
 
-const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Natural skin texture with visible pores, but clear healthy flawless complexion with no blemishes, no acne, no dark spots, no under-eye circles, no wrinkles, matte skin, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
+const IPHONE_REALISM = "Shot on an iPhone main wide camera. Natural smartphone photo look: deep depth of field with the background almost in focus, no creamy bokeh, no lens compression. Natural skin texture with visible pores, but clear healthy flawless complexion with no blemishes, no acne, no dark spots, no under-eye circles, no wrinkles, healthy luminous dewy skin with a natural sheen on the cheekbones, collarbones and shoulders — glowing but never greasy or plastic, no beauty retouching, no airbrushing, no skin smoothing. Neutral white balance with no warm amber or golden cast. Plain bright white or very light warm-neutral wall background, clean and evenly lit, never dark or dingy grey. No sdio strobes, no softbox, no rim light, no backlight, no colored gel lighting, no gradient studio backdrop. Slight sensor noise. This is an e-commerce marketplace product listing photo, not a fashion campaign. Bright, well-exposed and airy overall — clean and fresh, never dim, murky, flat, underexposed or grey. Skin looks healthy and naturally luminous, not oily or retouched."
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -377,8 +381,8 @@ export async function POST(req: NextRequest) {
         const skinDesc = SKIN_TONE_DESCRIPTIONS[skinTone] ?? SKIN_TONE_DESCRIPTIONS.sand
         const pose = variantPoses[i]
         const personBlock = displayType === 'woman'
-          ? `A strikingly beautiful Turkish / Mediterranean European fashion model in her early twenties, professional model with high defined cheekbones, a slim elegant neck and long graceful collarbones, symmetrical refined features, flawless ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair neatly styled, slim toned model physique. ${pose}. Wearing a simple plain well-fitted top.`
-          : `A strikingly handsome Turkish / Mediterranean European male fashion model in his early twenties, professional model with a sharply defined jawline, high cheekbones, symmetrical refined features, flawless ${skinDesc} and clear healthy complexion, glossy dark or chestnut hair neatly styled with a short natural haircut, athletic toned model physique with broad shoulders. ${pose}. Wearing a simple plain well-fitted top.`
+          ? `A strikingly beautiful Turkish / Mediterranean European fashion model in her early twenties, professional model with high defined cheekbones, strong well-defined natural eyebrows, a slim elegant neck and long graceful collarbones, symmetrical refined features, flawless ${skinDesc}, subtle natural makeup, glossy healthy dark or chestnut hair neatly styled, slim toned model physique. ${pose}. Wearing a simple plain well-fitted top.`
+          : `A strikingly handsome Turkish / Mediterranean European male fashion model in his early twenties, professional model with a sharply defined jawline, high cheekbones, strong well-defined natural eyebrows, symmetrical refined features, flawless ${skinDesc} and clear healthy complexion, glossy dark or chestnut hair neatly styled with a short natural haircut, athletic toned model physique with broad shoulders. ${pose}. Wearing a simple plain well-fitted top.`
         const variantPrompt = `${personBlock} ${basePrompt} ${watchCritical} ${IPHONE_REALISM} ${composition}. ${lighting}. ${mood}. Generation variant ${seed}.`
         return fal.subscribe('fal-ai/nano-banana-pro/edit', {
           input: {
