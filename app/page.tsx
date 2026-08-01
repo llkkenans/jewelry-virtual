@@ -251,14 +251,15 @@ function WallHeadline() {
   return (
     <section
       ref={sectionRef}
-      className={`bg-white px-5 py-[84px] md:px-8 md:py-[140px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
+      className={`bg-white px-5 pt-[64px] pb-[36px] md:px-8 md:pt-[96px] md:pb-[48px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
     >
       <h2
         style={{
           fontFamily: "var(--font-display)",
           fontVariationSettings: "'wght' 900, 'wdth' 118",
           fontSize: "clamp(38px, 7.4vw, 128px)",
-          lineHeight: 0.88,
+          // hard floor for Turkish uppercase display text: never below 1.0
+          lineHeight: 1.02,
           letterSpacing: "-0.035em",
           color: "#111827",
         }}
@@ -283,7 +284,7 @@ function WallHeadline() {
           lineHeight: 1.55,
           color: "#6B7280",
           maxWidth: "520px",
-          marginTop: "28px",
+          marginTop: "24px",
           transitionDelay: instant ? "0ms" : `${SUB_DELAY_MS}ms`,
         }}
       >
@@ -295,10 +296,10 @@ function WallHeadline() {
           display: inline-block;
           overflow: hidden;
           vertical-align: bottom;
+          padding-top: 0.18em;
+          margin-top: -0.18em;
           padding-bottom: 0.12em;
           margin-bottom: -0.12em;
-          padding-top: 0.1em;
-          margin-top: -0.1em;
         }
         .hl-word {
           display: inline-block;
