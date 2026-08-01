@@ -255,9 +255,9 @@ void main() {
 
 const COLORS = new Float32Array([
   0.043, 0.063, 0.149,
-  0.239, 0.275, 0.910,
-  0.694, 0.549, 1.000,
-  1.000, 0.839, 0.906,
+  0.145, 0.180, 0.780,
+  0.396, 0.290, 0.860,
+  0.545, 0.404, 0.925,
   0, 0, 0,
   0, 0, 0,
   0, 0, 0,
@@ -333,7 +333,7 @@ export default function SilkShader({ className }: { className?: string }) {
 
     gl.uniform3fv(uColors, COLORS)
     gl.uniform4f(uShape, 1.5, 0.55, 0.5, 0.0)
-    gl.uniform4f(uSurface, 2.4, 1.0, 0.12, 1.0)
+    gl.uniform4f(uSurface, 2.4, 1.0, -0.04, 1.0)
     gl.uniform4f(uFinish, 0.0, 0.0, 0.0, 0.04)
     gl.uniform4f(uTransform, 1.0, 0.0, 0.0, 0.0)
     gl.uniform4f(uSpace, 0.0, 0.0, 0.0, 0.0)

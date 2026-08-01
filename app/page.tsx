@@ -181,7 +181,7 @@ function MasonryWall() {
   })
 
   return (
-    <section ref={sectionRef} className="relative bg-white py-28 sm:py-36 overflow-hidden">
+    <section ref={sectionRef} className="relative bg-[#EFEEEA] py-28 sm:py-36 overflow-hidden">
 
       <div className="px-5 md:px-8">
         <div className="flex gap-4">
@@ -252,7 +252,7 @@ function WallHeadline() {
   return (
     <section
       ref={sectionRef}
-      className={`bg-black px-5 py-[80px] md:px-8 md:py-[120px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
+      className={`bg-[#EFEEEA] px-5 py-[80px] md:px-8 md:py-[120px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
     >
       <div className="headlineStack">
         <SilkShader className="hl-canvas" />
@@ -286,7 +286,7 @@ function WallHeadline() {
         style={{
           fontFamily: BODY,
           lineHeight: 1.55,
-          color: "#9CA3AF",
+          color: "#6B7280",
           maxWidth: "520px",
           marginTop: "24px",
           transitionDelay: instant ? "0ms" : `${SUB_DELAY_MS}ms`,
@@ -313,9 +313,9 @@ function WallHeadline() {
         .headlineText {
           position: relative;
           z-index: 1;
-          background: #000000;
-          color: #FFFFFF;
-          mix-blend-mode: darken;
+          background: #EFEEEA;
+          color: #000000;
+          mix-blend-mode: lighten;
         }
         .hl-mask {
           display: inline-block;
@@ -484,7 +484,7 @@ function DemoSimulator() {
               </div>
 
               {/* Seçili takı büyük görsel */}
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white border border-[#E5E7EB]">
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white">
                 <img
                   key={item.id}
                   src={item.before}
@@ -520,7 +520,7 @@ function DemoSimulator() {
               </div>
 
               {/* Kıyafet için placeholder */}
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center border border-dashed border-[#E5E7EB]">
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3 px-6 text-center">
                   <Sparkles size={22} strokeWidth={1.2} className="text-[#C4C0B8]" />
                   <p style={{ fontFamily: BODY, fontSize: "12px", letterSpacing: "0.02em" }} className="text-[#6B7280] font-light leading-relaxed">
@@ -538,7 +538,7 @@ function DemoSimulator() {
           {studioTab === 'jewelry' ? (
             <>
               {/* Çıktı alanı — takı */}
-              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white border border-[#E5E7EB] flex items-center justify-center">
+              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
 
                 {/* IDLE */}
                 {phase === "idle" && (
@@ -609,7 +609,7 @@ function DemoSimulator() {
           ) : (
             <>
               {/* Kıyafet — yakında mesajı */}
-              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white border border-[#E5E7EB] flex items-center justify-center">
+              <div className="relative flex-1 aspect-[4/5] rounded-2xl overflow-hidden bg-white flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 px-8 text-center">
                   <Sparkles size={22} strokeWidth={1.2} className="text-[#C4C0B8]" />
                   <p style={{ fontFamily: BODY, fontSize: "13px", letterSpacing: "0.01em" }} className="text-[#6B7280] font-light leading-[1.7]">
@@ -760,7 +760,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div style={{ fontFamily: BODY }} className="min-h-screen bg-white text-[#111827]">
+    <div style={{ fontFamily: BODY }} className="min-h-screen bg-[#EFEEEA] text-[#111827]">
 
       <SmoothScroll />
 
@@ -870,7 +870,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── STATS STRIP ─────────────── */}
-        <section className="bg-white border-b border-[#E5E7EB]">
+        <section className="bg-[#EFEEEA]">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
             <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-[#E5E7EB]">
               {stats.map(({ value, label }, i) => (
@@ -900,7 +900,7 @@ export default function LandingPage() {
         <WallHeadline />
 
         {/* ─────────────── RESULTS — Before/After ─────────────── */}
-        <section id="sonuclar" className="relative py-28 sm:py-36 bg-white border-t border-[#E5E7EB]">
+        <section id="sonuclar" className="relative py-28 sm:py-36 bg-[#EFEEEA]">
 
           <div className="relative z-10">
           <div className="max-w-6xl mx-auto px-6 sm:px-10">
@@ -936,7 +936,7 @@ export default function LandingPage() {
         </section>
 
         {/* ─────────────── SOCIAL MEDIA ─────────────── */}
-        <section className="relative pt-28 sm:pt-36 pb-24 bg-white border-t border-[#E5E7EB] overflow-hidden">
+        <section className="relative pt-28 sm:pt-36 pb-24 bg-[#EFEEEA] overflow-hidden">
 
           <style>{`
             @keyframes soundBar {
@@ -1028,7 +1028,7 @@ export default function LandingPage() {
       </main>
 
       {/* ─────────────── FOOTER ─────────────── */}
-      <footer className="bg-white border-t border-[#E5E7EB]">
+      <footer className="bg-[#EFEEEA]">
         <div className="max-w-6xl mx-auto px-6 sm:px-10 py-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
 

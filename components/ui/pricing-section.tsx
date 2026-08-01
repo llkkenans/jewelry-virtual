@@ -203,7 +203,7 @@ export default function PricingSection() {
   const [revealed, setRevealed] = useState(false)
 
   return (
-    <section className="relative bg-white py-28 sm:py-36 overflow-hidden border-t border-[#E5E7EB]">
+    <section className="relative bg-[#EFEEEA] py-28 sm:py-36 overflow-hidden">
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10">
 
