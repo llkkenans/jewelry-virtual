@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Gem, Circle, Sparkles, Watch } from "lucide-react"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import PricingSection from "@/components/ui/pricing-section"
+import SmoothScroll from "@/components/SmoothScroll"
 
 /* ─── Hero Videos ───────────────────────────────────────────────────── */
 const heroVideos = [
@@ -91,12 +92,18 @@ const wallImages: { src: string; ratio: "portrait" | "landscape" }[] = [
   { src: "/landing/landing_images/collection/earrings_after3.png", ratio: "portrait" },
 ]
 
-const COLUMN_SPEEDS = [1.0, 0.86, 1.14, 0.94]
+/* per-column convergence offsets: [xVw, yVh, scale] at e = 0 */
+const CONVERGE_OFFSETS: [number, number, number][] = [
+  [-24, 0, 1],
+  [0, 16, 0.9],
+  [0, 22, 0.9],
+  [24, 0, 1],
+]
+const RESIDUAL_SPEEDS = [1.0, 0.9, 1.1, 0.95]
 
 function MasonryWall() {
   const sectionRef = useRef<HTMLElement>(null)
   const colRefs = useRef<(HTMLDivElement | null)[]>([])
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [colCount, setColCount] = useState(4)
 
   useEffect(() => {
@@ -112,65 +119,51 @@ function MasonryWall() {
     }
   }, [])
 
-  /* (b) + (c) — staggered entrance, unobserve after reveal */
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[]
-
-    if (reduced) {
-      cards.forEach((el) => {
-        el.style.transition = "none"
-        el.style.opacity = "1"
-        el.style.transform = "none"
-      })
-      return
-    }
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries
-          .filter((e) => e.isIntersecting)
-          .forEach((entry, i) => {
-            const el = entry.target as HTMLDivElement
-            el.style.transitionDelay = `${i * 70}ms`
-            el.style.opacity = "1"
-            el.style.transform = "translateY(0) scale(1)"
-            obs.unobserve(el)
-          })
-      },
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.15 }
-    )
-    cards.forEach((el) => obs.observe(el))
-    return () => obs.disconnect()
-  }, [colCount])
-
-  /* (a) — column parallax, rAF-throttled, transform only */
+  /* scroll-scrubbed convergence + residual parallax */
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
 
     let raf = 0
+    const applyTransforms = () => {
+      const wall = sectionRef.current
+      if (!wall) return
+      const rect = wall.getBoundingClientRect()
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const mobile = vw < 768
+
+      const start = vh
+      const end = vh * 0.25
+      let p = (start - rect.top) / (start - end)
+      p = Math.max(0, Math.min(1, p))
+      const e = 1 - Math.pow(1 - p, 3)
+      const r = 1 - e
+      const opacity = Math.min(1, e / 0.45)
+
+      // residual drift ramps in with e so there is no jump at e === 1
+      const delta = vh / 2 - (rect.top + rect.height / 2)
+
+      colRefs.current.forEach((col, i) => {
+        if (!col) return
+        const [xVw, yVh, s] = CONVERGE_OFFSETS[i % 4]
+        const x = (mobile ? Math.sign(xVw) * 10 : xVw) * (vw / 100) * r
+        const drift = mobile
+          ? 0
+          : Math.max(-60, Math.min(60, delta * (RESIDUAL_SPEEDS[i % 4] - 1))) * e
+        const y = yVh * (vh / 100) * r + drift
+        const scale = 1 - (1 - s) * r
+        col.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
+        col.style.opacity = opacity.toFixed(3)
+      })
+    }
     const onScroll = () => {
       if (raf) return
       raf = requestAnimationFrame(() => {
         raf = 0
-        const sec = sectionRef.current
-        if (!sec) return
-        if (window.innerWidth < 768) {
-          colRefs.current.forEach((col) => {
-            if (col) col.style.transform = "translate3d(0, 0px, 0)"
-          })
-          return
-        }
-        const rect = sec.getBoundingClientRect()
-        const delta = window.innerHeight / 2 - (rect.top + rect.height / 2)
-        colRefs.current.forEach((col, i) => {
-          if (!col) return
-          const y = Math.max(-80, Math.min(80, delta * (COLUMN_SPEEDS[i % 4] - 1)))
-          col.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`
-        })
+        applyTransforms()
       })
     }
-    onScroll()
+    applyTransforms()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => {
       window.removeEventListener("scroll", onScroll)
@@ -200,14 +193,9 @@ function MasonryWall() {
               {col.map(({ img, index }) => (
                 <div
                   key={img.src}
-                  ref={(el) => { cardRefs.current[index] = el }}
                   className="relative overflow-hidden rounded-[20px]"
                   style={{
                     aspectRatio: img.ratio === "portrait" ? "3 / 5" : "4 / 3",
-                    opacity: 0,
-                    transform: "translateY(40px) scale(0.97)",
-                    transition:
-                      "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 >
                   <Image
@@ -638,6 +626,8 @@ export default function LandingPage() {
 
   return (
     <div style={{ fontFamily: BODY }} className="min-h-screen bg-white text-[#111827]">
+
+      <SmoothScroll />
 
       {/* ─────────────── NAVBAR ─────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
