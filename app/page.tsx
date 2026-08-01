@@ -252,7 +252,7 @@ function WallHeadline() {
   return (
     <section
       ref={sectionRef}
-      className={`bg-white px-5 pt-[64px] pb-[36px] md:px-8 md:pt-[96px] md:pb-[48px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
+      className={`bg-black px-5 py-[80px] md:px-8 md:py-[120px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
     >
       <div className="headlineStack">
         <SilkShader className="hl-canvas" />
@@ -286,7 +286,7 @@ function WallHeadline() {
         style={{
           fontFamily: BODY,
           lineHeight: 1.55,
-          color: "#6B7280",
+          color: "#9CA3AF",
           maxWidth: "520px",
           marginTop: "24px",
           transitionDelay: instant ? "0ms" : `${SUB_DELAY_MS}ms`,
@@ -313,9 +313,9 @@ function WallHeadline() {
         .headlineText {
           position: relative;
           z-index: 1;
-          background: #FFFFFF;
-          color: #000000;
-          mix-blend-mode: lighten;
+          background: #000000;
+          color: #FFFFFF;
+          mix-blend-mode: darken;
         }
         .hl-mask {
           display: inline-block;

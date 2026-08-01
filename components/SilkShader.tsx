@@ -333,7 +333,7 @@ export default function SilkShader({ className }: { className?: string }) {
 
     gl.uniform3fv(uColors, COLORS)
     gl.uniform4f(uShape, 1.5, 0.55, 0.5, 0.0)
-    gl.uniform4f(uSurface, 2.4, 1.0, 0.0, 1.0)
+    gl.uniform4f(uSurface, 2.4, 1.0, 0.12, 1.0)
     gl.uniform4f(uFinish, 0.0, 0.0, 0.0, 0.04)
     gl.uniform4f(uTransform, 1.0, 0.0, 0.0, 0.0)
     gl.uniform4f(uSpace, 0.0, 0.0, 0.0, 0.0)
