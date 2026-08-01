@@ -181,7 +181,7 @@ function MasonryWall() {
   })
 
   return (
-    <section ref={sectionRef} className="relative bg-[#EFEEEA] py-28 sm:py-36 overflow-hidden">
+    <section ref={sectionRef} className="relative bg-[#EFEEEA] pt-[72px] pb-28 sm:pt-[120px] sm:pb-36 overflow-hidden">
 
       <div className="px-5 md:px-8">
         <div className="flex gap-4">
@@ -351,13 +351,6 @@ function WallHeadline() {
     </section>
   )
 }
-
-const stats = [
-  { value: "2",    label: "Stüdyo" },
-  { value: "~30s", label: "Üretim süresi" },
-  { value: "HD",   label: "Çıktı kalitesi" },
-  { value: "10",   label: "Ücretsiz kredi" },
-]
 
 /* ─── Demo Simulator ─────────────────────────────────────────────────── */
 const demoItems = [
@@ -866,30 +859,6 @@ export default function LandingPage() {
               scroll
             </span>
             <div className="w-px h-10 bg-white/70" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-          </div>
-        </section>
-
-        {/* ─────────────── STATS STRIP ─────────────── */}
-        <section className="bg-[#EFEEEA]">
-          <div className="max-w-6xl mx-auto px-6 sm:px-10">
-            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-[#E5E7EB]">
-              {stats.map(({ value, label }, i) => (
-                <Reveal key={label} delay={i * 90} className="py-10 px-6 text-center">
-                  <div
-                    style={{ fontFamily: DISPLAY }}
-                    className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-[-0.03em] text-[#111827] leading-none mb-2.5"
-                  >
-                    {value}
-                  </div>
-                  <div
-                    style={{ fontFamily: BODY }}
-                    className="text-[11px] text-[#6B7280] uppercase tracking-[0.18em] font-medium"
-                  >
-                    {label}
-                  </div>
-                </Reveal>
-              ))}
-            </div>
           </div>
         </section>
 
