@@ -87,35 +87,24 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-none border transition-all duration-300 overflow-hidden",
+        "relative flex flex-col rounded-none border transition-all duration-300 overflow-hidden bg-white",
         plan.highlight
-          ? "border-white/25 bg-[#141414]"
-          : "border-white/[0.07] bg-[#0D0D0D]"
+          ? "border-[#111827]"
+          : "border-[#E5E7EB]"
       )}
     >
-      {/* Subtle glow on highlighted card */}
-      {plan.highlight && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%)",
-          }}
-        />
-      )}
-
       {/* Badge */}
       <div className="px-6 pt-6 pb-0 flex items-start justify-between">
         <span
           style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.2em" }}
-          className="uppercase text-white/25 font-medium tracking-widest"
+          className="uppercase text-[#6B7280] font-medium tracking-widest"
         >
           {plan.title}
         </span>
         {plan.badge && (
           <span
             style={{ fontFamily: BODY, fontSize: "9px", letterSpacing: "0.15em" }}
-            className="uppercase bg-white text-[#0A0A0A] font-semibold px-2.5 py-1"
+            className="uppercase bg-[#111827] text-white font-semibold px-2.5 py-1"
           >
             {plan.badge}
           </span>
@@ -123,7 +112,7 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
       </div>
 
       {/* Price */}
-      <div className="px-6 pt-4 pb-5 border-b border-white/[0.06]">
+      <div className="px-6 pt-4 pb-5 border-b border-[#E5E7EB]">
         <div className="flex items-end gap-1.5 mb-1">
           <AnimatePresence mode="wait">
             <motion.div
@@ -135,7 +124,7 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
             >
               <span
                 style={{ fontFamily: DISPLAY }}
-                className="text-[2.6rem] font-extrabold leading-none tracking-[-0.04em] text-white"
+                className="text-[2.6rem] font-extrabold leading-none tracking-[-0.04em] text-[#111827]"
               >
                 <NumberFlow
                   value={plan.price}
@@ -152,14 +141,14 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
           </AnimatePresence>
           <span
             style={{ fontFamily: BODY, fontSize: "12px" }}
-            className="text-white/30 mb-2 font-light"
+            className="text-[#6B7280] mb-2 font-light"
           >
             / {plan.credits} kredi
           </span>
         </div>
         <p
           style={{ fontFamily: BODY, fontSize: "12px", letterSpacing: "0.01em" }}
-          className="text-white/30 font-light leading-[1.65]"
+          className="text-[#6B7280] font-light leading-[1.65]"
         >
           {plan.desc}
         </p>
@@ -172,8 +161,8 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
             className={cn(
               "w-full h-11 text-[12px] font-semibold uppercase tracking-[0.15em] transition-all duration-200 cursor-pointer",
               plan.highlight
-                ? "bg-white text-[#0A0A0A] hover:bg-white/90"
-                : "bg-transparent border border-white/15 text-white/70 hover:border-white/30 hover:text-white"
+                ? "bg-[#111827] text-white hover:bg-[#111827]/90"
+                : "bg-transparent border border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB]"
             )}
             style={{ fontFamily: BODY }}
           >
@@ -182,7 +171,7 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
         </Link>
         <p
           style={{ fontFamily: BODY, fontSize: "10px", letterSpacing: "0.06em" }}
-          className="text-center text-white/18 mt-2.5 mb-1 font-light"
+          className="text-center text-[#6B7280] mt-2.5 mb-1 font-light"
         >
           ≈ {plan.pricePerCredit} ₺/görsel
         </p>
@@ -195,11 +184,11 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
             <CheckIcon
               size={13}
               strokeWidth={2.5}
-              className={plan.highlight ? "text-white mt-0.5 shrink-0" : "text-white/40 mt-0.5 shrink-0"}
+              className="text-[#111827] mt-0.5 shrink-0"
             />
             <span
               style={{ fontFamily: BODY, fontSize: "13px", letterSpacing: "0.01em" }}
-              className={plan.highlight ? "text-white/80 font-light" : "text-white/40 font-light"}
+              className="text-[#111827] font-light"
             >
               {feat}
             </span>
@@ -213,28 +202,8 @@ function PlanCard({ plan, visible }: { plan: Plan; visible: boolean }) {
 export default function PricingSection() {
   const [revealed, setRevealed] = useState(false)
 
-  // Trigger reveal once — just used to animate price on mount via NumberFlow
-  // We keep this simple: no monthly/annual toggle since these are credit packs
   return (
-    <section className="relative bg-[#0A0A0A] py-28 sm:py-36 overflow-hidden">
-
-      {/* Subtle top separator line */}
-      <div className="absolute top-0 inset-x-0 h-px bg-white/[0.05]" />
-
-      {/* Background blobs */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          width: "600px",
-          height: "600px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.025) 0%, transparent 65%)",
-          top: "-150px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          filter: "blur(60px)",
-        }}
-      />
+    <section className="relative bg-white py-28 sm:py-36 overflow-hidden border-t border-[#E5E7EB]">
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10">
 
@@ -242,30 +211,30 @@ export default function PricingSection() {
         <div className="mb-16 sm:mb-20">
           <p
             style={{ fontFamily: BODY }}
-            className="text-[11px] tracking-[0.28em] uppercase font-medium mb-5 text-white/35"
+            className="text-[11px] tracking-[0.28em] uppercase font-medium mb-5 text-[#6B7280]"
           >
             Fiyatlandırma
           </p>
           <h2
             style={{ fontFamily: DISPLAY }}
-            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-white leading-[1.0] mb-6 max-w-xl"
+            className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#111827] leading-[1.0] mb-6 max-w-xl"
           >
             Kredi Paketleri
             <br />
-            <em className="not-italic font-light text-white/20" style={{ fontFamily: DISPLAY }}>
+            <em className="not-italic font-light text-[#C4C0B8]" style={{ fontFamily: DISPLAY }}>
               Tek Seferlik Ödeme.
             </em>
           </h2>
           <p
             style={{ fontFamily: BODY, fontSize: "14px" }}
-            className="text-white/40 font-light max-w-sm leading-[1.75]"
+            className="text-[#6B7280] font-light max-w-sm leading-[1.75]"
           >
             Abonelik yok, gizli ücret yok. İhtiyacınız kadar kredi satın alın, istediğiniz zaman kullanın.
           </p>
         </div>
 
         {/* Cards grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-[1px] bg-white/[0.04]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-[1px] bg-[#E5E7EB]">
           {PLANS.map((plan) => (
             <PlanCard key={plan.id} plan={plan} visible={revealed} />
           ))}
@@ -274,7 +243,7 @@ export default function PricingSection() {
         {/* Footer note */}
         <p
           style={{ fontFamily: BODY, fontSize: "11px", letterSpacing: "0.08em" }}
-          className="text-center text-white/18 mt-8 font-light"
+          className="text-center text-[#6B7280] mt-8 font-light"
         >
           Tüm paketler tek seferlik satın alım · Krediler hesabınıza anında yüklenir · KDV dahil değildir
         </p>
