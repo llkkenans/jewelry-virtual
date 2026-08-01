@@ -501,32 +501,19 @@ export default function LandingPage() {
     sessionStorage.setItem('heroVideoIndex', String(next))
     setVideoIndex(current)
   }, [])
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 72)
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [])
 
   return (
     <div style={{ fontFamily: BODY }} className="min-h-screen bg-white text-[#111827]">
 
       {/* ─────────────── NAVBAR ─────────────── */}
-      <header
-        className={`fixed top-3 inset-x-4 z-50 rounded-2xl transition-all duration-500 backdrop-blur-xl ${
-          scrolled
-            ? "bg-white/90 border border-[#E5E7EB] shadow-sm"
-            : "bg-white/60 border border-[#E5E7EB]"
-        }`}
-      >
-        <div className="px-5 sm:px-7 h-14 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+        <div className="px-5 md:px-8 py-5 flex items-center justify-between">
 
           {/* Brand Mark */}
           <Link href="/" className="flex items-center gap-2.5">
             <span
-              style={{ fontFamily: DISPLAY }}
-              className="text-[12px] font-light tracking-[0.22em] uppercase text-[#111827]"
+              style={{ fontFamily: DISPLAY, textShadow: "0 1px 2px rgba(0,0,0,0.35)" }}
+              className="text-[12px] font-light tracking-[0.22em] uppercase text-white"
             >
               Lunia Studio
             </span>
@@ -542,7 +529,8 @@ export default function LandingPage() {
               <a
                 key={label}
                 href={href}
-                className="text-[13px] font-medium transition-colors duration-300 cursor-pointer text-[#6B7280] hover:text-[#111827]"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.35)" }}
+                className="text-[13px] font-medium transition-colors duration-300 cursor-pointer text-white hover:text-white/80"
               >
                 {label}
               </a>
@@ -554,7 +542,8 @@ export default function LandingPage() {
             <Link href="/login">
               <Button
                 variant="ghost"
-                className="h-9 px-4 text-[13px] font-medium rounded-full cursor-pointer transition-all duration-300 text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB]"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.35)" }}
+                className="h-9 px-4 text-[13px] font-medium rounded-full cursor-pointer transition-all duration-300 text-white hover:text-white/80 hover:bg-transparent"
               >
                 Giriş Yap
               </Button>
