@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Gem, Circle, Sparkles, Watch } from "lucide-react"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
@@ -72,27 +73,160 @@ const socialVideos = [
   "/landing/landing_videos/social_media/hf_20260624_025743_9cfed9ef-72a7-485a-88a7-c44adefef3fd.mp4",
 ]
 
-/* ─── Data ───────────────────────────────────────────────────────────── */
-const steps = [
-  {
-    n: "01",
-    img: "/landing/landing_images/how_does_it_work/step1.jpg",
-    title: "Fotoğrafı Yükle",
-    desc: "Takı veya kıyafet görselinizi sürükleyip bırakın.",
-  },
-  {
-    n: "02",
-    img: "/landing/landing_images/how_does_it_work/step2.jpg",
-    title: "Modeli Seç",
-    desc: "Cinsiyet, cilt tonu ve sahne stilini birkaç saniyede belirleyin.",
-  },
-  {
-    n: "03",
-    img: "/landing/landing_images/how_does_it_work/step3.jpg",
-    title: "Görseli İndir",
-    desc: "AI saniyeler içinde stüdyo kalitesinde görseli hazırlasın.",
-  },
+/* ─── Masonry Wall ───────────────────────────────────────────────────── */
+const wallImages: { src: string; ratio: "portrait" | "landscape" }[] = [
+  { src: "/landing/landing_images/collection/ring_after.png",      ratio: "portrait" },
+  { src: "/landing/landing_images/collection/necklace_after.png",  ratio: "landscape" },
+  { src: "/landing/landing_images/collection/earrings_after.png",  ratio: "portrait" },
+  { src: "/landing/landing_images/how_does_it_work/step2.jpg",     ratio: "portrait" },
+  { src: "/landing/landing_images/collection/ring_after1.png",     ratio: "landscape" },
+  { src: "/landing/landing_images/collection/necklace_after1.png", ratio: "portrait" },
+  { src: "/landing/landing_images/collection/earrings_after1.png", ratio: "portrait" },
+  { src: "/landing/landing_images/how_does_it_work/step1.jpg",     ratio: "landscape" },
+  { src: "/landing/landing_images/collection/ring_after2.png",     ratio: "portrait" },
+  { src: "/landing/landing_images/collection/necklace_after2.png", ratio: "landscape" },
+  { src: "/landing/landing_images/collection/earrings_after2.png", ratio: "portrait" },
+  { src: "/landing/landing_images/how_does_it_work/step3.jpg",     ratio: "portrait" },
+  { src: "/landing/landing_images/collection/necklace_after3.png", ratio: "landscape" },
+  { src: "/landing/landing_images/collection/earrings_after3.png", ratio: "portrait" },
 ]
+
+const COLUMN_SPEEDS = [1.0, 0.86, 1.14, 0.94]
+
+function MasonryWall() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const colRefs = useRef<(HTMLDivElement | null)[]>([])
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [colCount, setColCount] = useState(4)
+
+  useEffect(() => {
+    const mqMobile = window.matchMedia("(max-width: 767px)")
+    const mqTablet = window.matchMedia("(min-width: 768px) and (max-width: 1279px)")
+    const update = () => setColCount(mqMobile.matches ? 2 : mqTablet.matches ? 3 : 4)
+    update()
+    mqMobile.addEventListener("change", update)
+    mqTablet.addEventListener("change", update)
+    return () => {
+      mqMobile.removeEventListener("change", update)
+      mqTablet.removeEventListener("change", update)
+    }
+  }, [])
+
+  /* (b) + (c) — staggered entrance, unobserve after reveal */
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[]
+
+    if (reduced) {
+      cards.forEach((el) => {
+        el.style.transition = "none"
+        el.style.opacity = "1"
+        el.style.transform = "none"
+      })
+      return
+    }
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries
+          .filter((e) => e.isIntersecting)
+          .forEach((entry, i) => {
+            const el = entry.target as HTMLDivElement
+            el.style.transitionDelay = `${i * 70}ms`
+            el.style.opacity = "1"
+            el.style.transform = "translateY(0) scale(1)"
+            obs.unobserve(el)
+          })
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.15 }
+    )
+    cards.forEach((el) => obs.observe(el))
+    return () => obs.disconnect()
+  }, [colCount])
+
+  /* (a) — column parallax, rAF-throttled, transform only */
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        const sec = sectionRef.current
+        if (!sec) return
+        if (window.innerWidth < 768) {
+          colRefs.current.forEach((col) => {
+            if (col) col.style.transform = "translate3d(0, 0px, 0)"
+          })
+          return
+        }
+        const rect = sec.getBoundingClientRect()
+        const delta = window.innerHeight / 2 - (rect.top + rect.height / 2)
+        colRefs.current.forEach((col, i) => {
+          if (!col) return
+          const y = Math.max(-80, Math.min(80, delta * (COLUMN_SPEEDS[i % 4] - 1)))
+          col.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`
+        })
+      })
+    }
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [colCount])
+
+  const columns: { img: (typeof wallImages)[number]; index: number }[][] = Array.from(
+    { length: colCount },
+    () => []
+  )
+  wallImages.forEach((img, index) => {
+    columns[index % colCount].push({ img, index })
+  })
+
+  return (
+    <section ref={sectionRef} className="bg-white py-28 sm:py-36 overflow-hidden">
+      <div className="px-5 md:px-8">
+        <div className="flex gap-4">
+          {columns.map((col, ci) => (
+            <div
+              key={ci}
+              ref={(el) => { colRefs.current[ci] = el }}
+              className="flex-1 flex flex-col gap-4"
+              style={{ willChange: "transform" }}
+            >
+              {col.map(({ img, index }) => (
+                <div
+                  key={img.src}
+                  ref={(el) => { cardRefs.current[index] = el }}
+                  className="relative overflow-hidden rounded-[20px]"
+                  style={{
+                    aspectRatio: img.ratio === "portrait" ? "3 / 5" : "4 / 3",
+                    opacity: 0,
+                    transform: "translateY(40px) scale(0.97)",
+                    transition:
+                      "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
+                >
+                  <Image
+                    src={img.src}
+                    alt=""
+                    fill
+                    sizes="(max-width:768px) 50vw, 25vw"
+                    priority={index < 4}
+                    className="object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 
 const stats = [
@@ -634,67 +768,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─────────────── HOW IT WORKS ─────────────── */}
-        <section id="nasil-calisir" className="bg-white py-28 sm:py-36">
-          <div className="max-w-6xl mx-auto px-6 sm:px-10">
-
-            <Reveal>
-              <Overline>Nasıl Çalışır</Overline>
-              <h2
-                style={{ fontFamily: DISPLAY }}
-                className="text-[2.4rem] sm:text-[3.4rem] font-extrabold tracking-[-0.035em] text-[#111827] leading-[1.0] mb-20 max-w-xl"
-              >
-                Üç Adımda
-                <br />
-                <em className="not-italic font-light text-[#C4C0B8]" style={{ fontFamily: DISPLAY }}>
-                  Profesyonel Görsel.
-                </em>
-              </h2>
-            </Reveal>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
-              {steps.map(({ n, img, title, desc }, i) => (
-                <Reveal key={n} delay={i * 110}>
-                  <div className="group cursor-default">
-                    <div className="aspect-[4/5] rounded-2xl overflow-hidden mb-7 bg-white border border-[#E5E7EB]">
-                      <img
-                        src={img}
-                        alt={title}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                      />
-                    </div>
-                    <span
-                      style={{ fontFamily: DISPLAY }}
-                      className="block text-[11px] font-semibold tracking-[0.25em] uppercase text-[#C4C0B8] mb-3"
-                    >
-                      {n}
-                    </span>
-                    <h3
-                      style={{ fontFamily: DISPLAY }}
-                      className="text-[1.2rem] font-bold text-[#111827] tracking-[-0.02em] mb-2.5 leading-[1.2]"
-                    >
-                      {title}
-                    </h3>
-                    <p
-                      style={{ fontFamily: BODY }}
-                      className="text-[14px] text-[#6B7280] leading-[1.7] font-light"
-                    >
-                      {desc}
-                    </p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-
-            <Reveal delay={180} className="mt-16">
-              <Link href="/register">
-                <Button className="h-11 px-8 text-[13px] font-semibold rounded-full cursor-pointer bg-[#111827] text-white hover:bg-[#111827]/90 transition-all duration-300">
-                  Hemen Başla
-                </Button>
-              </Link>
-            </Reveal>
-          </div>
-        </section>
+        {/* ─────────────── MASONRY WALL ─────────────── */}
+        <MasonryWall />
 
         {/* ─────────────── RESULTS — Before/After ─────────────── */}
         <section id="sonuclar" className="relative py-28 sm:py-36 bg-white border-t border-[#E5E7EB]">
