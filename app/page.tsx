@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Fragment } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -104,7 +104,6 @@ const RESIDUAL_SPEEDS = [1.0, 0.9, 1.1, 0.95]
 function MasonryWall() {
   const sectionRef = useRef<HTMLElement>(null)
   const colRefs = useRef<(HTMLDivElement | null)[]>([])
-  const headlineRef = useRef<HTMLDivElement>(null)
   const [colCount, setColCount] = useState(4)
 
   useEffect(() => {
@@ -156,12 +155,6 @@ function MasonryWall() {
         col.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
         col.style.opacity = opacity.toFixed(3)
       })
-
-      const hl = headlineRef.current
-      if (hl) {
-        hl.style.transform = `translate3d(0, ${((1 - e) * 60).toFixed(2)}px, 0)`
-        hl.style.opacity = Math.min(1, e / 0.4).toFixed(3)
-      }
     }
     const onScroll = () => {
       if (raf) return
@@ -188,48 +181,6 @@ function MasonryWall() {
 
   return (
     <section ref={sectionRef} className="relative bg-white py-28 sm:py-36 overflow-hidden">
-
-      {/* Overlapping display headline */}
-      <div
-        ref={headlineRef}
-        className="absolute inset-x-0 z-10 text-center pointer-events-none"
-        style={{ top: "18%" }}
-      >
-        <div
-          className="wall-headline-l1"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontVariationSettings: "'wght' 900, 'wdth' 125",
-            fontSize: "clamp(56px, 13vw, 210px)",
-            lineHeight: 0.82,
-            color: "rgba(255, 255, 255, 0.82)",
-            mixBlendMode: "overlay",
-          }}
-        >
-          GERÇEK DEĞİL
-        </div>
-        <div
-          style={{
-            fontFamily: "var(--font-display)",
-            fontVariationSettings: "'wght' 500, 'wdth' 110",
-            fontSize: "clamp(28px, 6.4vw, 96px)",
-            lineHeight: 0.95,
-            letterSpacing: "-0.01em",
-            color: "#111827",
-            marginTop: "4px",
-            mixBlendMode: "normal",
-          }}
-        >
-          HEPSİ ÜRETİLDİ
-        </div>
-      </div>
-
-      <style>{`
-        .wall-headline-l1 { letter-spacing: -0.04em; }
-        @media (max-width: 767px) {
-          .wall-headline-l1 { letter-spacing: -0.02em; }
-        }
-      `}</style>
 
       <div className="px-5 md:px-8">
         <div className="flex gap-4">
@@ -266,6 +217,114 @@ function MasonryWall() {
   )
 }
 
+
+/* ─── Wall Headline ──────────────────────────────────────────────────── */
+const HEADLINE_WORDS = ["HEPSİ", "LUNIA", "İLE", "ÜRETİLDİ"]
+const SUB_DELAY_MS = (HEADLINE_WORDS.length - 1) * 90 + 180
+
+function WallHeadline() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const [revealed, setRevealed] = useState(false)
+  const [instant, setInstant] = useState(false)
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setInstant(true)
+      setRevealed(true)
+      return
+    }
+    const el = sectionRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setRevealed(true)
+          io.unobserve(el)
+        }
+      },
+      { threshold: 0.3, rootMargin: "0px 0px -12% 0px" }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  return (
+    <section
+      ref={sectionRef}
+      className={`bg-white px-5 py-[84px] md:px-8 md:py-[140px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
+    >
+      <h2
+        style={{
+          fontFamily: "var(--font-display)",
+          fontVariationSettings: "'wght' 900, 'wdth' 118",
+          fontSize: "clamp(38px, 7.4vw, 128px)",
+          lineHeight: 0.88,
+          letterSpacing: "-0.035em",
+          color: "#111827",
+        }}
+      >
+        {HEADLINE_WORDS.map((word, i) => (
+          <Fragment key={word + i}>
+            <span className="hl-mask">
+              <span
+                className="hl-word"
+                style={{ transitionDelay: instant ? "0ms" : `${i * 90}ms` }}
+              >
+                {word}
+              </span>
+            </span>{" "}
+          </Fragment>
+        ))}
+      </h2>
+      <p
+        className="hl-sub text-[16px] md:text-[18px]"
+        style={{
+          fontFamily: BODY,
+          lineHeight: 1.55,
+          color: "#6B7280",
+          maxWidth: "520px",
+          marginTop: "28px",
+          transitionDelay: instant ? "0ms" : `${SUB_DELAY_MS}ms`,
+        }}
+      >
+        Yukarıdaki her kare, tek bir ürün fotoğrafından saniyeler içinde
+        oluşturuldu. Stüdyo yok, model yok, çekim günü yok.
+      </p>
+      <style>{`
+        .hl-mask {
+          display: inline-block;
+          overflow: hidden;
+          vertical-align: bottom;
+          padding-bottom: 0.12em;
+          margin-bottom: -0.12em;
+          padding-top: 0.1em;
+          margin-top: -0.1em;
+        }
+        .hl-word {
+          display: inline-block;
+          transform: translateY(110%);
+          transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .revealed .hl-word {
+          transform: translateY(0);
+        }
+        .hl-sub {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 700ms ease, transform 700ms ease;
+        }
+        .revealed .hl-sub {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .hl-instant .hl-word,
+        .hl-instant .hl-sub {
+          transition: none;
+        }
+      `}</style>
+    </section>
+  )
+}
 
 const stats = [
   { value: "2",    label: "Stüdyo" },
@@ -810,6 +869,9 @@ export default function LandingPage() {
 
         {/* ─────────────── MASONRY WALL ─────────────── */}
         <MasonryWall />
+
+        {/* ─────────────── WALL HEADLINE ─────────────── */}
+        <WallHeadline />
 
         {/* ─────────────── RESULTS — Before/After ─────────────── */}
         <section id="sonuclar" className="relative py-28 sm:py-36 bg-white border-t border-[#E5E7EB]">
