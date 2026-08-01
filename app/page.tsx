@@ -104,6 +104,7 @@ const RESIDUAL_SPEEDS = [1.0, 0.9, 1.1, 0.95]
 function MasonryWall() {
   const sectionRef = useRef<HTMLElement>(null)
   const colRefs = useRef<(HTMLDivElement | null)[]>([])
+  const headlineRef = useRef<HTMLDivElement>(null)
   const [colCount, setColCount] = useState(4)
 
   useEffect(() => {
@@ -155,6 +156,12 @@ function MasonryWall() {
         col.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
         col.style.opacity = opacity.toFixed(3)
       })
+
+      const hl = headlineRef.current
+      if (hl) {
+        hl.style.transform = `translate3d(0, ${((1 - e) * 60).toFixed(2)}px, 0)`
+        hl.style.opacity = Math.min(1, e / 0.4).toFixed(3)
+      }
     }
     const onScroll = () => {
       if (raf) return
@@ -180,7 +187,50 @@ function MasonryWall() {
   })
 
   return (
-    <section ref={sectionRef} className="bg-white py-28 sm:py-36 overflow-hidden">
+    <section ref={sectionRef} className="relative bg-white py-28 sm:py-36 overflow-hidden">
+
+      {/* Overlapping display headline */}
+      <div
+        ref={headlineRef}
+        className="absolute inset-x-0 z-10 text-center pointer-events-none"
+        style={{ top: "18%" }}
+      >
+        <div
+          className="wall-headline-l1"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontVariationSettings: "'wght' 900, 'wdth' 125",
+            fontSize: "clamp(56px, 13vw, 210px)",
+            lineHeight: 0.82,
+            color: "rgba(255, 255, 255, 0.82)",
+            mixBlendMode: "overlay",
+          }}
+        >
+          GERÇEK DEĞİL
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-display)",
+            fontVariationSettings: "'wght' 500, 'wdth' 110",
+            fontSize: "clamp(28px, 6.4vw, 96px)",
+            lineHeight: 0.95,
+            letterSpacing: "-0.01em",
+            color: "#111827",
+            marginTop: "4px",
+            mixBlendMode: "normal",
+          }}
+        >
+          HEPSİ ÜRETİLDİ
+        </div>
+      </div>
+
+      <style>{`
+        .wall-headline-l1 { letter-spacing: -0.04em; }
+        @media (max-width: 767px) {
+          .wall-headline-l1 { letter-spacing: -0.02em; }
+        }
+      `}</style>
+
       <div className="px-5 md:px-8">
         <div className="flex gap-4">
           {columns.map((col, ci) => (
