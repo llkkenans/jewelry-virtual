@@ -8,6 +8,7 @@ import { Gem, Circle, Sparkles, Watch } from "lucide-react"
 import { GlowingEffect } from "@/components/ui/glowing-effect"
 import PricingSection from "@/components/ui/pricing-section"
 import SmoothScroll from "@/components/SmoothScroll"
+import SilkShader from "@/components/SilkShader"
 
 /* ─── Hero Videos ───────────────────────────────────────────────────── */
 const heroVideos = [
@@ -253,30 +254,33 @@ function WallHeadline() {
       ref={sectionRef}
       className={`bg-white px-5 pt-[64px] pb-[36px] md:px-8 md:pt-[96px] md:pb-[48px]${revealed ? " revealed" : ""}${instant ? " hl-instant" : ""}`}
     >
-      <h2
-        style={{
-          fontFamily: "var(--font-display)",
-          fontVariationSettings: "'wght' 900, 'wdth' 118",
-          fontSize: "clamp(38px, 7.4vw, 128px)",
-          // hard floor for Turkish uppercase display text: never below 1.0
-          lineHeight: 1.02,
-          letterSpacing: "-0.035em",
-          color: "#111827",
-        }}
-      >
-        {HEADLINE_WORDS.map((word, i) => (
-          <Fragment key={word + i}>
-            <span className="hl-mask">
-              <span
-                className="hl-word"
-                style={{ transitionDelay: instant ? "0ms" : `${i * 90}ms` }}
-              >
-                {word}
-              </span>
-            </span>{" "}
-          </Fragment>
-        ))}
-      </h2>
+      <div className="headlineStack">
+        <SilkShader className="hl-canvas" />
+        <h2
+          className="headlineText"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontVariationSettings: "'wght' 900, 'wdth' 118",
+            fontSize: "clamp(38px, 7.4vw, 128px)",
+            // hard floor for Turkish uppercase display text: never below 1.0
+            lineHeight: 1.02,
+            letterSpacing: "-0.035em",
+          }}
+        >
+          {HEADLINE_WORDS.map((word, i) => (
+            <Fragment key={word + i}>
+              <span className="hl-mask">
+                <span
+                  className="hl-word"
+                  style={{ transitionDelay: instant ? "0ms" : `${i * 90}ms` }}
+                >
+                  {word}
+                </span>
+              </span>{" "}
+            </Fragment>
+          ))}
+        </h2>
+      </div>
       <p
         className="hl-sub text-[16px] md:text-[18px]"
         style={{
@@ -292,6 +296,27 @@ function WallHeadline() {
         oluşturuldu. Stüdyo yok, model yok, çekim günü yok.
       </p>
       <style>{`
+        .headlineStack {
+          position: relative;
+          isolation: isolate;
+          display: block;
+        }
+        .headlineStack .hl-canvas {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 0;
+          pointer-events: none;
+          display: block;
+        }
+        .headlineText {
+          position: relative;
+          z-index: 1;
+          background: #FFFFFF;
+          color: #000000;
+          mix-blend-mode: lighten;
+        }
         .hl-mask {
           display: inline-block;
           overflow: hidden;
