@@ -95,10 +95,10 @@ const wallImages: { src: string; ratio: "portrait" | "landscape" }[] = [
 
 /* per-card convergence offsets by column index: [xVw, yVh, scale] at e = 0 */
 const CONVERGE_OFFSETS: [number, number, number][] = [
-  [-18, 0, 1],
-  [0, 12, 0.92],
-  [0, 15, 0.92],
-  [18, 0, 1],
+  [-24, 0, 1],
+  [0, 16, 0.9],
+  [0, 20, 0.9],
+  [24, 0, 1],
 ]
 const RESIDUAL_SPEEDS = [1.0, 0.9, 1.1, 0.95]
 
@@ -182,38 +182,42 @@ function MasonryWall() {
       })
     }
 
-    markInitial()
-    setupInitialStyles()
+    // damped follow: each non-initial card eases its own current toward target
+    const target = new Array(cards.length).fill(0)
+    const current = new Array(cards.length).fill(0)
+    const SMOOTH = 0.085
+    const SETTLED = 0.001
 
-    let raf = 0
-    const apply = () => {
-      const vw = window.innerWidth
+    const readTargets = () => {
       const vh = window.innerHeight
-      const mobile = vw < 768
-      const start = vh * 1.0
-      const end = vh * 0.55
-
-      // READ: card progress
-      const cardData = cards.map((el, i) => {
-        if (!el || initial[i]) return null
+      const start = vh * 1.15
+      const end = vh * 0.15
+      cards.forEach((el, i) => {
+        if (!el || initial[i]) { target[i] = 0; return }
         const r = el.getBoundingClientRect()
         let p = (start - r.top) / (start - end)
         p = Math.max(0, Math.min(1, p))
-        const e = 1 - Math.pow(1 - p, 3)
-        return { el, colIndex: i % colCount, e }
+        // smoothstep
+        target[i] = p * p * (3.0 - 2.0 * p)
       })
+    }
 
-      // READ: column drift (independent of card convergence)
-      const colData = colRefs.current.map((col) => {
-        if (!col || mobile) return null
-        const r = col.getBoundingClientRect()
-        return { col, delta: vh / 2 - (r.top + r.height / 2) }
-      })
+    // seed current to target so first paint does not animate from zero
+    readTargets()
+    for (let i = 0; i < current.length; i++) current[i] = target[i]
 
-      // WRITE: cards
-      cardData.forEach((d) => {
-        if (!d) return
-        const { el, colIndex, e } = d
+    let raf = 0
+    let running = false
+    let needsFrame = false
+
+    const writeCards = () => {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const mobile = vw < 768
+      cards.forEach((el, i) => {
+        if (!el || initial[i]) return
+        const e = current[i]
+        const colIndex = i % colCount
         const [xVw, yVh, s] = CONVERGE_OFFSETS[colIndex % 4]
         const r = 1 - e
         const x = (mobile ? Math.sign(xVw) * 8 : xVw) * (vw / 100) * r
@@ -222,32 +226,74 @@ function MasonryWall() {
         const opacity = Math.min(1, e / 0.4)
         el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
         el.style.opacity = opacity.toFixed(3)
-        el.style.willChange = e >= 1 || e <= 0 ? "auto" : "transform, opacity"
+        const settling = Math.abs(target[i] - current[i]) > SETTLED
+        el.style.willChange = settling || (e > 0 && e < 1) ? "transform, opacity" : "auto"
       })
+    }
 
-      // WRITE: columns (drift only)
-      colData.forEach((d, i) => {
-        const col = colRefs.current[i]
+    const writeColumns = () => {
+      const vh = window.innerHeight
+      const mobile = window.innerWidth < 768
+      colRefs.current.forEach((col, i) => {
         if (!col) return
-        if (!d) { col.style.transform = "none"; return }
-        const drift = Math.max(-60, Math.min(60, d.delta * (RESIDUAL_SPEEDS[i % 4] - 1)))
+        if (mobile) { col.style.transform = "none"; return }
+        const r = col.getBoundingClientRect()
+        const delta = vh / 2 - (r.top + r.height / 2)
+        const drift = Math.max(-60, Math.min(60, delta * (RESIDUAL_SPEEDS[i % 4] - 1)))
         col.style.transform = `translate3d(0, ${drift.toFixed(2)}px, 0)`
       })
     }
 
-    const onScroll = () => {
-      if (raf) return
-      raf = requestAnimationFrame(() => { raf = 0; apply() })
+    const tick = () => {
+      readTargets()
+      let anyMoving = false
+      for (let i = 0; i < current.length; i++) {
+        if (initial[i]) continue
+        const d = target[i] - current[i]
+        if (Math.abs(d) > SETTLED) {
+          current[i] += d * SMOOTH
+          anyMoving = true
+        } else {
+          current[i] = target[i]
+        }
+      }
+      writeCards()
+      writeColumns()
+
+      if (anyMoving || needsFrame) {
+        needsFrame = false
+        raf = requestAnimationFrame(tick)
+      } else {
+        running = false
+        raf = 0
+      }
     }
+
+    const kick = () => {
+      needsFrame = true
+      if (!running) {
+        running = true
+        raf = requestAnimationFrame(tick)
+      }
+    }
+
+    // first paint: seed transforms without animating
+    writeCards()
+    writeColumns()
+
+    const onScroll = () => { kick() }
 
     const onResize = () => {
       markInitial()
       setupInitialStyles()
-      if (raf) return
-      raf = requestAnimationFrame(() => { raf = 0; apply() })
+      // reseed current to new targets so resize doesn't animate
+      readTargets()
+      for (let i = 0; i < current.length; i++) current[i] = target[i]
+      writeCards()
+      writeColumns()
+      kick()
     }
 
-    apply()
     window.addEventListener("scroll", onScroll, { passive: true })
     window.addEventListener("resize", onResize, { passive: true })
     return () => {
