@@ -93,18 +93,19 @@ const wallImages: { src: string; ratio: "portrait" | "landscape" }[] = [
   { src: "/landing/landing_images/collection/earrings_after3.png", ratio: "portrait" },
 ]
 
-/* per-column convergence offsets: [xVw, yVh, scale] at e = 0 */
+/* per-card convergence offsets by column index: [xVw, yVh, scale] at e = 0 */
 const CONVERGE_OFFSETS: [number, number, number][] = [
-  [-24, 0, 1],
-  [0, 16, 0.9],
-  [0, 22, 0.9],
-  [24, 0, 1],
+  [-18, 0, 1],
+  [0, 12, 0.92],
+  [0, 15, 0.92],
+  [18, 0, 1],
 ]
 const RESIDUAL_SPEEDS = [1.0, 0.9, 1.1, 0.95]
 
 function MasonryWall() {
   const sectionRef = useRef<HTMLElement>(null)
   const colRefs = useRef<(HTMLDivElement | null)[]>([])
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [colCount, setColCount] = useState(4)
 
   useEffect(() => {
@@ -120,54 +121,138 @@ function MasonryWall() {
     }
   }, [])
 
-  /* scroll-scrubbed convergence + residual parallax */
+  /* per-card scroll-scrubbed convergence + column residual drift */
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const cards = cardRefs.current
 
-    let raf = 0
-    const applyTransforms = () => {
-      const wall = sectionRef.current
-      if (!wall) return
-      const rect = wall.getBoundingClientRect()
+    if (reduce) {
+      cards.forEach((el) => {
+        if (!el) return
+        el.style.opacity = "1"
+        el.style.transform = "none"
+        el.style.willChange = "auto"
+      })
+      colRefs.current.forEach((col) => {
+        if (col) col.style.transform = "none"
+      })
+      return
+    }
+
+    const initial: boolean[] = new Array(cards.length).fill(false)
+
+    const markInitial = () => {
+      const vh = window.innerHeight
+      const scrollY = window.scrollY
+      cards.forEach((el, i) => {
+        if (!el) { initial[i] = false; return }
+        const r = el.getBoundingClientRect()
+        // document-relative top so scroll position does not confuse the check
+        initial[i] = r.top + scrollY < vh
+      })
+    }
+
+    const setupInitialStyles = () => {
       const vw = window.innerWidth
       const vh = window.innerHeight
       const mobile = vw < 768
-
-      const start = vh
-      const end = vh * 0.25
-      let p = (start - rect.top) / (start - end)
-      p = Math.max(0, Math.min(1, p))
-      const e = 1 - Math.pow(1 - p, 3)
-      const r = 1 - e
-      const opacity = Math.min(1, e / 0.45)
-
-      // residual drift ramps in with e so there is no jump at e === 1
-      const delta = vh / 2 - (rect.top + rect.height / 2)
-
-      colRefs.current.forEach((col, i) => {
-        if (!col) return
-        const [xVw, yVh, s] = CONVERGE_OFFSETS[i % 4]
-        const x = (mobile ? Math.sign(xVw) * 10 : xVw) * (vw / 100) * r
-        const drift = mobile
-          ? 0
-          : Math.max(-60, Math.min(60, delta * (RESIDUAL_SPEEDS[i % 4] - 1))) * e
-        const y = yVh * (vh / 100) * r + drift
-        const scale = 1 - (1 - s) * r
-        col.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
-        col.style.opacity = opacity.toFixed(3)
+      cards.forEach((el, i) => {
+        if (!el) return
+        const colIndex = i % colCount
+        if (initial[i]) {
+          el.style.transform = "none"
+          el.style.opacity = "0"
+          el.style.willChange = "opacity"
+          el.style.transition = `opacity 600ms ease-out ${i * 60}ms`
+        } else {
+          const [xVw, yVh, s] = CONVERGE_OFFSETS[colIndex % 4]
+          const x = (mobile ? Math.sign(xVw) * 8 : xVw) * (vw / 100)
+          const y = mobile ? 0 : yVh * (vh / 100)
+          el.style.transition = ""
+          el.style.opacity = "0"
+          el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${s})`
+          el.style.willChange = "transform, opacity"
+        }
+      })
+      // fade the initial row in on the next frame
+      requestAnimationFrame(() => {
+        cards.forEach((el, i) => {
+          if (el && initial[i]) el.style.opacity = "1"
+        })
       })
     }
+
+    markInitial()
+    setupInitialStyles()
+
+    let raf = 0
+    const apply = () => {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const mobile = vw < 768
+      const start = vh * 1.0
+      const end = vh * 0.55
+
+      // READ: card progress
+      const cardData = cards.map((el, i) => {
+        if (!el || initial[i]) return null
+        const r = el.getBoundingClientRect()
+        let p = (start - r.top) / (start - end)
+        p = Math.max(0, Math.min(1, p))
+        const e = 1 - Math.pow(1 - p, 3)
+        return { el, colIndex: i % colCount, e }
+      })
+
+      // READ: column drift (independent of card convergence)
+      const colData = colRefs.current.map((col) => {
+        if (!col || mobile) return null
+        const r = col.getBoundingClientRect()
+        return { col, delta: vh / 2 - (r.top + r.height / 2) }
+      })
+
+      // WRITE: cards
+      cardData.forEach((d) => {
+        if (!d) return
+        const { el, colIndex, e } = d
+        const [xVw, yVh, s] = CONVERGE_OFFSETS[colIndex % 4]
+        const r = 1 - e
+        const x = (mobile ? Math.sign(xVw) * 8 : xVw) * (vw / 100) * r
+        const y = (mobile ? 0 : yVh * (vh / 100)) * r
+        const scale = 1 - (1 - s) * r
+        const opacity = Math.min(1, e / 0.4)
+        el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
+        el.style.opacity = opacity.toFixed(3)
+        el.style.willChange = e >= 1 || e <= 0 ? "auto" : "transform, opacity"
+      })
+
+      // WRITE: columns (drift only)
+      colData.forEach((d, i) => {
+        const col = colRefs.current[i]
+        if (!col) return
+        if (!d) { col.style.transform = "none"; return }
+        const drift = Math.max(-60, Math.min(60, d.delta * (RESIDUAL_SPEEDS[i % 4] - 1)))
+        col.style.transform = `translate3d(0, ${drift.toFixed(2)}px, 0)`
+      })
+    }
+
     const onScroll = () => {
       if (raf) return
-      raf = requestAnimationFrame(() => {
-        raf = 0
-        applyTransforms()
-      })
+      raf = requestAnimationFrame(() => { raf = 0; apply() })
     }
-    applyTransforms()
+
+    const onResize = () => {
+      markInitial()
+      setupInitialStyles()
+      if (raf) return
+      raf = requestAnimationFrame(() => { raf = 0; apply() })
+    }
+
+    apply()
     window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onResize, { passive: true })
     return () => {
       window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onResize)
       if (raf) cancelAnimationFrame(raf)
     }
   }, [colCount])
@@ -195,6 +280,7 @@ function MasonryWall() {
               {col.map(({ img, index }) => (
                 <div
                   key={img.src}
+                  ref={(el) => { cardRefs.current[index] = el }}
                   className="relative overflow-hidden rounded-[20px]"
                   style={{
                     aspectRatio: img.ratio === "portrait" ? "3 / 5" : "4 / 3",
