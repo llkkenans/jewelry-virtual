@@ -946,7 +946,10 @@ export default function LandingPage() {
       <main>
 
         {/* ─────────────── HERO ─────────────── */}
-        <section className="relative h-screen overflow-hidden">
+        <section
+          className="relative h-screen mx-5 overflow-hidden rounded-b-[28px]"
+          style={{ boxShadow: "0 24px 60px -20px rgba(17, 24, 39, 0.18)" }}
+        >
           <video
             key={videoIndex}
             src={heroVideos[videoIndex]}
@@ -956,8 +959,8 @@ export default function LandingPage() {
           {/* Legibility gradient confined to bottom text area */}
           <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/70 via-black/35 to-transparent pointer-events-none" />
 
-          {/* Hero content — bottom left */}
-          <div className="absolute bottom-14 sm:bottom-20 left-0 right-0 z-10 px-6 sm:px-16 max-w-5xl">
+          {/* Hero content — bottom left, aligned to wall headline edge */}
+          <div className="absolute bottom-14 sm:bottom-20 left-0 right-0 z-10 pl-0 md:pl-3 pr-5 md:pr-8 max-w-5xl">
             <Overline light>AI STÜDYO</Overline>
             <h1
               style={{ fontFamily: DISPLAY }}
@@ -985,8 +988,8 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Scroll line indicator */}
-          <div className="absolute bottom-8 right-10 hidden sm:flex flex-col items-center gap-1.5 opacity-70">
+          {/* Scroll line indicator — inside the card, safe of the rounded corner */}
+          <div className="absolute bottom-10 right-8 hidden sm:flex flex-col items-center gap-1.5 opacity-70">
             <span style={{ fontFamily: BODY }} className="text-[9px] tracking-[0.25em] uppercase text-white rotate-90 mb-2 origin-center">
               scroll
             </span>
